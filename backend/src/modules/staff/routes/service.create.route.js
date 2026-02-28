@@ -10,5 +10,7 @@ const cpUpload = upload.fields([
     { name: 'license', maxCount: 10 }
 ]);
 router.post('/', cpUpload, controller.createController);
+router.post('/leave', auth.authenticate, auth.authorize("DOCTOR", "ASSISTANT"), controller.createLeaveController);
+
 
 module.exports = router;

@@ -6,6 +6,7 @@ const Pagination = require("../../../common/responses/Pagination");
 const StaffModel = require("../models/index.model");
 const { Model: AuthModel } = require("../../../modules/auth/index");
 const bcrypt = require('bcrypt');
+const leaveRequestModel = require("../models/leaveRequest.model");
 
 /*
     get list with infor (
@@ -625,7 +626,94 @@ const updateStaffStatusOnly = async (accountId, status) => {
     return updatedAccount;
 };
 
+// Create leave request service
+const createLeaveRequestService = async (accountId, payload) => {
+  // 1. Tìm staff theo account_id
+  const staff = await StaffModel.Staff.findOne({ account_id: accountId });
 
+  if (!staff) {
+    throw new errorRes.NotFoundError("Staff not found");
+  }
+
+  // 2. Kiểm tra ngày hợp lệ
+  if (new Date(payload.startedDate) > new Date(payload.endDate)) {
+    throw new errorRes.BadRequestError("End date must be after start date");
+  }
+
+  // 3. Tạo leave request
+  const leave = await leaveRequestModel.create({
+    ...payload,
+    staff_id: staff._id,
+  });
+
+  return leave;
+};
+
+// View leave request
+const getLeaveRequestService = async (accountId) => {
+  // 1. Lấy staff theo account_id
+  const staff = await StaffModel.Staff.findOne({ account_id: accountId });
+  if (!staff) throw new errorRes.NotFoundError("Staff not found");
+
+  const filter = { staff_id: staff._id };
+
+  const data = await leaveRequestModel.find(filter)
+    .sort({ createdAt: -1 })
+
+  return data;
+};
+
+// Edit leave request (chỉ cho phép sửa khi còn PENDING)
+const editLeaveRequestService = async (accountId, leaveId, payload) => {
+  const staff = await StaffModel.Staff.findOne({ account_id: accountId });
+  if (!staff) throw new errorRes.NotFoundError("Staff not found");
+
+  const leave = await leaveRequestModel.findById(leaveId);
+  if (!leave) throw new errorRes.NotFoundError("Leave request not found");
+
+  // Chỉ cho sửa khi PENDING
+  if (leave.status !== "PENDING") {
+    throw new errorRes.BadRequestError("Only PENDING request can be edited");
+  }
+
+  // Validate ngày
+  if (
+    payload.startedDate &&
+    payload.endDate &&
+    new Date(payload.startedDate) > new Date(payload.endDate)
+  ) {
+    throw new errorRes.BadRequestError("End date must be after start date");
+  }
+
+  Object.assign(leave, payload);
+
+  await leave.save();
+
+  return leave;
+};
+
+// Cancel leave request (chỉ cho phép cancel khi còn PENDING)
+const cancelLeaveRequestService = async (accountId, leaveId) => {
+  const staff = await StaffModel.Staff.findOne({ account_id: accountId });
+  if (!staff) throw new errorRes.NotFoundError("Staff not found");
+
+  const leave = await leaveRequestModel.findOne({
+    _id: leaveId,
+    staff_id: staff._id,
+  });
+  
+  if (!leave) throw new errorRes.NotFoundError("Leave request not found");
+
+  if (leave.status !== "PENDING") {
+    throw new errorRes.BadRequestError("Only PENDING request can be cancelled");
+  }
+
+  leave.status = "CANCELLED";
+
+  await leave.save();
+
+  return leave;
+};
 
 
 // Lấy danh sách roles phù hợp cho nhân viên (loại bỏ PATIENT)
@@ -649,6 +737,10 @@ module.exports = {
     getListService,
     getByIdService,
     createService,
+    createLeaveRequestService,
+    getLeaveRequestService,
+    editLeaveRequestService,
+    cancelLeaveRequestService,
     updateService,
     checkUniqueLicenseNumber,
     checkUniqueUsername,
