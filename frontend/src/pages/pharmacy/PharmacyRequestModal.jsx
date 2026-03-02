@@ -1,14 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Modal from '../../components/ui/Modal';
-import { mockMedicines } from '../../utils/mockData';
+import inventoryService from '../../services/inventoryService';
 
 const PharmacyRequestModal = ({ isOpen, onClose, onSubmit }) => {
+    const [medicines, setMedicines] = useState([]);
     const [formData, setFormData] = useState({
         medicineId: '',
         requestedQuantity: '',
         priority: 'medium',
+        reason: '',
         note: ''
     });
+
+    useEffect(() => {
+        if (isOpen) {
+            inventoryService.getMedicines({ limit: 100 })
+                .then(res => { if (res?.success) setMedicines(res.data || []); })
+                .catch(() => { });
+        }
+    }, [isOpen]);
 
     const [errors, setErrors] = useState({});
 
@@ -30,23 +40,20 @@ const PharmacyRequestModal = ({ isOpen, onClose, onSubmit }) => {
         if (!formData.requestedQuantity || formData.requestedQuantity <= 0) {
             newErrors.requestedQuantity = 'Số lượng phải lớn hơn 0';
         }
+        if (!formData.reason.trim()) newErrors.reason = 'Vui lòng nhập lý do yêu cầu';
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
     const handleSubmit = () => {
         if (validate()) {
-            const selectedMedicine = mockMedicines.find(m => m.id === formData.medicineId);
-
-            const requestData = {
-                ...formData,
-                medicineName: selectedMedicine?.medicine_name || 'Unknown',
-                currentStock: selectedMedicine?.quantity || 0,
-                minStock: 50, // Mock value as it's not in medicine object
-                requestedQuantity: parseInt(formData.requestedQuantity)
-            };
-
-            onSubmit(requestData);
+            onSubmit({
+                medicineId: formData.medicineId,
+                requestedQuantity: parseInt(formData.requestedQuantity),
+                priority: formData.priority,
+                reason: formData.reason.trim(),
+                note: formData.note
+            });
             handleClose();
         }
     };
@@ -56,6 +63,7 @@ const PharmacyRequestModal = ({ isOpen, onClose, onSubmit }) => {
             medicineId: '',
             requestedQuantity: '',
             priority: 'medium',
+            reason: '',
             note: ''
         });
         setErrors({});
@@ -98,8 +106,8 @@ const PharmacyRequestModal = ({ isOpen, onClose, onSubmit }) => {
                             }`}
                     >
                         <option value="">-- Chọn thuốc --</option>
-                        {mockMedicines.map(med => (
-                            <option key={med.id} value={med.id}>
+                        {medicines.map(med => (
+                            <option key={med._id} value={med._id}>
                                 {med.medicine_name} (Tồn: {med.quantity} {med.unit})
                             </option>
                         ))}
@@ -144,15 +152,30 @@ const PharmacyRequestModal = ({ isOpen, onClose, onSubmit }) => {
 
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Ghi chú
+                        Lý do yêu cầu <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="text"
+                        name="reason"
+                        value={formData.reason}
+                        onChange={handleChange}
+                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 ${errors.reason ? 'border-red-500' : 'border-gray-300'}`}
+                        placeholder="Nhập lý do cần bổ sung thuốc..."
+                    />
+                    {errors.reason && <p className="text-red-500 text-xs mt-1">{errors.reason}</p>}
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Ghi chú thêm
                     </label>
                     <textarea
                         name="note"
                         value={formData.note}
                         onChange={handleChange}
-                        rows="3"
+                        rows="2"
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
-                        placeholder="Nhập lý do hoặc ghi chú thêm..."
+                        placeholder="Ghi chú thêm (không bắt buộc)..."
                     ></textarea>
                 </div>
             </div>
