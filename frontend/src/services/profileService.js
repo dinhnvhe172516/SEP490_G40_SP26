@@ -18,3 +18,16 @@ export const getProfile = async () => {
 export const updateProfile = async (payload) => {
     return await apiClient.patch("/api/profile/update", payload);
 };
+
+/**
+ * Upload avatar
+ * @param {File} file - Image file to upload
+ * @returns {Promise<{data: {avatar_url: string}}>}
+ */
+export const uploadAvatar = async (file) => {
+    const formData = new FormData();
+    formData.append("avatar", file);
+    return await apiClient.post("/api/profile/upload-avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
+};
