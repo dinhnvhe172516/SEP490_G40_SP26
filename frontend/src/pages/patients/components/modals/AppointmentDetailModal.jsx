@@ -59,7 +59,7 @@ const AppointmentDetailModal = ({
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Bác sĩ</div>
-                                <div className="font-semibold">{appointment.doctorName}</div>
+                                <div className="font-semibold">{appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</div>
                             </div>
                         </div>
 
@@ -71,12 +71,19 @@ const AppointmentDetailModal = ({
                             <div>
                                 <div className="text-xs text-gray-500">Ngày khám</div>
                                 <div className="font-semibold">
-                                    {new Date(appointment.date).toLocaleDateString('vi-VN', {
-                                        weekday: 'long',
-                                        year: 'numeric',
-                                        month: 'long',
-                                        day: 'numeric'
-                                    })}
+                                    {appointment.appointment_date
+                                        ? new Date(appointment.appointment_date).toLocaleDateString('vi-VN', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })
+                                        : new Date(appointment.date).toLocaleDateString('vi-VN', {
+                                            weekday: 'long',
+                                            year: 'numeric',
+                                            month: 'long',
+                                            day: 'numeric'
+                                        })}
                                 </div>
                             </div>
                         </div>
@@ -88,7 +95,7 @@ const AppointmentDetailModal = ({
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Giờ khám</div>
-                                <div className="font-semibold">{appointment.time}</div>
+                                <div className="font-semibold">{appointment.appointment_time || appointment.time}</div>
                             </div>
                         </div>
 
@@ -99,7 +106,7 @@ const AppointmentDetailModal = ({
                             </div>
                             <div>
                                 <div className="text-xs text-gray-500">Bệnh nhân</div>
-                                <div className="font-semibold">{appointment.patientName}</div>
+                                <div className="font-semibold">{appointment.full_name || appointment.patientName}</div>
                             </div>
                         </div>
                     </div>
@@ -110,27 +117,56 @@ const AppointmentDetailModal = ({
                     {/* Phone */}
                     <div className="border-l-4 border-primary-500 pl-4">
                         <div className="text-sm text-gray-500 mb-1">Số điện thoại</div>
-                        <div className="font-medium text-gray-900">{appointment.patientPhone}</div>
+                        <div className="font-medium text-gray-900">{appointment.phone || appointment.patientPhone}</div>
                     </div>
 
+                    {/* Email (Nếu có) */}
+                    {appointment.email && (
+                        <div className="border-l-4 border-purple-500 pl-4">
+                            <div className="text-sm text-gray-500 mb-1">Email</div>
+                            <div className="font-medium text-gray-900">{appointment.email}</div>
+                        </div>
+                    )}
+
                     {/* Notes */}
-                    {appointment.notes && (
+                    {(appointment.note || appointment.notes) && (
                         <div className="border-l-4 border-blue-500 pl-4">
                             <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
                                 <FileText size={14} />
                                 Ghi chú
                             </div>
-                            <div className="text-gray-900">{appointment.notes}</div>
+                            <div className="text-gray-900">{appointment.note || appointment.notes}</div>
+                        </div>
+                    )}
+
+                    {/* Dịch vụ (Nếu có) */}
+                    {appointment.book_service && appointment.book_service.length > 0 && (
+                        <div className="border-l-4 border-teal-500 pl-4">
+                            <div className="text-sm text-gray-500 mb-1">Dịch vụ đã đặt</div>
+                            <div className="space-y-2">
+                                {appointment.book_service.map((serviceItem, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 rounded">
+                                        <span className="font-medium text-gray-800">
+                                            {serviceItem.service_id?.service_name || 'Dịch vụ'}
+                                        </span>
+                                        <span className="text-primary-600 font-semibold">
+                                            {serviceItem.unit_price?.toLocaleString('vi-VN')} VNĐ
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     )}
 
                     {/* Created Date */}
-                    <div className="border-l-4 border-gray-300 pl-4">
-                        <div className="text-sm text-gray-500 mb-1">Ngày đặt lịch</div>
-                        <div className="text-gray-900">
-                            {new Date(appointment.createdAt).toLocaleDateString('vi-VN')}
+                    {appointment.createdAt && (
+                        <div className="border-l-4 border-gray-300 pl-4">
+                            <div className="text-sm text-gray-500 mb-1">Ngày đặt lịch</div>
+                            <div className="text-gray-900">
+                                {new Date(appointment.createdAt).toLocaleDateString('vi-VN')} lúc {new Date(appointment.createdAt).toLocaleTimeString('vi-VN')}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 {/* Action Buttons */}
@@ -177,17 +213,26 @@ AppointmentDetailModal.propTypes = {
     isOpen: PropTypes.bool.isRequired,
     onClose: PropTypes.func.isRequired,
     appointment: PropTypes.shape({
+        _id: PropTypes.string,
         id: PropTypes.number,
         code: PropTypes.string,
         status: PropTypes.string,
         reason: PropTypes.string,
+        doctor_name: PropTypes.string,
         doctorName: PropTypes.string,
+        appointment_date: PropTypes.string,
         date: PropTypes.string,
+        appointment_time: PropTypes.string,
         time: PropTypes.string,
+        full_name: PropTypes.string,
         patientName: PropTypes.string,
+        phone: PropTypes.string,
         patientPhone: PropTypes.string,
+        email: PropTypes.string,
+        note: PropTypes.string,
         notes: PropTypes.string,
         createdAt: PropTypes.string,
+        book_service: PropTypes.arrayOf(PropTypes.object)
     }),
     onUpdate: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,

@@ -50,29 +50,33 @@ const AppointmentCard = ({
                                 <div className="flex items-center gap-2">
                                     <User size={16} />
                                     <span className="font-medium">Bác sĩ:</span>
-                                    <span>{appointment.doctorName}</span>
+                                    <span>{appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</span>
                                 </div>
 
                                 {/* Date */}
                                 <div className="flex items-center gap-2">
                                     <Calendar size={16} />
                                     <span className="font-medium">Ngày:</span>
-                                    <span>{new Date(appointment.date).toLocaleDateString('vi-VN')}</span>
+                                    <span>
+                                        {appointment.appointment_date
+                                            ? new Date(appointment.appointment_date).toLocaleDateString('vi-VN')
+                                            : new Date(appointment.date).toLocaleDateString('vi-VN')}
+                                    </span>
                                 </div>
 
                                 {/* Time */}
                                 <div className="flex items-center gap-2">
                                     <Clock size={16} />
                                     <span className="font-medium">Giờ:</span>
-                                    <span>{appointment.time}</span>
+                                    <span>{appointment.appointment_time || appointment.time}</span>
                                 </div>
 
                                 {/* Notes */}
-                                {appointment.notes && (
+                                {(appointment.note || appointment.notes) && (
                                     <div className="flex items-start gap-2 mt-2">
                                         <FileText size={16} className="mt-0.5" />
                                         <span className="font-medium">Ghi chú:</span>
-                                        <span className="italic">{appointment.notes}</span>
+                                        <span className="italic">{appointment.note || appointment.notes}</span>
                                     </div>
                                 )}
                             </div>
@@ -119,12 +123,17 @@ const AppointmentCard = ({
 
 AppointmentCard.propTypes = {
     appointment: PropTypes.shape({
-        id: PropTypes.number.isRequired,
+        _id: PropTypes.string,
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         reason: PropTypes.string.isRequired,
         status: PropTypes.string.isRequired,
-        doctorName: PropTypes.string.isRequired,
-        date: PropTypes.string.isRequired,
-        time: PropTypes.string.isRequired,
+        doctor_name: PropTypes.string,
+        doctorName: PropTypes.string,
+        appointment_date: PropTypes.string,
+        date: PropTypes.string,
+        appointment_time: PropTypes.string,
+        time: PropTypes.string,
+        note: PropTypes.string,
         notes: PropTypes.string,
     }).isRequired,
     onViewDetail: PropTypes.func.isRequired,
