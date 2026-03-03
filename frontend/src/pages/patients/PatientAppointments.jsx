@@ -103,10 +103,12 @@ const PatientAppointments = () => {
      */
     const getStatusColor = (status) => {
         const colors = {
-            'Confirmed': 'bg-green-100 text-green-700 border-green-200',
-            'Pending': 'bg-yellow-100 text-yellow-700 border-yellow-200',
-            'Completed': 'bg-blue-100 text-blue-700 border-blue-200',
-            'Cancelled': 'bg-red-100 text-red-700 border-red-200'
+            'SCHEDULED': 'bg-blue-100 text-blue-700 border-blue-200',
+            'CHECKED_IN': 'bg-yellow-100 text-yellow-700 border-yellow-200',
+            'IN_CONSULTATION': 'bg-purple-100 text-purple-700 border-purple-200',
+            'COMPLETED': 'bg-green-100 text-green-700 border-green-200',
+            'CANCELLED': 'bg-red-100 text-red-700 border-red-200',
+            'NO_SHOW': 'bg-gray-100 text-gray-700 border-gray-200'
         };
         return colors[status] || 'bg-gray-100 text-gray-700 border-gray-200';
     };
@@ -116,10 +118,12 @@ const PatientAppointments = () => {
      */
     const getStatusText = (status) => {
         const texts = {
-            'Confirmed': 'Đã xác nhận',
-            'Pending': 'Chờ xác nhận',
-            'Completed': 'Hoàn thành',
-            'Cancelled': 'Đã hủy'
+            'SCHEDULED': 'Đã lên lịch',
+            'CHECKED_IN': 'Đã check-in',
+            'IN_CONSULTATION': 'Đang khám',
+            'COMPLETED': 'Hoàn thành',
+            'CANCELLED': 'Đã hủy',
+            'NO_SHOW': 'Không đến'
         };
         return texts[status] || status;
     };

@@ -15,14 +15,8 @@ const MainNavigation = () => {
         if (isAuthenticated) {
             getProfile()
                 .then((res) => {
-                    console.log('=== DEBUG getProfile response ===', res);
-                    console.log('=== DEBUG res.data ===', res.data);
-                    console.log('=== DEBUG avatar_url ===', res.data?.avatar_url);
                     setAvatarUrl(res.data?.avatar_url || '');
                 })
-                .catch((err) => {
-                    console.error('=== DEBUG getProfile error ===', err);
-                });
         }
     }, [isAuthenticated]);
 

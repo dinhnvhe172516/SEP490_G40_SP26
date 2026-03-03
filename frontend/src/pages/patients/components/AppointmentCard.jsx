@@ -90,8 +90,8 @@ const AppointmentCard = ({
                         Chi tiết
                     </button>
 
-                    {/* Update Button - Only for Pending/Confirmed */}
-                    {(appointment.status === 'Pending' || appointment.status === 'Confirmed') && (
+                    {/* Update Button - Only for SCHEDULED/CHECKED_IN */}
+                    {(appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN') && (
                         <button
                             onClick={() => onUpdate(appointment)}
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center gap-1"
@@ -101,8 +101,8 @@ const AppointmentCard = ({
                         </button>
                     )}
 
-                    {/* Cancel Button - Only for Pending */}
-                    {appointment.status === 'Pending' && (
+                    {/* Cancel Button - Only for SCHEDULED */}
+                    {appointment.status === 'SCHEDULED' && (
                         <button
                             onClick={() => onCancel(appointment)}
                             className="px-4 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors text-sm font-medium flex items-center gap-1"

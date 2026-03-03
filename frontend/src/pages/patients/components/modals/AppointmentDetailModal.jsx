@@ -135,7 +135,7 @@ const AppointmentDetailModal = ({
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4 border-t border-gray-200">
-                    {(appointment.status === 'Pending' || appointment.status === 'Confirmed') && (
+                    {(appointment.status === 'SCHEDULED' || appointment.status === 'CHECKED_IN') && (
                         <Button
                             onClick={() => {
                                 onClose();
@@ -148,7 +148,7 @@ const AppointmentDetailModal = ({
                         </Button>
                     )}
 
-                    {appointment.status === 'Pending' && (
+                    {appointment.status === 'SCHEDULED' && (
                         <Button
                             onClick={() => {
                                 onClose();
