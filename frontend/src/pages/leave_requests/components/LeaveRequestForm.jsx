@@ -5,9 +5,9 @@ import Button from '../../../components/ui/Button';
 
 const LeaveRequestForm = ({ onSubmit, onCancel }) => {
     const [formData, setFormData] = useState({
-        startDate: '',
+        startedDate: '',
         endDate: '',
-        type: 'SICK_LEAVE',
+        type: 'SICK',
         reason: ''
     });
 
@@ -30,8 +30,8 @@ const LeaveRequestForm = ({ onSubmit, onCancel }) => {
                 <Input
                     label="Từ ngày"
                     type="date"
-                    name="startDate"
-                    value={formData.startDate}
+                    name="startedDate"
+                    value={formData.startedDate}
                     onChange={handleChange}
                     required
                 />
@@ -51,9 +51,12 @@ const LeaveRequestForm = ({ onSubmit, onCancel }) => {
                 value={formData.type}
                 onChange={handleChange}
                 options={[
-                    { value: 'SICK_LEAVE', label: 'Nghỉ ốm' },
-                    { value: 'ANNUAL_LEAVE', label: 'Nghỉ phép năm' },
-                    { value: 'PERSONAL_LEAVE', label: 'Việc riêng' }
+                    { value: 'SICK', label: 'Nghỉ ốm (Sick)' },
+                    { value: 'ANNUAL', label: 'Nghỉ phép năm (Annual)' },
+                    { value: 'MATERNITY', label: 'Thai sản (Maternity)' },
+                    { value: 'UNPAID', label: 'Không lương (Unpaid)' },
+                    { value: 'BEREAVEMENT', label: 'Tang chế (Bereavement)' },
+                    { value: 'EMERGENCY', label: 'Khẩn cấp (Emergency)' }
                 ]}
             />
 

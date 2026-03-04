@@ -11,8 +11,8 @@ const LeaveRequestTable = ({ requests }) => {
         },
         {
             header: 'Từ ngày',
-            accessor: 'startDate',
-            render: (row) => new Date(row.startDate).toLocaleDateString('vi-VN')
+            accessor: 'startedDate',
+            render: (row) => new Date(row.startedDate).toLocaleDateString('vi-VN')
         },
         {
             header: 'Đến ngày',
@@ -24,9 +24,12 @@ const LeaveRequestTable = ({ requests }) => {
             accessor: 'type',
             render: (row) => {
                 const types = {
-                    'SICK_LEAVE': 'Nghỉ ốm',
-                    'ANNUAL_LEAVE': 'Nghỉ phép năm',
-                    'PERSONAL_LEAVE': 'Việc riêng'
+                    'SICK': 'Nghỉ ốm',
+                    'ANNUAL': 'Nghỉ phép năm',
+                    'MATERNITY': 'Thai sản',
+                    'UNPAID': 'Không lương',
+                    'BEREAVEMENT': 'Tang chế',
+                    'EMERGENCY': 'Khẩn cấp'
                 };
                 return types[row.type] || row.type;
             }

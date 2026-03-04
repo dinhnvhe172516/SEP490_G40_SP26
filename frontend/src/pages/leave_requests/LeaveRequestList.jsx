@@ -10,22 +10,36 @@ import LeaveRequestStats from './components/LeaveRequestStats';
 import LeaveRequestTable from './components/LeaveRequestTable';
 import LeaveRequestForm from './components/LeaveRequestForm';
 import { useAuth } from '../../contexts/AuthContext';
-import { mockLeaveRequests } from '../../utils/mockData';
+import staffService from '../../services/staffService';
+import Toast from '../../components/ui/Toast';
 
 const LeaveRequestList = () => {
     const { user } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+    const fetchLeaveRequests = async () => {
+        setLoading(true);
+        try {
+            const response = await staffService.getLeaveRequests();
+            // Assuming the API returns { data: [...] } or the array directly
+            const data = response.data?.data || response.data || [];
+            // Sort by newest first (createdAt descending)
+            const sortedData = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            setRequests(sortedData);
+        } catch (error) {
+            console.error('Lỗi khi lấy danh sách nghỉ phép:', error);
+            setToast({ show: true, message: 'Không thể tải danh sách nghỉ phép.', type: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (user) {
-            console.log('🔍 LeaveRequestList - User:', user);
-            console.log('🔍 User ID:', user.id);
-            console.log('📋 All Leave Requests:', mockLeaveRequests);
-            const userRequests = mockLeaveRequests.filter(req => req.user_id === user.id);
-            console.log('✅ Filtered Leave Requests:', userRequests);
-            console.log('📊 Total requests found:', userRequests.length);
-            setRequests(userRequests);
+            fetchLeaveRequests();
         }
     }, [user]);
 
@@ -37,10 +51,10 @@ const LeaveRequestList = () => {
     // Calculate stats
     const stats = useMemo(() => ({
         totalDays: requests.reduce((acc, curr) => {
-            const start = new Date(curr.startDate);
+            const start = new Date(curr.startedDate);
             const end = new Date(curr.endDate);
             const days = (end - start) / (1000 * 60 * 60 * 24) + 1;
-            return acc + days;
+            return acc + (days > 0 ? days : 0);
         }, 0),
         pending: requests.filter(r => r.status === 'PENDING').length,
         approved: requests.filter(r => r.status === 'APPROVED').length,
@@ -57,20 +71,27 @@ const LeaveRequestList = () => {
         });
     }, [requests, searchTerm, statusFilter, typeFilter]);
 
-    const handleCreateRequest = (data) => {
-        const newRequest = {
-            id: `leave_${Date.now()}`,
-            user_id: user.id,
-            createdAt: new Date().toISOString().split('T')[0],
-            status: 'PENDING',
-            ...data
-        };
-        setRequests([newRequest, ...requests]);
-        setIsModalOpen(false);
+    const handleCreateRequest = async (data) => {
+        try {
+            await staffService.createLeaveRequest(data);
+            setToast({ show: true, message: 'Yêu cầu nghỉ phép đã được gửi thành công!', type: 'success' });
+            setIsModalOpen(false);
+            fetchLeaveRequests(); // Reload data
+        } catch (error) {
+            console.error('Lỗi khi tạo yêu cầu nghỉ phép:', error);
+            setToast({ show: true, message: error.response?.data?.message || 'Không thể tạo yêu cầu.', type: 'error' });
+        }
     };
 
     return (
         <div className="space-y-6 animate-fadeIn">
+            {toast.show && (
+                <Toast
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={() => setToast({ ...toast, show: false })}
+                />
+            )}
             {/* Header */}
             <div className="flex justify-between items-start mb-8">
                 <div>
@@ -110,9 +131,12 @@ const LeaveRequestList = () => {
                             onChange={(e) => setTypeFilter(e.target.value)}
                             options={[
                                 { value: 'All', label: 'Tất cả loại nghỉ' },
-                                { value: 'SICK_LEAVE', label: 'Nghỉ ốm' },
-                                { value: 'ANNUAL_LEAVE', label: 'Nghỉ phép năm' },
-                                { value: 'PERSONAL_LEAVE', label: 'Việc riêng' }
+                                { value: 'SICK', label: 'Nghỉ ốm' },
+                                { value: 'ANNUAL', label: 'Nghỉ phép năm' },
+                                { value: 'MATERNITY', label: 'Thai sản' },
+                                { value: 'UNPAID', label: 'Không lương' },
+                                { value: 'BEREAVEMENT', label: 'Tang chế' },
+                                { value: 'EMERGENCY', label: 'Khẩn cấp' }
                             ]}
                         />
                     </div>
@@ -137,7 +161,11 @@ const LeaveRequestList = () => {
                 title={`Danh sách yêu cầu (${filteredRequests.length})`}
                 actions={<Badge variant="info">{filteredRequests.length} yêu cầu</Badge>}
             >
-                <LeaveRequestTable requests={filteredRequests} />
+                {loading ? (
+                    <div className="text-center py-10 text-gray-500">Đang tải dữ liệu...</div>
+                ) : (
+                    <LeaveRequestTable requests={filteredRequests} />
+                )}
             </Card>
 
             {/* Modal */}
