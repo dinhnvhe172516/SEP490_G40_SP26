@@ -735,7 +735,7 @@ const getStaffRoles = async () => {
 
 // Admin: Lấy tất cả leave requests (view toàn bộ nhân viên)
 const getAllLeaveRequestsService = async () => {
-    const data = await leaveRequestModel.find()
+    const data = await leaveRequestModel.find({ status: { $ne: 'CANCELLED' } })
         .populate({
             path: 'staff_id',
             populate: [

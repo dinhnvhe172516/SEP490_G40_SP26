@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { CheckCircle, XCircle, Clock, Users, Filter, RefreshCw } from 'lucide-react';
 import staffService from '../../../services/staffService';
 import Toast from '../../../components/ui/Toast';
+import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 
 const STATUS_CONFIG = {
     PENDING: { label: 'Chờ duyệt', color: 'bg-yellow-100 text-yellow-800 border border-yellow-200', icon: Clock },
@@ -34,6 +35,7 @@ const AdminLeaveList = () => {
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
     const [statusFilter, setStatusFilter] = useState('All');
     const [approvingId, setApprovingId] = useState(null);
+    const [confirmAction, setConfirmAction] = useState(null); // { id, status }
 
     const fetchLeaveRequests = async () => {
         setLoading(true);
@@ -53,9 +55,13 @@ const AdminLeaveList = () => {
         fetchLeaveRequests();
     }, []);
 
-    const handleApprove = async (leaveId, status) => {
-        const actionLabel = status === 'APPROVED' ? 'duyệt' : 'từ chối';
-        if (!window.confirm(`Bạn có chắc chắn muốn ${actionLabel} đơn này?`)) return;
+    const handleApprove = (leaveId, status) => {
+        setConfirmAction({ id: leaveId, status });
+    };
+
+    const executeApprove = async () => {
+        if (!confirmAction) return;
+        const { id: leaveId, status } = confirmAction;
 
         setApprovingId(leaveId);
         try {
@@ -70,6 +76,7 @@ const AdminLeaveList = () => {
             setToast({ show: true, message: error?.response?.data?.message || 'Thao tác thất bại.', type: 'error' });
         } finally {
             setApprovingId(null);
+            setConfirmAction(null);
         }
     };
 
@@ -152,8 +159,8 @@ const AdminLeaveList = () => {
                             key={s}
                             onClick={() => setStatusFilter(s)}
                             className={`px-3 py-1 text-xs font-medium rounded-full border transition-colors ${statusFilter === s
-                                    ? 'bg-primary-600 text-white border-primary-600'
-                                    : 'bg-white text-gray-600 border-gray-300 hover:border-primary-400 hover:text-primary-600'
+                                ? 'bg-primary-600 text-white border-primary-600'
+                                : 'bg-white text-gray-600 border-gray-300 hover:border-primary-400 hover:text-primary-600'
                                 }`}
                         >
                             {s === 'All' ? 'Tất cả' : STATUS_CONFIG[s]?.label}
@@ -256,6 +263,18 @@ const AdminLeaveList = () => {
                     </div>
                 )}
             </div>
+
+            {/* Confirmation Modal */}
+            <ConfirmationModal
+                show={!!confirmAction}
+                title={confirmAction?.status === 'APPROVED' ? 'Xác nhận phê duyệt' : 'Xác nhận từ chối'}
+                message={confirmAction?.status === 'APPROVED'
+                    ? 'Bạn có chắc chắn muốn PHÊ DUYỆT đơn xin nghỉ phép này không?'
+                    : 'Bạn có chắc chắn muốn TỪ CHỐI đơn xin nghỉ phép này không?'}
+                onClose={() => setConfirmAction(null)}
+                onConfirm={executeApprove}
+                isLoading={!!approvingId}
+            />
         </div>
     );
 };
