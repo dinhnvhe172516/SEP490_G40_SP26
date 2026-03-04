@@ -11,7 +11,8 @@ import {
     Calendar,
     FileText,
     ClipboardCheck,
-    Briefcase
+    Briefcase,
+    PackagePlus
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -28,6 +29,7 @@ const Sidebar = ({ role }) => {
             { path: '/admin/equipment', icon: Wrench, label: 'Thiết bị' },
             { path: '/admin/medicines', icon: Pill, label: 'Thuốc' },
             { path: '/admin/leave-management', icon: Calendar, label: 'Quản lý Nghỉ phép' },
+            { path: '/admin/restock-requests', icon: PackagePlus, label: 'Yêu cầu Nhập thuốc' },
             { path: '/admin/clinics', icon: Building2, label: 'Thông tin phòng khám' },
         ],
         Doctor: [
