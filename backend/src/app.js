@@ -111,6 +111,11 @@ app.use('/api/dentist', routeTreatment);
 
 const { inventoryRoute } = require('./modules/inventory');
 app.use('/api/inventory', inventoryRoute);
+
+const { route: receptionistRoute } = require('./modules/receptionist');
+app.use('/api/receptionist', receptionistRoute);
+
+
 // 404 Handler - Must be after all routes
 app.use((req, res, next) => {
     res.status(404).json({
