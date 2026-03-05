@@ -6,6 +6,7 @@ import { mockPatients } from '../../utils/mockData';
 import ViewPatientModal from './components/modals/ViewPatientModal';
 import EditPatientModal from './components/modals/EditPatientModal';
 import ScheduleAppointmentModal from './components/modals/ScheduleAppointmentModal';
+import AddPatientModal from './components/modals/AddPatientModal';
 
 const ReceptionistPatients = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -14,6 +15,7 @@ const ReceptionistPatients = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showScheduleModal, setShowScheduleModal] = useState(false);
+    const [showAddModal, setShowAddModal] = useState(false);
 
     const filteredPatients = mockPatients.filter(patient => {
         const matchesSearch = patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -44,7 +46,13 @@ const ReceptionistPatients = () => {
         setShowViewModal(false);
         setShowEditModal(false);
         setShowScheduleModal(false);
+        setShowAddModal(false);
         setSelectedPatient(null);
+    };
+
+    const handleAddPatient = (patientData) => {
+        // TODO: Call API to create patient
+        console.log('Creating new patient:', patientData);
     };
 
     const handleSavePatient = (updatedData) => {
@@ -92,7 +100,10 @@ const ReceptionistPatients = () => {
                     </select>
 
                     {/* Add Patient Button */}
-                    <button className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2">
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                    >
                         <UserPlus size={20} />
                         Thêm Bệnh Nhân
                     </button>
@@ -257,6 +268,13 @@ const ReceptionistPatients = () => {
                 isOpen={showScheduleModal}
                 onClose={closeModal}
                 onSchedule={handleScheduleSubmit}
+            />
+
+            {/* Add Patient Modal */}
+            <AddPatientModal
+                isOpen={showAddModal}
+                onClose={closeModal}
+                onSave={handleAddPatient}
             />
         </div>
     );

@@ -7,6 +7,7 @@ import ConfirmAppointmentModal from './components/modals/ConfirmAppointmentModal
 import CancelAppointmentModal from './components/modals/CancelAppointmentModal';
 import RescheduleAppointmentModal from './components/modals/RescheduleAppointmentModal';
 import ContactPatientModal from './components/modals/ContactPatientModal';
+import BookAppointmentModal from './components/modals/BookAppointmentModal';
 
 const ReceptionistAppointments = () => {
     const [selectedDate, setSelectedDate] = useState('2026-01-15');
@@ -16,6 +17,7 @@ const ReceptionistAppointments = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showRescheduleModal, setShowRescheduleModal] = useState(false);
     const [showContactModal, setShowContactModal] = useState(false);
+    const [showBookModal, setShowBookModal] = useState(false);
 
     const filteredAppointments = mockAppointments.filter(apt => {
         const matchesDate = apt.date === selectedDate;
@@ -58,7 +60,13 @@ const ReceptionistAppointments = () => {
         setShowCancelModal(false);
         setShowRescheduleModal(false);
         setShowContactModal(false);
+        setShowBookModal(false);
         setSelectedAppointment(null);
+    };
+
+    const handleBookAppointment = (data) => {
+        // TODO: Call API to create appointment
+        console.log('Booking new appointment:', data);
     };
 
     const handleConfirmAppointment = (appointmentId) => {
@@ -120,7 +128,10 @@ const ReceptionistAppointments = () => {
 
                     {/* Add Button */}
                     <div className="flex items-end">
-                        <button className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2">
+                        <button
+                            onClick={() => setShowBookModal(true)}
+                            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-2"
+                        >
                             <Plus size={20} />
                             Đặt lịch mới
                         </button>
@@ -235,6 +246,13 @@ const ReceptionistAppointments = () => {
                 appointment={selectedAppointment}
                 isOpen={showContactModal}
                 onClose={closeModals}
+            />
+
+            {/* Book Appointment Modal */}
+            <BookAppointmentModal
+                isOpen={showBookModal}
+                onClose={closeModals}
+                onBook={handleBookAppointment}
             />
         </div>
     );
