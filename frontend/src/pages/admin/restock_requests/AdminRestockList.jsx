@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PackagePlus } from 'lucide-react';
+import { PackagePlus, CheckCircle, XCircle } from 'lucide-react';
 import ConfirmationModal from '../../../components/ui/ConfirmationModal';
 import Toast from '../../../components/ui/Toast';
 
@@ -169,8 +169,15 @@ const AdminRestockList = () => {
                 onConfirm={executeAction}
                 title={confirmAction.action === 'approve' ? 'Duyệt yêu cầu' : 'Từ chối yêu cầu'}
                 message={confirmAction.request ?
-                    `Bạn có chắc chắn muốn ${confirmAction.action === 'approve' ? 'DUYỆT' : 'TỪ CHỐI'} yêu cầu nhập thêm ${confirmAction.request.quantity_requested} ${confirmAction.request.medicine_name} của nhân viên ${confirmAction.request.request_by_name} không?`
+                    `Bạn có chắc chắn muốn ${confirmAction.action === 'approve' ? 'DUYỆT' : 'TỪ CHỐI'} yêu cầu nhập thêm ${confirmAction.request.quantity_requested} ${confirmAction.request.medicine_name} của nhân viên ${confirmAction.request.request_by_name || 'Không xác định'} không?`
                     : ''}
+                icon={confirmAction.action === 'approve' ? CheckCircle : XCircle}
+                iconBgClass={confirmAction.action === 'approve' ? 'bg-blue-50 text-blue-500' : 'bg-red-50 text-red-500'}
+                confirmBtnClass={confirmAction.action === 'approve' ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-blue-200' : 'bg-red-500 text-white hover:bg-red-600 shadow-red-200'}
+                cancelBtnClass={confirmAction.action === 'approve' ? 'border-gray-200 text-gray-600 hover:bg-gray-50' : 'border-red-200 text-red-600 hover:bg-red-50'}
+                confirmText={confirmAction.action === 'approve' ? 'Duyệt' : 'Từ chối'}
+                loadingText={confirmAction.action === 'approve' ? 'Đang duyệt...' : 'Đang từ chối...'}
+                isLoading={loading}
             />
 
             {toast.show && (
