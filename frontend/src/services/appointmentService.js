@@ -34,7 +34,7 @@ const appointmentService = {
     // Hủy cuộc hẹn (cập nhật trạng thái thành CANCELLED)
     cancelAppointment: async (id) => {
         try {
-            const response = await apiClient.patch(`/api/dentist/status/${id}`, { status: 'CANCELLED' });
+            const response = await apiClient.patch(`/api/appointment/status/${id}`, { status: 'CANCELLED' });
             return response;
         } catch (error) {
             throw error;

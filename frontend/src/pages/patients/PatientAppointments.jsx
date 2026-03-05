@@ -151,9 +151,11 @@ const PatientAppointments = () => {
     const handleUpdateClick = (appointment) => {
         setSelectedAppointment(appointment);
         setUpdateForm({
-            date: appointment.date,
-            time: appointment.time,
-            reason: appointment.reason
+            date: appointment.appointment_date
+                ? new Date(appointment.appointment_date).toISOString().split('T')[0]
+                : appointment.date || '',
+            time: appointment.appointment_time || appointment.time || '',
+            reason: appointment.note || appointment.reason || ''
         });
         setShowUpdateModal(true);
     };
