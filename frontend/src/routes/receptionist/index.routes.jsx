@@ -6,6 +6,7 @@ import ReceptionistAppointments from '../../pages/receptionist/ReceptionistAppoi
 import ReceptionistInvoices from '../../pages/receptionist/ReceptionistInvoices';
 import ReceptionistServices from '../../pages/receptionist/ReceptionistServices';
 import ReceptionistEquipment from '../../pages/receptionist/ReceptionistEquipment';
+import ReceptionistLeave from '../../pages/receptionist/ReceptionistLeave';
 
 /**
  * Receptionist Routes - Protected routes for Receptionist role
@@ -57,6 +58,16 @@ const receptionistRoutes = [
             <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
                 <ReceptionistLayout>
                     <ReceptionistEquipment />
+                </ReceptionistLayout>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/receptionist/leave',
+        element: (
+            <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
+                <ReceptionistLayout>
+                    <ReceptionistLeave />
                 </ReceptionistLayout>
             </ProtectedRoute>
         )

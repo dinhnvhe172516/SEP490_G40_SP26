@@ -6,6 +6,7 @@ import Toast from '../../components/ui/Toast';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import * as profileService from '../../services/profileService';
+import { formatDate, formatDateForInput } from '../../utils/dateUtils';
 
 const ProfilePage = () => {
     const { user, updateUser } = useAuth();
@@ -20,7 +21,7 @@ const ProfilePage = () => {
         full_name: user?.full_name || '',
         email: user?.email || '',
         phone: user?.phone || '',
-        dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+        dob: formatDateForInput(user?.dob),
         address: user?.address || '',
     });
 
@@ -31,7 +32,7 @@ const ProfilePage = () => {
                 full_name: user.full_name || '',
                 email: user.email || '',
                 phone: user.phone || '',
-                dob: user.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+                dob: formatDateForInput(user.dob),
                 address: user.address || '',
             });
             if (user.avatar_url && !avatarFile) {
@@ -136,7 +137,7 @@ const ProfilePage = () => {
             full_name: user?.full_name || '',
             email: user?.email || '',
             phone: user?.phone || '',
-            dob: user?.dob ? new Date(user.dob).toISOString().split('T')[0] : '',
+            dob: formatDateForInput(user?.dob),
             address: user?.address || '',
         });
         setAvatarPreview(user?.avatar_url || null);
@@ -365,7 +366,7 @@ const ProfilePage = () => {
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                     />
                                 ) : (
-                                    <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{formData.dob}</p>
+                                    <p className="text-gray-900 px-4 py-2 bg-gray-50 rounded-lg">{formatDate(formData.dob)}</p>
                                 )}
                             </div>
 

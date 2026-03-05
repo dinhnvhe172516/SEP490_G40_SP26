@@ -7,7 +7,8 @@ import {
     ClipboardList,
     Wrench,
     LogOut,
-    Menu
+    Menu,
+    Clock
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -23,6 +24,7 @@ const ReceptionistSidebar = () => {
         { path: '/receptionist/invoices', icon: DollarSign, label: 'Hóa đơn' },
         { path: '/receptionist/services', icon: ClipboardList, label: 'Dịch vụ' },
         { path: '/receptionist/equipment', icon: Wrench, label: 'Thiết bị' },
+        { path: '/receptionist/leave', icon: Clock, label: 'Nghỉ phép' },
     ];
 
     return (
