@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { DollarSign, Search, FileText, CheckCircle, Clock } from 'lucide-react';
+import { DollarSign, Search, FileText, CheckCircle, Clock, Eye, CreditCard } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { mockInvoices } from '../../utils/mockData';
+import InvoiceDetailModal from './components/modals/InvoiceDetailModal';
 
 const ReceptionistInvoices = () => {
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+    const handleViewDetails = (invoice) => {
+        setSelectedInvoice(invoice);
+        setIsDetailModalOpen(true);
+    };
 
     const filteredInvoices = mockInvoices.filter(inv => {
         const matchesSearch = inv.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -152,15 +160,17 @@ const ReceptionistInvoices = () => {
                                             {invoice.status === 'Paid' ? 'Đã TT' : invoice.status === 'Pending' ? 'Chưa TT' : 'TT 1 phần'}
                                         </Badge>
                                     </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                                    <td className="px-6 py-4 whitespace-nowrap text-right flex justify-end gap-2">
+                                        <button
+                                            onClick={() => handleViewDetails(invoice)}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors border border-transparent hover:border-blue-100"
+                                            title="Xem chi tiết"
+                                        >
+                                            <Eye size={20} />
+                                        </button>
                                         {invoice.status !== 'Paid' && (
-                                            <button className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700">
-                                                Thu tiền
-                                            </button>
-                                        )}
-                                        {invoice.status === 'Paid' && (
-                                            <button className="px-4 py-2 bg-gray-100 text-gray-600 text-sm rounded-lg">
-                                                Xem chi tiết
+                                            <button className="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors flex items-center gap-1.5 shadow-sm">
+                                                <CreditCard size={16} /> Thu tiền
                                             </button>
                                         )}
                                     </td>
@@ -176,6 +186,21 @@ const ReceptionistInvoices = () => {
                     </div>
                 )}
             </Card>
+
+            {/* Modal Chi tiết hóa đơn */}
+            <InvoiceDetailModal
+                invoice={selectedInvoice}
+                isOpen={isDetailModalOpen}
+                onClose={() => {
+                    setIsDetailModalOpen(false);
+                    setTimeout(() => setSelectedInvoice(null), 300); // clear after animation
+                }}
+                onPaymentClick={(invoice) => {
+                    // TODO: Open payment modal
+                    console.log('Open payment for', invoice.code);
+                    alert(`Tính năng thu tiền cho hóa đơn ${invoice.code} đang được phát triển.`);
+                }}
+            />
         </div>
     );
 };
