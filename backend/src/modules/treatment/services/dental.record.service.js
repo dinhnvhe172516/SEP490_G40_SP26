@@ -3,7 +3,7 @@ const errorRes = require("../../../common/errors");
 const mongoose = require("mongoose");
 const Pagination = require("../../../common/responses/Pagination");
 
-const StaffModel = require("../models/index.model");
+const Model = require("../models/index.model");
 const { Model: AuthModel } = require("../../auth/index");
 const PatientModel = require("../../../modules/patient/model/patient.model");
 const AppointmentModel = require("../../appointment/models/index.model");
@@ -11,6 +11,7 @@ const { model: ServiceModel } = require("../../service/index")
 
 const bcrypt = require('bcrypt');
 const emailService = require("../../../common/service/email.service");
+const appointmentModel = require("../../appointment/models/appointment.model");
 
 /*
     get list appointment with pagination and filter
@@ -280,71 +281,46 @@ const getByIdService = async (id) => {
     }
 };
 
-const createService = async (dataCreate, account_id) => {
+// Đừng quên import AppointmentModel vào file này nhé
+const createService = async (dataCreate, appointmentId) => {
+  const context = "DentalRecordService.createService";
     try {
-        logger.debug("raw data to create", {
-            context: "appointmentService.createService",
+        logger.debug("Raw data to create dental record", {
+            context: context,
             dataCreate: dataCreate,
-            account_id, account_id
+            appointmentId: appointmentId
         });
-        // Tìm Patient profile từ account_id của user đang đăng nhập
-        const patient = await PatientModel.findOne({ account_id: account_id });
-        if (!patient) {
-            logger.warn("Pation notfound", {
-                context: "appointmentService.createService",
-                account_id: account_id,
-                patient: patient
-            });
-            throw new errorRes.NotFoundError("No patient records were found linked to this account. Please update your records.");
-        }
-        dataCreate.patient_id = patient._id;
-        // check duplicate appointment by 'full_name', 'phone', 'email',  'appointment_date', 'appointment_time'
-        const duplicateQuery = {
-            full_name: dataCreate.full_name,
-            phone: dataCreate.phone,
-            email: dataCreate.email,
-            appointment_date: dataCreate.appointment_date,
-            appointment_time: dataCreate.appointment_time,
-            status: { $nin: ['CANCELLED', 'NO_SHOW'] } // Bỏ qua lịch đã hủy
-        };
-        const isDuplicatePatient = await AppointmentModel.findOne(duplicateQuery);
-        if (isDuplicatePatient) {
-            throw new Error(`Patient ${dataCreate.full_name} already has an appointment scheduled for ${dataCreate.appointment_time}. Please do not book a duplicate appointment.`);
-        }
-        // check id service
-        if (dataCreate.book_service && Array.isArray(dataCreate.book_service)) {
-            for (const service of dataCreate.book_service) {
-                const serviceExist = await ServiceModel.findById(service.service_id);
 
-                if (!serviceExist) {
-                    logger.warn(`ID service not found: ${service.service_id}`, {
-                        context: "AppointmentService.createService",
-                        account_id: account_id,
-                        service_id: service.service_id
-                    });
-                    throw new errorRes.NotFoundError(`Service not found! ID: ${service.service_id}`);
+        // 1. Tạo hồ sơ bệnh án mới
+        const newData = await Model.DentalRecord.create(dataCreate);
+
+        // 2. Tự động chuyển trạng thái lịch hẹn thành IN_CONSULTATION (Đang khám)
+        if (appointmentId) {
+            await appointmentModel.findByIdAndUpdate(
+                appointmentId, 
+                { 
+                    status: "IN_CONSULTATION",
+                    doctor_id: dataCreate.created_by
                 }
-            }
+            );
+            logger.info("Appointment status auto-updated to IN_CONSULTATION", {
+                context: context,
+                appointmentId: appointmentId
+            });
         }
-        // Tạo lịch hẹn mới
-        const newAppointment = await AppointmentModel.create(dataCreate);
-        // --- 5. GỬI EMAIL XÁC NHẬN ĐẶT LỊCH (Fire and Forget) ---
-        if (newAppointment.email) {
-            const formattedDate = new Date(newAppointment.appointment_date).toLocaleDateString('vi-VN');
-            emailService.sendBookingConfirmationEmail(
-                newAppointment.email,
-                newAppointment.full_name,
-                formattedDate,
-                newAppointment.appointment_time
-            ).catch(err => logger.error("Lỗi gửi email đặt lịch:", { message: err.message }));
-        }
-        return newAppointment;
+
+        return newData;
+
     } catch (error) {
-        logger.error("Error at create new appointment.", {
-            message: error.message,
-            stack: error.stack,
+        logger.error("Error at create new dental record.", { // Đã sửa text log
+          context: context,
+          message: error.message,
+          stack: error.stack,
         });
-        throw new errorRes.InternalServerError(`Error: ${error.message}`);
+        
+        // Quăng tiếp lỗi chuẩn nếu có
+        if (error.statusCode) throw error;
+        throw new errorRes.InternalServerError(`Error creating dental record: ${error.message}`);
     }
 };
 

@@ -8,7 +8,7 @@ const {
   uploadMultipleToCloudinary,
 } = require("../../../utils/cloudinaryHelper");
 
-const ServiceProcess = require("../services/appointment.service");
+const {treatment: ServiceProcess} = require("../services/index.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
 
 /*

@@ -8,8 +8,10 @@ const {
   uploadMultipleToCloudinary,
 } = require("../../../utils/cloudinaryHelper");
 
-const ServiceProcess = require("../services/appointment.service");
+const {dental: ServiceProcess} = require("../services/index.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
+const { findStaffByAccountId } = require("../../auth/service/account.service");
+const {service: ServiceAppointment} = require("../../appointment/index")
 
 /*
     get list appointment of patient with pagination and filter
@@ -148,56 +150,75 @@ const getByIdController = async (req, res) => {
 };
 
 /*
-  doctor create new dental_record by patient_id
+  doctor create new dental_record by appointmentId
 */
 const createController = async (req, res) => {
+  const context = "DentalRecordController.createController"
   try {
     const dataCreate = req.body || {};
-    const {id: patient_id} = req.params;
-    const { account_id: accountDoctor } = req.user
+    const { id: appointmentId } = req.params;
+    const { account_id: accountDoctorId } = req.user;
+
+    logger.debug("Base data", {
+      context: context,
+      appointmentId: appointmentId,
+      accountDoctorId: accountDoctorId
+    });
+
+    // --- 1. FIND DOCTOR & APPOINTMENT ---
+    const doctor = await findStaffByAccountId(accountDoctorId);
     
-    // clean data
+    // Lưu ý: Hãy chắc chắn bạn đã import service của appointment vào file này.
+    // Nếu bạn đang dùng hàm getByIdService đã viết ở các bước trước, đổi lại tên hàm cho đúng nhé.
+    const appointment = await ServiceAppointment.findById(appointmentId); 
+
+    if (!doctor) throw new errorRes.NotFoundError("Doctor not found!");
+    if (!appointment) throw new errorRes.NotFoundError("Appointment not found!");
+
+    // Gán khóa ngoại
+    dataCreate.created_by = doctor._id;
+    dataCreate.patient_id = appointment.patient_id;
+    
+    // --- 2. CLEAN & AUTO-FILL SNAPSHOT DATA ---
     const cleanedData = cleanObjectData(dataCreate);
+    
+    // Ưu tiên lấy dữ liệu từ lịch hẹn nếu Frontend không gửi lên
+    if (!cleanedData.full_name) cleanedData.full_name = appointment.full_name;
+    if (!cleanedData.phone) cleanedData.phone = appointment.phone;
+    if (!cleanedData.email && appointment.email) cleanedData.email = appointment.email;
 
-
-    // 1. Khai báo các fields bắt buộc dựa theo Schema
+    // --- 3. VALIDATION ---
+    // Khai báo các fields BẮT BUỘC dựa theo Schema DentalRecord
     const requiredFields = [
+      "patient_id",
+      "created_by",
       "full_name",
       "phone",
-      "email",
-      "appointment_date",
-      "appointment_time",
+      "record_name"
     ];
 
     // Kiểm tra validation cơ bản
     checkRequiredFields(requiredFields, cleanedData, this, "createController");
-    // Validate mảng book_service nếu client có gửi kèm dịch vụ
-    if (cleanedData.book_service && Array.isArray(cleanedData.book_service)) {
-      cleanedData.book_service.forEach((item, index) => {
-        if (!item.service_id || item.unit_price === undefined) {
-          throw new Error(
-            `service at the index ${index + 1} is missing service_id or unit_price`,
-          );
-        }
-      });
+    
+    // --- 4. CALL SERVICE ---
+    const newData = await ServiceProcess.createService(cleanedData, appointmentId);
+    if (!newData) {
+      logger.warn("Failed to create new dental record", { context });
+      throw new errorRes.BadRequestError("Create new dental record fails.");
     }
-    // 2. Chuyển dữ liệu sang Service để xử lý logic nghiệp vụ
-    const newAppointment = await ServiceProcess.createService(
-      cleanedData,
-      account_id,
-    );
-    if (!newAppointment) {
-      logger.warn("Failed to create new appointment");
-      throw new errorRes.BadRequestError("Create new appointment fails.")
-    }
-    // 3. Trả về response
-    return new successRes.CreateSuccess(newAppointment).send(res);
+
+    // --- 5. RESPONSE ---
+    return new successRes.CreateSuccess(
+        newData, 
+        "Dental record created successfully"
+    ).send(res);
+
   } catch (error) {
-    logger.error("Error create new appointment controller", {
-      context: "appointmentController.createController",
+    logger.error("Error create new dental record controller", {
+      context: context,
       message: error.message,
     });
-    throw error; // Ném lỗi ra để middleware error handler tổng bắt lấy
+    throw error; 
   }
 };
 
