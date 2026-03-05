@@ -11,7 +11,8 @@ const {
 const {dental: ServiceProcess} = require("../services/index.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
 const { findStaffByAccountId } = require("../../auth/service/account.service");
-const {service: ServiceAppointment} = require("../../appointment/index")
+const {service: ServiceAppointment} = require("../../appointment/index");
+const { checkDuplicateDental } = require("../services/dental.record.service");
 
 /*
     get list appointment of patient with pagination and filter
@@ -189,6 +190,18 @@ const createController = async (req, res) => {
         patientID: patientID
       });
       throw new errorRes.BadRequestError("Patient ID is required!")
+    }
+    const dentalDuplicate = await checkDuplicateDental(patientID, dataCreate.record_name);
+    if (dentalDuplicate) {
+      logger.warn("Duplicate IN_PROGRESS dental record found for patient", {
+        context: context,
+        patientID: patientID,
+        record_name: dataCreate.record_name,
+        dentalDuplicate: dentalDuplicate
+      });
+      throw new errorRes.ConflictError(
+        "A dental record with the same name is already in progress for this patient. Please choose a different name or complete the existing record before creating a new one."
+      );
     }
 
     // Gán khóa ngoại
