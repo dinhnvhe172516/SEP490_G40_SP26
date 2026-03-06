@@ -1,4 +1,4 @@
-import { X, CheckCircle, Wrench, Package } from 'lucide-react';
+import { X, CheckCircle, Wrench, Package, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 
 const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) => {
@@ -7,24 +7,52 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
             dentalChair: false,
             instruments: false,
             xrayMachine: false,
-            suction: false
+            suction: false,
+            light: false
         },
         supplies: {
             gloves: false,
             masks: false,
             gauze: false,
-            anesthesia: false
+            anesthesia: false,
+            tray: false,
+            syringe: false
         },
         hygiene: {
             sterilization: false,
             disinfection: false,
-            areaPrep: false
+            areaPrep: false,
+            wasteReady: false
         }
     });
 
     const [notes, setNotes] = useState('');
 
     if (!isOpen || !appointment) return null;
+
+    const equipmentLabels = {
+        dentalChair: { label: 'Ghế nha khoa hoạt động tốt', icon: '🪑' },
+        instruments: { label: 'Dụng cụ khám đã tiệt trùng', icon: '🔧' },
+        xrayMachine: { label: 'Máy X-quang sẵn sàng', icon: '📷' },
+        suction: { label: 'Máy hút hoạt động bình thường', icon: '💨' },
+        light: { label: 'Đèn soi hoạt động tốt', icon: '💡' }
+    };
+
+    const suppliesLabels = {
+        gloves: { label: 'Găng tay y tế (đủ cỡ)', icon: '🧤' },
+        masks: { label: 'Khẩu trang y tế', icon: '😷' },
+        gauze: { label: 'Băng gạc, bông', icon: '🩹' },
+        anesthesia: { label: 'Thuốc tê (nếu cần)', icon: '💉' },
+        tray: { label: 'Khay khám cơ bản', icon: '🍽️' },
+        syringe: { label: 'Kim tiêm vô trùng', icon: '🔬' }
+    };
+
+    const hygieneLabels = {
+        sterilization: { label: 'Dụng cụ đã tiệt trùng', icon: '✨' },
+        disinfection: { label: 'Khu vực khám đã khử trùng', icon: '🧹' },
+        areaPrep: { label: 'Phòng khám sạch sẽ, ngăn nắp', icon: '🏥' },
+        wasteReady: { label: 'Thùng rác y tế sẵn sàng', icon: '🗑️' }
+    };
 
     const handleCheckboxChange = (category, item) => {
         setChecklist(prev => ({
@@ -49,216 +77,180 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
         onClose();
     };
 
-    const isAllChecked = () => {
-        return Object.values(checklist).every(category =>
-            Object.values(category).every(item => item === true)
-        );
-    };
+    // Calculate progress
+    const totalItems = Object.values(checklist).reduce(
+        (sum, category) => sum + Object.keys(category).length, 0
+    );
+    const checkedItems = Object.values(checklist).reduce(
+        (sum, category) => sum + Object.values(category).filter(Boolean).length, 0
+    );
+    const progress = Math.round((checkedItems / totalItems) * 100);
+    const isAllChecked = progress === 100;
+
+    const renderChecklistGroup = (title, icon, items, labels, category) => (
+        <div className="mb-5">
+            <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider">
+                {icon}
+                {title}
+                <span className="text-xs font-normal text-gray-400 normal-case tracking-normal">
+                    ({Object.values(items).filter(Boolean).length}/{Object.keys(items).length})
+                </span>
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {Object.entries(items).map(([key, checked]) => (
+                    <label
+                        key={key}
+                        className={`flex items-center gap-3 cursor-pointer p-3 rounded-xl border-2 transition-all duration-200 ${checked
+                                ? 'bg-green-50 border-green-200 shadow-sm'
+                                : 'bg-white border-gray-100 hover:border-blue-200 hover:bg-blue-50/30'
+                            }`}
+                    >
+                        <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => handleCheckboxChange(category, key)}
+                            className="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500 border-gray-300"
+                        />
+                        <span className="text-base mr-1">{labels[key]?.icon}</span>
+                        <span className={`text-sm ${checked ? 'text-green-700 font-medium line-through' : 'text-gray-700'}`}>
+                            {labels[key]?.label}
+                        </span>
+                    </label>
+                ))}
+            </div>
+        </div>
+    );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-start mb-4">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-green-100 rounded-lg">
-                            <CheckCircle className="text-green-600" size={24} />
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+            {/* Backdrop */}
+            <div className="absolute inset-0 bg-white/40 backdrop-blur-sm" onClick={onClose} />
+
+            {/* Modal */}
+            <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-3xl max-h-[90vh] overflow-hidden mx-4">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-green-100 rounded-xl">
+                            <CheckCircle className="text-green-600" size={22} />
                         </div>
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">Chuẩn Bị Ca Khám</h2>
-                            <p className="text-sm text-gray-500">Checklist thiết bị & vật tư</p>
+                            <h2 className="text-lg font-bold text-gray-900">Chuẩn Bị Ca Khám</h2>
+                            <p className="text-xs text-gray-500">Kiểm tra thiết bị & vật tư trước ca</p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
-                        <X size={20} />
+                    <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                        <X size={20} className="text-gray-500" />
                     </button>
                 </div>
 
-                {/* Appointment Info Banner */}
-                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div>
-                            <span className="text-blue-600 font-medium">Bệnh nhân:</span>
-                            <span className="ml-2 text-blue-900">{appointment.patientName}</span>
-                        </div>
-                        <div>
-                            <span className="text-blue-600 font-medium">Thời gian:</span>
-                            <span className="ml-2 text-blue-900">{appointment.date} - {appointment.time}</span>
-                        </div>
-                        <div className="col-span-2">
-                            <span className="text-blue-600 font-medium">Bác sĩ:</span>
-                            <span className="ml-2 text-blue-900">{appointment.doctorName}</span>
-                        </div>
+                {/* Progress Bar */}
+                <div className="px-6 py-3 bg-gray-50 border-b border-gray-100">
+                    <div className="flex items-center justify-between text-sm mb-2">
+                        <span className="text-gray-600 font-medium">Tiến độ chuẩn bị</span>
+                        <span className={`font-bold ${isAllChecked ? 'text-green-600' : 'text-blue-600'}`}>
+                            {checkedItems}/{totalItems} mục ({progress}%)
+                        </span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                        <div
+                            className={`h-full rounded-full transition-all duration-500 ease-out ${isAllChecked
+                                    ? 'bg-gradient-to-r from-green-400 to-green-500'
+                                    : 'bg-gradient-to-r from-blue-400 to-blue-600'
+                                }`}
+                            style={{ width: `${progress}%` }}
+                        />
                     </div>
                 </div>
 
-                <form onSubmit={handleSubmit}>
-                    {/* Equipment Checklist */}
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <Wrench size={18} className="text-gray-600" />
-                            Kiểm Tra Thiết Bị
-                        </h3>
-                        <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.equipment.dentalChair}
-                                    onChange={() => handleCheckboxChange('equipment', 'dentalChair')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Ghế nha khoa hoạt động tốt</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.equipment.instruments}
-                                    onChange={() => handleCheckboxChange('equipment', 'instruments')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Dụng cụ khám đã tiệt trùng</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.equipment.xrayMachine}
-                                    onChange={() => handleCheckboxChange('equipment', 'xrayMachine')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Máy X-quang sẵn sàng</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.equipment.suction}
-                                    onChange={() => handleCheckboxChange('equipment', 'suction')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Máy hút hoạt động bình thường</span>
-                            </label>
+                {/* Body */}
+                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-240px)] p-6">
+                    {/* Appointment Info Banner */}
+                    <div className="mb-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                        <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <span className="text-blue-600 font-medium">Bệnh nhân:</span>
+                                <span className="ml-2 text-blue-900 font-semibold">{appointment.patientName}</span>
+                            </div>
+                            <div>
+                                <span className="text-blue-600 font-medium">Thời gian:</span>
+                                <span className="ml-2 text-blue-900">{appointment.date} - {appointment.time}</span>
+                            </div>
+                            <div>
+                                <span className="text-blue-600 font-medium">Bác sĩ:</span>
+                                <span className="ml-2 text-blue-900">{appointment.doctorName}</span>
+                            </div>
+                            <div>
+                                <span className="text-blue-600 font-medium">Lý do:</span>
+                                <span className="ml-2 text-blue-900">{appointment.reason}</span>
+                            </div>
                         </div>
                     </div>
+
+                    {/* Equipment Checklist */}
+                    {renderChecklistGroup(
+                        'Kiểm Tra Thiết Bị',
+                        <Wrench size={18} className="text-amber-600" />,
+                        checklist.equipment,
+                        equipmentLabels,
+                        'equipment'
+                    )}
 
                     {/* Supplies Checklist */}
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <Package size={18} className="text-gray-600" />
-                            Vật Tư Y Tế
-                        </h3>
-                        <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.supplies.gloves}
-                                    onChange={() => handleCheckboxChange('supplies', 'gloves')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Găng tay y tế</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.supplies.masks}
-                                    onChange={() => handleCheckboxChange('supplies', 'masks')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Khẩu trang</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.supplies.gauze}
-                                    onChange={() => handleCheckboxChange('supplies', 'gauze')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Băng gạc, bông</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.supplies.anesthesia}
-                                    onChange={() => handleCheckboxChange('supplies', 'anesthesia')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Thuốc tê (nếu cần)</span>
-                            </label>
-                        </div>
-                    </div>
+                    {renderChecklistGroup(
+                        'Vật Tư Y Tế',
+                        <Package size={18} className="text-blue-600" />,
+                        checklist.supplies,
+                        suppliesLabels,
+                        'supplies'
+                    )}
 
                     {/* Hygiene Checklist */}
-                    <div className="mb-6">
-                        <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            <CheckCircle size={18} className="text-gray-600" />
-                            Vệ Sinh & Khử Trùng
-                        </h3>
-                        <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.hygiene.sterilization}
-                                    onChange={() => handleCheckboxChange('hygiene', 'sterilization')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Dụng cụ đã tiệt trùng</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.hygiene.disinfection}
-                                    onChange={() => handleCheckboxChange('hygiene', 'disinfection')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Khu vực khám đã khử trùng</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer hover:bg-white p-2 rounded transition-colors">
-                                <input
-                                    type="checkbox"
-                                    checked={checklist.hygiene.areaPrep}
-                                    onChange={() => handleCheckboxChange('hygiene', 'areaPrep')}
-                                    className="w-5 h-5 text-primary-600 rounded focus:ring-2 focus:ring-primary-500"
-                                />
-                                <span className="text-gray-700">Phòng khám sạch sẽ, ngăn nắp</span>
-                            </label>
-                        </div>
-                    </div>
+                    {renderChecklistGroup(
+                        'Vệ Sinh & Khử Trùng',
+                        <ShieldCheck size={18} className="text-green-600" />,
+                        checklist.hygiene,
+                        hygieneLabels,
+                        'hygiene'
+                    )}
 
                     {/* Notes */}
-                    <div className="mb-6">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Ghi chú thêm
-                        </label>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Ghi chú thêm</label>
                         <textarea
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
-                            rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                            rows={2}
+                            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
                             placeholder="Ghi chú về tình trạng chuẩn bị, vấn đề gặp phải..."
                         />
                     </div>
 
-                    {/* Progress Indicator */}
-                    {isAllChecked() && (
-                        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    {/* Success Banner */}
+                    {isAllChecked && (
+                        <div className="mb-4 p-4 bg-green-50 border-2 border-green-200 rounded-xl flex items-center gap-3">
+                            <CheckCircle size={22} className="text-green-600 shrink-0" />
                             <p className="text-sm text-green-800 font-medium">
-                                ✅ Tất cả các hạng mục đã được kiểm tra đầy đủ!
+                                Tất cả các hạng mục đã được kiểm tra đầy đủ! Bạn có thể xác nhận hoàn thành.
                             </p>
                         </div>
                     )}
 
                     {/* Actions */}
-                    <div className="flex justify-end gap-3 pt-4 border-t">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                            className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                         >
                             Hủy
                         </button>
                         <button
                             type="submit"
-                            disabled={!isAllChecked()}
-                            className={`px-6 py-2 rounded-lg flex items-center gap-2 transition-colors ${isAllChecked()
-                                    ? 'bg-green-600 text-white hover:bg-green-700'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            disabled={!isAllChecked}
+                            className={`px-5 py-2.5 rounded-lg flex items-center gap-2 transition-all duration-200 font-medium ${isAllChecked
+                                    ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg shadow-green-600/25'
+                                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
                             <CheckCircle size={18} />
