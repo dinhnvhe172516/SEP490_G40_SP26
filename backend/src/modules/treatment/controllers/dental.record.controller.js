@@ -5,38 +5,33 @@ const { cleanObjectData } = require("../../../common/utils/cleanObjectData");
 const Pagination = require("../../../common/responses/Pagination");
 const mongoose = require("mongoose"); 
 
-const {
-  uploadToCloudinary,
-  uploadMultipleToCloudinary,
-} = require("../../../utils/cloudinaryHelper");
-
 const {dental: ServiceProcess} = require("../services/index.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
 const { findStaffByAccountId, findPatientByAccountId } = require("../../auth/service/account.service");
-const {service: ServiceAppointment} = require("../../appointment/index");
 const { checkDuplicateDental } = require("../services/dental.record.service");
 
-/*
-    get list appointment of patient with pagination and filter
+/* 
+  get list dental record with pagination and filter
     (
-        search: search by full_name, phone, email;
-        filter: filter by status;
-        sort: sort by appointment_date;
+        search: search by record_name(in collection dental_record), doctor_name(in collection staff), tooth_position(in collection treatment);
+        filter_dental_record: filter by status (in collection dental_record);
+        filter_treatment: filter by status (in collection treatment);
+        sort: sort by start_date(in collection dental_record);
         page
-        limit
+        limit (5 record dental_record/page)
     )
-    only get appointment with account_id
 */
 const getListController = async (req, res) => {
+  const context = "DentalRecordController.getListController";
   try {
     const queryParams = req.query;
 
-    logger.debug("Get list appointment of patient request received", {
-      context: "AppointmentController.getListController",
+    logger.debug("Get list dental records request received", {
+      context: context,
       query: queryParams,
     });
 
-    const { data, pagination } = await ServiceProcess.getListService(queryParams);
+    const { data, pagination } = await ServiceProcess.getListOfPatientService(queryParams, null);
 
     const paginationData = new Pagination({
       page: pagination.page,
@@ -47,11 +42,11 @@ const getListController = async (req, res) => {
     return new successRes.GetListSuccess(
       data,
       paginationData,
-      "Appointment retrieved successfully",
+      "Dental records retrieved successfully",
     ).send(res);
   } catch (error) {
-    logger.error("Error get Appointment", {
-      context: "AppointmentController.getListController",
+    logger.error("Error get Dental Record", {
+      context: context,
       message: error.message,
       stack: error.stack,
     });
@@ -206,6 +201,7 @@ const getByIdController = async (req, res) => {
   const context = "DentalRecordController.getByIdController";
   try {
     const { id } = req.params;
+    const { treatment_status } = req.query;
     logger.debug("Get dental record by id request received", {
       context: context,
       dentalRecordId: id,
@@ -229,7 +225,7 @@ const getByIdController = async (req, res) => {
     }
 
     // 3. Gọi service xử lý logic
-    const dentalRecordDetail = await ServiceProcess.getByIdService(id);
+    const dentalRecordDetail = await ServiceProcess.getByIdService(id, treatment_status);
 
     // 4. Xử lý trường hợp không tìm thấy dữ liệu (Rất quan trọng)
     if (!dentalRecordDetail) {
