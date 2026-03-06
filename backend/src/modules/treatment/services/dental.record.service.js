@@ -549,7 +549,6 @@ module.exports = {
   getByIdService,
   createService,
   updateService,
-  updateStatusOnly,
   getListOfPatientService,
   checkDuplicateDental,
   checkDuplicateDentalExcludeId,

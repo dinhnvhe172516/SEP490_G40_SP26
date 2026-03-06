@@ -5,6 +5,4 @@ const controller = require('../controllers/index.controller');
 
 router.patch('/treatment/status/:id', controller.treatment.updateStatusController);
 
-router.patch('/dental-record/status/:id', controller.dental.updateStatusController);
-
 module.exports = router;
