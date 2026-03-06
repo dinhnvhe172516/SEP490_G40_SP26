@@ -16,6 +16,7 @@ const Header = () => {
     const getProfilePath = () => {
         const role = user?.role;
         if (role === 'ADMIN_CLINIC') return '/admin/profile';
+        if (role === 'DOCTOR') return '/doctor/profile';
         return '/';
     };
 
