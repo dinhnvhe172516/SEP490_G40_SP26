@@ -81,7 +81,7 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]" onClick={onClose} />
 
             {/* Modal */}
             <div className="relative bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl max-h-[90vh] overflow-hidden mx-4 flex flex-col">
@@ -112,8 +112,8 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                     <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
                         <div
                             className={`h-full rounded-full transition-all duration-500 ease-out ${isReadyToConfirm
-                                    ? 'bg-green-500'
-                                    : 'bg-blue-500'
+                                ? 'bg-green-500'
+                                : 'bg-blue-500'
                                 }`}
                             style={{ width: `${progressPercent}%` }}
                         />
@@ -134,8 +134,8 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                                     <label
                                         key={key}
                                         className={`flex items-center gap-3 p-3.5 border-2 rounded-xl cursor-pointer transition-all duration-200 ${supplies[key]
-                                                ? 'bg-blue-50 border-blue-200 shadow-sm'
-                                                : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50'
+                                            ? 'bg-blue-50 border-blue-200 shadow-sm'
+                                            : 'bg-white border-gray-100 hover:border-gray-300 hover:bg-gray-50'
                                             }`}
                                     >
                                         <input
@@ -165,10 +165,10 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                                         <div
                                             key={key}
                                             className={`p-3.5 border-2 rounded-xl transition-all duration-200 ${status === 'good'
-                                                    ? 'bg-green-50 border-green-200 shadow-sm'
-                                                    : status === 'error'
-                                                        ? 'bg-red-50 border-red-200 shadow-sm'
-                                                        : 'bg-white border-gray-100'
+                                                ? 'bg-green-50 border-green-200 shadow-sm'
+                                                : status === 'error'
+                                                    ? 'bg-red-50 border-red-200 shadow-sm'
+                                                    : 'bg-white border-gray-100'
                                                 }`}
                                         >
                                             <div className={`font-medium mb-3 text-[15px] ${status === 'good' ? 'text-green-800' : status === 'error' ? 'text-red-800' : 'text-gray-700'}`}>
@@ -179,8 +179,8 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                                                     type="button"
                                                     onClick={() => handleEquipmentChange(key, 'good')}
                                                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 ${status === 'good'
-                                                            ? 'bg-green-500 text-white shadow-md shadow-green-500/20'
-                                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                        ? 'bg-green-500 text-white shadow-md shadow-green-500/20'
+                                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                                         }`}
                                                 >
                                                     Hoạt động Tốt
@@ -189,8 +189,8 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                                                     type="button"
                                                     onClick={() => handleEquipmentChange(key, 'error')}
                                                     className={`flex-1 py-2 px-3 rounded-lg text-sm font-semibold transition-colors duration-200 flex items-center justify-center gap-1.5 ${status === 'error'
-                                                            ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
-                                                            : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                                        ? 'bg-red-500 text-white shadow-md shadow-red-500/20'
+                                                        : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
                                                         }`}
                                                 >
                                                     {status === 'error' && <AlertTriangle size={14} />}
@@ -247,8 +247,8 @@ const PrepareAppointmentModal = ({ appointment, isOpen, onClose, onComplete }) =
                         onClick={handleSubmit}
                         disabled={!isReadyToConfirm}
                         className={`px-8 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all duration-200 ${isReadyToConfirm
-                                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20 transform hover:-translate-y-[1px]'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-600/20 transform hover:-translate-y-[1px]'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             }`}
                     >
                         Trạng thái: Sẵn sàng

@@ -112,7 +112,7 @@ const TreatmentPlanModal = ({ plan, isOpen, mode, onClose, onSave }) => {
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             {/* Backdrop */}
-            <div className="absolute inset-0 bg-white/40 backdrop-blur-sm" onClick={onClose} />
+            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px]" onClick={onClose} />
 
             {/* Modal */}
             <div className="relative bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-3xl max-h-[90vh] overflow-hidden mx-4">
