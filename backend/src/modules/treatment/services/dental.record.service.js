@@ -12,7 +12,7 @@ const { Model: AuthModel } = require("../../auth/index");
 const PatientModel = require("../../../modules/patient/model/patient.model");
 const AppointmentModel = require("../../appointment/models/index.model");
 const { model: ServiceModel } = require("../../service/index");
-const {Staff: StaffModel} = require("../../staff/models/index.model");
+const { Staff: StaffModel } = require("../../staff/models/index.model");
 
 /*
     get list appointment with pagination and filter
@@ -125,9 +125,13 @@ const getListOfPatientService = async (query, patientId) => {
 
     // 1. CHUẨN HÓA THAM SỐ TỪ QUERY
     const search = query.search ? query.search.trim() : null;
-    const filterDentalRecord = query.filter_dental_record ? query.filter_dental_record.toUpperCase() : null; 
-    const filterTreatment = query.filter_treatment ? query.filter_treatment.toUpperCase() : null;
-    
+    const filterDentalRecord = query.filter_dental_record
+      ? query.filter_dental_record.toUpperCase()
+      : null;
+    const filterTreatment = query.filter_treatment
+      ? query.filter_treatment.toUpperCase()
+      : null;
+
     const sortOrder = query.sort === "asc" ? 1 : -1;
     const page = Math.max(1, parseInt(query.page || 1));
     const limit = Math.max(1, parseInt(query.limit || 5));
@@ -148,17 +152,17 @@ const getListOfPatientService = async (query, patientId) => {
     // --- STAGE 2: JOIN với bảng Staff (Bác sĩ) ---
     aggregatePipeline.push({
       $lookup: {
-        from: "staffs", 
+        from: "staffs",
         localField: "created_by",
         foreignField: "_id",
-        as: "doctor_info" 
-      }
+        as: "doctor_info",
+      },
     });
 
     aggregatePipeline.push({
       $addFields: {
-        doctor_info: { $arrayElemAt: ["$doctor_info", 0] } 
-      }
+        doctor_info: { $arrayElemAt: ["$doctor_info", 0] },
+      },
     });
 
     // --- STAGE 3: JOIN với bảng Treatment ---
@@ -167,8 +171,8 @@ const getListOfPatientService = async (query, patientId) => {
         from: "treatments",
         localField: "_id",
         foreignField: "record_id",
-        as: "treatments" 
-      }
+        as: "treatments",
+      },
     });
 
     // --- STAGE 4: Lọc và Search Nâng cao ---
@@ -182,8 +186,8 @@ const getListOfPatientService = async (query, patientId) => {
       const searchRegex = { $regex: search, $options: "i" };
       complexMatch.$or = [
         { record_name: searchRegex },
-        { "doctor_info.full_name": searchRegex }, 
-        { "treatments.tooth_position": searchRegex }
+        { "doctor_info.full_name": searchRegex },
+        { "treatments.tooth_position": searchRegex },
       ];
     }
 
@@ -232,7 +236,7 @@ const getListOfPatientService = async (query, patientId) => {
       stack: error.stack,
     });
     throw new errorRes.InternalServerError(
-      `An error occurred while fetching list of dental records: ${error.message}`
+      `An error occurred while fetching list of dental records: ${error.message}`,
     );
   }
 };
@@ -249,7 +253,7 @@ const getByIdService = async (id) => {
     });
 
     // --- 1. KIỂM TRA ĐỊNH DẠNG ID ---
-    // (Thực ra bạn đã check isValidObjectId ở Controller rồi, 
+    // (Thực ra bạn đã check isValidObjectId ở Controller rồi,
     // nhưng để lại ở Service cho chắc chắn cũng rất tốt)
     if (!mongoose.Types.ObjectId.isValid(id)) {
       throw new errorRes.BadRequestError("Invalid Dental Record ID format");
@@ -257,8 +261,8 @@ const getByIdService = async (id) => {
 
     // --- 2. TRUY VẤN DỮ LIỆU DENTAL RECORD ---
     const dentalRecord = await Model.DentalRecord.findById(id)
-      .populate("patient_id") 
-      .populate("created_by") 
+      .populate("patient_id")
+      .populate("created_by")
       .lean();
 
     // --- 3. KIỂM TRA TỒN TẠI ---
@@ -273,8 +277,8 @@ const getByIdService = async (id) => {
     // --- 4. TRUY VẤN DANH SÁCH TREATMENT CỦA RECORD NÀY ---
     // Tìm tất cả các phiên điều trị (Treatment) có record_id bằng với ID của bệnh án này
     const treatments = await Model.Treatment.find({ record_id: id })
-      .populate("doctor_id") 
-      .sort({ createdAt: -1 }) 
+      .populate("doctor_id")
+      .sort({ createdAt: -1 })
       .lean();
 
     // --- 5. GỘP DỮ LIỆU VÀ TRẢ VỀ ---
@@ -288,7 +292,6 @@ const getByIdService = async (id) => {
     });
 
     return dentalRecord;
-
   } catch (error) {
     logger.error("Error getting dental record by id", {
       context: context,
@@ -332,212 +335,75 @@ const createService = async (dataCreate) => {
 };
 
 /**
- * Update an existing service
+ * Cập nhật thông tin bệnh án (Nếu status = COMPLETED thì không được cập nhật bất kỳ thông tin nào nữa bao gồm cả status)
+ * - Chỉ cập nhật được khi bệnh án đang ở trạng thái IN_PROGRESS
+ * - Có thể cập nhật record_name, start_date, end_date, status
+ * - Nếu cập nhật status sang COMPLETED thì sẽ tự động cập nhật end_date bằng ngày hiện tại
+ * - Không tự động đổi status sang COMPLETED và nó tự động được đổi khi all treatment của dental record đó đều đã hoàn thành (status = COMPLETED)
+ * và end_date sẽ được cập nhật bằng ngày hiện tại
+ * - Nếu cập nhật status sang CANCELLED thì phải đảm bảo tất cả treatment của dental record đó đều không có status = IN_PROGRESS
+ * - Khi cập nhật record_name phải kiểm tra trùng lặp với các record_name của các dental record khác của cùng bệnh nhân có status IN_PROGRESS (không tính bản ghi hiện tại)
+ * - Không được cập nhật field created_by, patient_id, treatment_list, start_date, end_date
+ * - Chỉ có doctor mới được quyền cập nhật thông tin bệnh án
  *
- * @param {ObjectId} id service id to update
- * @param {*} updateData data to update
- * @returns updated service object
+ * @param {*} id dental_record id cần cập nhật
+ * @param {*} data dữ liệu cập nhật (có thể là record_name, start_date, end_date, status)
  */
-const updateService = async (accountId, data) => {
-  // 1. Khởi tạo Session
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
+const updateService = async (id, data) => {
+  const context = "DentalRecordService.updateService";
   try {
-    // --- BƯỚC 1: TÁCH DỮ LIỆU (Giữ nguyên) ---
-    const accountUpdate = {};
-    const profileUpdate = {};
-    const staffUpdate = {};
-    const licenseUpdate = {};
-
-    // Mapping Account
-    if (data.username) accountUpdate.username = data.username;
-    if (data.email) accountUpdate.email = data.email;
-    if (data.phone_number) accountUpdate.phone_number = data.phone_number;
-    if (data.password) {
-      const salt = parseInt(process.env.BCRYPT_SALT, 10) || 10;
-      accountUpdate.password = await bcrypt.hash(data.password, salt);
-    }
-
-    // Mapping Profile
-    if (data.full_name) profileUpdate.full_name = data.full_name;
-    if (data.dob) profileUpdate.dob = data.dob;
-    if (data.gender) profileUpdate.gender = data.gender;
-    if (data.address) profileUpdate.address = data.address;
-    if (data.avatar_url) profileUpdate.avatar_url = data.avatar_url;
-
-    // Mapping Staff
-    if (data.work_start) staffUpdate.work_start = data.work_start;
-    if (data.work_end) staffUpdate.work_end = data.work_end;
-
-    // Mapping License
-    if (data.license_number) licenseUpdate.license_number = data.license_number;
-    if (data.issued_by) licenseUpdate.issued_by = data.issued_by;
-    if (data.issued_date) licenseUpdate.issued_date = data.issued_date;
-    if (data.document_url) licenseUpdate.document_url = data.document_url;
-
-    // --- BƯỚC 2: THỰC HIỆN UPDATE ---
-
-    // 2.1 Update Account
-    if (Object.keys(accountUpdate).length > 0) {
-      const updatedAccount = await AuthModel.Account.findByIdAndUpdate(
-        accountId,
-        { $set: accountUpdate },
-        { new: true, session },
-      );
-      if (!updatedAccount)
-        throw new errorRes.NotFoundError("Account not found");
-    }
-
-    // 2.2 Update Profile
-    if (Object.keys(profileUpdate).length > 0) {
-      await AuthModel.Profile.findOneAndUpdate(
-        { account_id: accountId },
-        { $set: profileUpdate },
-        { new: true, session },
-      );
-    }
-
-    // 2.3 Update Staff & License
-    // Tìm Staff hiện tại (Quan trọng: phải dùng session để đảm bảo tính nhất quán đọc/ghi)
-    const currentStaff = await StaffModel.Staff.findOne({
-      account_id: accountId,
-    }).session(session);
-
-    if (!currentStaff) {
-      // Nếu không tìm thấy Staff, throw lỗi để rollback tất cả (kể cả Account/Profile vừa update)
-      throw new errorRes.NotFoundError(
-        "Staff profile not found for this account!",
-      );
-    }
-
-    // Update Staff info
-    if (Object.keys(staffUpdate).length > 0) {
-      await StaffModel.Staff.findByIdAndUpdate(
-        currentStaff._id,
-        { $set: staffUpdate },
-        { session },
-      );
-    }
-
-    // Update License (Upsert: Tạo mới nếu chưa có)
-    if (Object.keys(licenseUpdate).length > 0) {
-      await StaffModel.License.findOneAndUpdate(
-        { doctor_id: currentStaff._id },
-        { $set: licenseUpdate },
-        { new: true, session, upsert: true },
-      );
-    }
-
-    // --- BƯỚC 3: COMMIT TRANSACTION ---
-    await session.commitTransaction();
-
-    // --- BƯỚC 4: LẤY DỮ LIỆU TRẢ VỀ (Tối ưu Performance) ---
-    // Session đã kết thúc (commit), ta có thể query song song bằng Promise.all
-    // Lưu ý: Lúc này không cần truyền 'session' vào query nữa
-
-    const [accountResult, profileResult, staffResult, licenseResult] =
-      await Promise.all([
-        AuthModel.Account.findById(accountId).select("-password").lean(),
-        AuthModel.Profile.findOne({ account_id: accountId }).lean(),
-        StaffModel.Staff.findById(currentStaff._id).lean(),
-        StaffModel.License.findOne({ doctor_id: currentStaff._id }).lean(),
-      ]);
-
-    return {
-      account: accountResult,
-      profile: profileResult,
-      staff: staffResult,
-      license: licenseResult,
-    };
-  } catch (error) {
-    // Rollback nếu transaction đang chạy
-    if (session.inTransaction()) {
-      await session.abortTransaction();
-    }
-
-    // Log lỗi
-    logger.error("Error updating service", {
-      context: "ServiceService.updateService",
-      message: error.message,
-      stack: error.stack,
+    logger.debug("Updating dental record with data", {
+      context,
+      dentalRecordId: id,
+      data,
     });
 
-    // QUAN TRỌNG: Ném lại đúng lỗi gốc để Controller xử lý (400, 404, 409...)
-    throw error;
-  } finally {
-    session.endSession();
-  }
-};
+    const existingRecord = await Model.DentalRecord.findById(id);
+    if (!existingRecord)
+      throw new errorRes.NotFoundError("Dental record not found");
 
-/*
-    Update Status and Auto-generate Queue Number
-*/
-const updateStatusOnly = async (id, status) => {
-  try {
-    let newData = null;
+    if (existingRecord.status !== "IN_PROGRESS") {
+      throw new errorRes.BadRequestError(
+        "Only IN_PROGRESS records can be updated.",
+      );
+    }
 
-    // --- KỊCH BẢN 1: BỆNH NHÂN CHECK-IN TẠI QUẦY ---
-    if (status === "CHECKED_IN") {
-      // Bước 1: Phải tìm lịch hẹn trước để lấy ngày khám (appointment_date)
-      const existingAppt = await AppointmentModel.findById(id);
+    // STRICT BUSINESS RULE: Không bao giờ cho phép tự tay đổi thành COMPLETED
+    if (data.status === "COMPLETED") {
+      throw new errorRes.BadRequestError(
+        "Cannot manually set status to COMPLETED. System will auto-complete when all treatments are COMPLETED.",
+      );
+    }
 
-      if (!existingAppt) {
-        throw new errorRes.NotFoundError("Appointment not found");
+    // Xử lý kịch bản CANCELLED
+    if (data.status === "CANCELLED") {
+      const treatments = await Model.Treatment.find({ record_id: id }).lean();
+      const hasInProgress = treatments.some((t) => t.status === "IN_PROGRESS");
+
+      if (hasInProgress) {
+        throw new errorRes.BadRequestError(
+          "Cannot cancel dental record. There are treatments in IN_PROGRESS status.",
+        );
       }
-
-      // Bảo vệ API (Idempotent): Nếu khách ấn Check-in 2 lần liên tiếp,
-      // hoặc đã có số rồi thì không cấp số mới, trả về kết quả luôn.
-      if (existingAppt.status === "CHECKED_IN" && existingAppt.queue_number) {
-        return existingAppt;
-      }
-
-      // Bước 2: Gọi hàm sinh số thứ tự thông minh từ Model
-      const nextNumber = await AppointmentModel.getNextQueueNumber(
-        existingAppt.appointment_date,
-      );
-
-      // Bước 3: Cập nhật ĐỒNG THỜI cả trạng thái và số thứ tự
-      newData = await AppointmentModel.findByIdAndUpdate(
-        id,
-        {
-          status: status,
-          queue_number: nextNumber,
-        },
-        { new: true }, // Trả về object sau khi đã update xong
-      );
+      data.end_date = new Date();
     }
 
-    // --- KỊCH BẢN 2: CÁC TRẠNG THÁI KHÁC (SCHEDULED, COMPLETED, CANCELLED...) ---
-    else {
-      newData = await AppointmentModel.findByIdAndUpdate(
-        id,
-        { status: status },
-        { new: true },
-      );
-    }
-
-    // --- KIỂM TRA LẠI KẾT QUẢ ---
-    if (!newData) {
-      throw new errorRes.NotFoundError(
-        "Appointment not found or update failed",
-      );
-    }
-
-    return newData;
-  } catch (error) {
-    logger.error("Error updating appointment status.", {
-      context: "AppointmentService.updateStatusOnly",
-      appointmentId: id,
-      status: status,
-      message: error.message,
+    // Thực thi cập nhật
+    const updatedRecord = await Model.DentalRecord.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
     });
 
-    // Ném tiếp các lỗi đã được định nghĩa (ví dụ: NotFoundError)
+    return updatedRecord;
+  } catch (error) {
+    logger.error("Error updating dental record.", {
+      context,
+      message: error.message,
+    });
     if (error.statusCode) throw error;
-
-    // Bắt các lỗi hệ thống (Database lỗi, rớt mạng...)
-    throw new errorRes.InternalServerError(`Update fails: ${error.message}`);
+    throw new errorRes.InternalServerError(
+      `Error updating dental record: ${error.message}`,
+    );
   }
 };
 
@@ -585,6 +451,99 @@ const checkDuplicateDental = async (patientId, record_name) => {
   }
 };
 
+/**
+ * Tìm kiếm bệnh án khớp với 3 điều kiện ngoại trừ bản ghi có id:
+    1. Của đúng bệnh nhân đó
+    2. Trùng tên bệnh án
+    3. Trạng thái đang là IN_PROGRESS
+ * @param {ObjectId} patientId patient id để kiểm tra
+ * @param {String} record_name tên bệnh án để kiểm tra
+ * @param {ObjectId} excludeId id của bản ghi cần loại trừ khi kiểm tra trùng lặp
+ * @returns 
+ */
+const checkDuplicateDentalExcludeId = async (
+  patientId,
+  record_name,
+  excludeId,
+) => {
+  const context = "DentalRecordService.checkDuplicateDentalExcludeId";
+  const cleanedRecordName = record_name.trim().replace(/\s+/g, " ");
+  try {
+    logger.debug("Checking duplicate IN_PROGRESS dental record", {
+      context: context,
+      patientId: patientId,
+      record_name: cleanedRecordName,
+      excludeId: excludeId,
+    });
+    const existingRecord = await Model.DentalRecord.findOne({
+      patient_id: patientId,
+      record_name: { $regex: new RegExp(`^${cleanedRecordName}$`, "i") },
+      status: "IN_PROGRESS",
+    });
+
+    if (existingRecord) {
+      logger.info("Found duplicate IN_PROGRESS dental record", {
+        context: context,
+        excludeId: excludeId,
+        recordId: existingRecord._id,
+        existingRecord: existingRecord,
+      });
+    }
+
+    return existingRecord || null;
+  } catch (error) {
+    logger.error("Error checking duplicate dental record", {
+      context: context,
+      excludeId: excludeId,
+      record_name: cleanedRecordName,
+      patientId: patientId,
+      message: error.message,
+      stack: error.stack,
+    });
+    throw new errorRes.InternalServerError(
+      `Error checking duplicate dental record: ${error.message}`,
+    );
+  }
+};
+
+/**
+ * only find dental record by id
+ *
+ * @param {ObjectId} id dental record id for searching
+ * @returns Object {dentalRecord} if found, otherwisr return null
+ */
+const getDentalRecordById = async (id) => {
+  const context = "DentalRecordService.getDentalRecordById";
+  try {
+    logger.debug("Finding dental record by id", {
+      context: context,
+      dentalRecordId: id,
+    });
+
+    const dentalRecord = await Model.DentalRecord.findById(id).lean();
+
+    if (!dentalRecord) {
+      logger.warn("Dental record not found", {
+        context: context,
+        dentalRecordId: id,
+      });
+      return null;
+    }
+
+    return dentalRecord;
+  } catch (error) {
+    logger.error("Error finding dental record by id", {
+      context: context,
+      dentalRecordId: id,
+      message: error.message,
+      stack: error.stack,
+    });
+    throw new errorRes.InternalServerError(
+      `An error occurred while finding dental record by id: ${error.message}`,
+    );
+  }
+};
+
 module.exports = {
   getListService,
   getByIdService,
@@ -593,4 +552,6 @@ module.exports = {
   updateStatusOnly,
   getListOfPatientService,
   checkDuplicateDental,
+  checkDuplicateDentalExcludeId,
+  getDentalRecordById,
 };
