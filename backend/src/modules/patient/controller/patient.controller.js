@@ -77,4 +77,34 @@ const createController = async (req, res) => {
     }
 };
 
-module.exports = { getListController, getByIdController, createController };
+// PUT /api/patient/:id
+const updateController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = req.body || {};
+        logger.debug('Update patient request', {
+            context: 'PatientController.updateController',
+            id, data
+        });
+
+        if (Object.keys(data).length === 0) {
+            throw new errorRes.BadRequestError('No data provided');
+        }
+
+        const patient = await PatientService.updatePatientService(id, data);
+
+        return new successRes.UpdateSuccess(
+            patient,
+            'Patient updated successfully'
+        ).send(res);
+
+    } catch (error) {
+        logger.error('Error update patient', {
+            context: 'PatientController.updateController',
+            message: error.message,
+        });
+        throw error;
+    }
+};
+
+module.exports = { getListController, getByIdController, createController, updateController };
