@@ -13,15 +13,16 @@ const formatDate = (iso) => {
 
 /**
  * PatientRecordList
- * Hiển thị tất cả hồ sơ nha khoa của bệnh nhân đã chọn
  * Props:
- *   patient    – bệnh nhân đang được chọn { full_name, ... }
- *   records    – mảng dental records
- *   isLoading  – bool
- *   error      – string | null
- *   onRetry    – callback
+ *   patient       – bệnh nhân đang được chọn
+ *   records       – mảng dental records
+ *   isLoading     – bool
+ *   error         – string | null
+ *   onRetry       – callback
+ *   canCreate     – bool (không có hồ sơ IN_PROGRESS nào)
+ *   onCreateClick – callback mở modal
  */
-const PatientRecordList = ({ patient, records, isLoading, error, onRetry }) => {
+const PatientRecordList = ({ patient, records, isLoading, error, onRetry, canCreate, onCreateClick }) => {
     const navigate = useNavigate();
 
     if (isLoading) {
@@ -43,24 +44,35 @@ const PatientRecordList = ({ patient, records, isLoading, error, onRetry }) => {
         );
     }
 
-    if (records.length === 0) {
-        return (
-            <div className="bg-white border border-gray-100 rounded-2xl py-16 text-center text-gray-400 text-sm">
-                <p className="font-medium text-gray-500 mb-1">{patient.full_name}</p>
-                <p>Bệnh nhân này chưa có hồ sơ nha khoa nào</p>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-3">
-            {/* Summary header */}
-            <div className="flex items-center justify-between text-sm px-1">
-                <span className="font-medium text-gray-700">{patient.full_name}</span>
-                <span className="text-gray-400">
-                    {records.length} hồ sơ
-                </span>
+            {/* Header: tên bệnh nhân + nút tạo */}
+            <div className="flex items-center justify-between px-1">
+                <div>
+                    <span className="text-sm font-medium text-gray-700">{patient.full_name}</span>
+                    <span className="ml-2 text-gray-400 text-xs">· {records.length} hồ sơ</span>
+                </div>
+
+                {canCreate ? (
+                    <button
+                        onClick={onCreateClick}
+                        className="px-4 py-1.5 rounded-xl bg-teal-500 text-white text-xs font-medium hover:bg-teal-600 transition-colors"
+                    >
+                        Tạo hồ sơ mới
+                    </button>
+                ) : (
+                    <span className="text-xs text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full">
+                        Đang có hồ sơ điều trị
+                    </span>
+                )}
             </div>
+
+            {/* Empty state */}
+            {records.length === 0 && (
+                <div className="bg-white border border-dashed border-gray-200 rounded-2xl py-14 text-center text-gray-400 text-sm">
+                    Bệnh nhân này chưa có hồ sơ nha khoa nào
+                </div>
+            )}
 
             {/* Record cards */}
             {records.map(record => {
@@ -72,7 +84,6 @@ const PatientRecordList = ({ patient, records, isLoading, error, onRetry }) => {
                     >
                         <div className="p-5">
                             <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                {/* Left */}
                                 <div className="flex-1 min-w-0 space-y-2">
                                     <div className="flex items-center gap-2.5 flex-wrap">
                                         <h3 className="text-sm font-semibold text-gray-900 group-hover:text-teal-700 transition-colors">
@@ -109,7 +120,6 @@ const PatientRecordList = ({ patient, records, isLoading, error, onRetry }) => {
                                     </div>
                                 </div>
 
-                                {/* Right */}
                                 <button
                                     onClick={() => navigate(`/dentist/dental-records/${record._id}`)}
                                     className="flex-shrink-0 self-center px-4 py-1.5 rounded-xl border border-teal-500 text-teal-600 text-xs font-medium hover:bg-teal-500 hover:text-white transition-all duration-200"

@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { findPatientByInfo, getDentalRecordsByPatient } from '../../services/dentalRecordService';
 import PatientSearchBar from './components/PatientSearchBar';
 import PatientCard from './components/PatientCard';
 import PatientRecordList from './components/PatientRecordList';
+import CreateDentalRecordModal from './components/CreateDentalRecordModal';
 
 const PatientRecordSearch = () => {
+    const navigate = useNavigate();
+
     // ── Patient search state ──────────────────────────────────────
     const [inputValue, setInputValue] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
@@ -18,6 +22,12 @@ const PatientRecordSearch = () => {
     const [recordsError, setRecordsError] = useState(null);
     const [isVisible, setIsVisible] = useState(false);
 
+    // ── Create modal state ────────────────────────────────────────
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+    // Chỉ cho tạo hồ sơ mới khi không còn hồ sơ IN_PROGRESS nào
+    const canCreate = !records.some(r => r.status === 'IN_PROGRESS');
+
     // ── Debounce search 400ms ─────────────────────────────────────
     useEffect(() => {
         const t = setTimeout(() => setSearchTerm(inputValue.trim()), 400);
@@ -29,17 +39,15 @@ const PatientRecordSearch = () => {
         if (!searchTerm) {
             setPatients([]);
             setSelectedPatient(null);
+            setRecords([]);
             return;
         }
         const doSearch = async () => {
             setIsSearching(true);
             try {
-                // GET /api/dentist/patient?search=...
                 const res = await findPatientByInfo(searchTerm);
-                // res is the data array directly (Success response)
                 const list = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []);
                 setPatients(list);
-                // Auto-clear selection if patient not in new result
                 setSelectedPatient(prev =>
                     prev && list.find(p => p.patient_id === prev.patient_id) ? prev : null
                 );
@@ -60,7 +68,6 @@ const PatientRecordSearch = () => {
         setIsVisible(false);
         setRecordsError(null);
         try {
-            // GET /api/dentist/staff/patient/:id/dental-record
             const res = await getDentalRecordsByPatient(patient.patient_id);
             setRecords(res.data ?? []);
         } catch (err) {
@@ -85,6 +92,16 @@ const PatientRecordSearch = () => {
         setRecords([]);
     };
 
+    // Sau khi tạo hồ sơ thành công: reload danh sách và navigate đến chi tiết
+    const handleCreateSuccess = (newRecord) => {
+        setIsCreateModalOpen(false);
+        if (newRecord?._id) {
+            navigate(`/dentist/dental-records/${newRecord._id}`);
+        } else {
+            fetchRecords(selectedPatient);
+        }
+    };
+
     // ── Render ────────────────────────────────────────────────────
     return (
         <div className="space-y-5">
@@ -93,7 +110,7 @@ const PatientRecordSearch = () => {
             <div className="pb-3 border-b border-gray-100">
                 <h1 className="text-2xl font-bold text-gray-800 tracking-tight">Tìm kiếm hồ sơ nha khoa</h1>
                 <p className="text-xs text-gray-400 mt-0.5">
-                    Tìm bệnh nhân, sau đó xem toàn bộ hồ sơ nha khoa của họ
+                    Tìm bệnh nhân, sau đó xem hoặc tạo hồ sơ nha khoa
                 </p>
             </div>
 
@@ -116,7 +133,7 @@ const PatientRecordSearch = () => {
                             </p>
                             <button
                                 onClick={handleClear}
-                                className="text-xs text-gray-400 hover:text-red-500 transition-colors underline-offset-2 hover:underline"
+                                className="text-xs text-gray-400 hover:text-red-500 transition-colors hover:underline underline-offset-2"
                             >
                                 Xóa tìm kiếm
                             </button>
@@ -140,7 +157,7 @@ const PatientRecordSearch = () => {
                         </div>
                     </div>
 
-                    {/* Right: Dental records of selected patient */}
+                    {/* Right: Dental records */}
                     <div
                         className="md:col-span-3 transition-all duration-200"
                         style={{
@@ -155,6 +172,8 @@ const PatientRecordSearch = () => {
                                 isLoading={isLoadingRecords}
                                 error={recordsError}
                                 onRetry={() => fetchRecords(selectedPatient)}
+                                canCreate={!isLoadingRecords && canCreate}
+                                onCreateClick={() => setIsCreateModalOpen(true)}
                             />
                         ) : (
                             <div className="bg-white border border-dashed border-gray-200 rounded-2xl py-16 text-center text-gray-400 text-sm">
@@ -165,12 +184,22 @@ const PatientRecordSearch = () => {
                 </div>
             )}
 
-            {/* Empty state – no search yet */}
+            {/* Empty state */}
             {!searchTerm && patients.length === 0 && (
                 <div className="bg-white border border-dashed border-gray-200 rounded-2xl py-24 text-center">
                     <p className="text-gray-400 text-sm">Nhập thông tin bệnh nhân để bắt đầu tìm kiếm</p>
                 </div>
             )}
+
+            {/* Create modal */}
+            <CreateDentalRecordModal
+                isOpen={isCreateModalOpen}
+                onClose={() => setIsCreateModalOpen(false)}
+                onSuccess={handleCreateSuccess}
+                patientId={selectedPatient?.patient_id}
+                patientName={selectedPatient?.full_name}
+                patientPhone={selectedPatient?.phone}
+            />
         </div>
     );
 };
