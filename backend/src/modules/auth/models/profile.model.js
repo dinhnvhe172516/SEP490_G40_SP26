@@ -25,6 +25,15 @@ const profileSchema = new Schema(
         address: {
             type: String
         },
+        phone: {
+            type: String,
+            trim: true
+        },
+        email: {
+            type: String,
+            trim: true,
+            lowercase: true
+        },
         avatar_url: {
             type: String,
             default: "https://as2.ftcdn.net/jpg/03/31/69/91/1000_F_331699188_lRpvqxO5QRtwOM05gR50ImaaJgBx68vi.jpg"

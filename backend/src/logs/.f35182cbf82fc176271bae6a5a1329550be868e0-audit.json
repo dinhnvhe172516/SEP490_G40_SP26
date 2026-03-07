@@ -29,6 +29,11 @@
             "date": 1772700032610,
             "name": "D:\\Respositories\\SEP490_G40_SP26\\backend\\src\\logs\\application-2026-03-05.log",
             "hash": "1a0790cd98229d7785fb1c0839f7654808b9284234f8ba4a119497aa0342defb"
+        },
+        {
+            "date": 1772886999725,
+            "name": "D:\\Respositories\\SEP490_G40_SP26\\backend\\src\\logs\\application-2026-03-07.log",
+            "hash": "a3caf2bdcc18edbdfdc41af42bf713c80d6c50de9635a8c2885d3a936f17e1fb"
         }
     ],
     "hashType": "sha256"
