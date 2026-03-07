@@ -124,7 +124,6 @@ const getListService = async (query) => {
 
 const getPatientById = async (id) => {
     try {
-        // Populate cả profile lẫn account trong 1 query
         const patient = await PatientModel.findById(id)
             .populate('profile_id', 'full_name phone email dob gender address avatar_url')
             .populate('account_id', 'email phone_number');
@@ -133,13 +132,11 @@ const getPatientById = async (id) => {
             throw new errorRes.NotFoundError('Patient not found');
         }
 
-        // Merge phone/email: ưu tiên Profile, fallback sang Account
-        const result = patient.toObject(); // chuyển sang plain object để chỉnh sửa
+        const result = patient.toObject();
         if (result.profile_id) {
             result.profile_id.phone = result.profile_id.phone ?? result.account_id?.phone_number;
             result.profile_id.email = result.profile_id.email ?? result.account_id?.email;
         }
-        // Ẩn account khỏi response (FE không cần)
         delete result.account_id;
 
         return result;
@@ -154,5 +151,46 @@ const getPatientById = async (id) => {
     }
 };
 
+const createPatientService = async (data) => {
+    let createdProfile = null;
+    try {
+        const { full_name, phone, email, dob, gender, address } = data;
 
-module.exports = { getListService, getPatientById };
+        if (!full_name?.trim()) {
+            throw new errorRes.BadRequestError('Họ tên không được để trống');
+        }
+
+        createdProfile = await ProfileModel.create({
+            full_name: full_name.trim(),
+            phone,
+            email,
+            dob,
+            gender,
+            address,
+        });
+
+        const patient = await PatientModel.create({
+            profile_id: createdProfile._id,
+            status: 'active',
+        });
+
+        return await PatientModel.findById(patient._id)
+            .populate('profile_id', 'full_name phone email dob gender address');
+
+    } catch (error) {
+        if (createdProfile) {
+            await ProfileModel.findByIdAndDelete(createdProfile._id).catch(() => { });
+        }
+
+        if (error.name === 'BadRequestError') throw error;
+        logger.error('Error creating patient', {
+            context: 'PatientService.createPatientService',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
+
+
+module.exports = { getListService, getPatientById, createPatientService };
