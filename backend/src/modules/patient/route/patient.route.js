@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListController, getByIdController } = require('../controller/patient.controller');
+const { getListController, getByIdController, createController } = require('../controller/patient.controller');
 
 /**
  * @swagger
@@ -160,5 +160,49 @@ router.get('/', getListController);
  *         $ref: '#/components/schemas/Error'
  */
 router.get('/:id', getByIdController);
+
+/**
+ * @swagger
+ * /api/patient:
+ *   post:
+ *     summary: Thêm bệnh nhân mới
+ *     tags: [Patient]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - full_name
+ *             properties:
+ *               full_name:
+ *                 type: string
+ *                 example: Nguyễn Văn A
+ *               phone:
+ *                 type: string
+ *                 example: "0901234567"
+ *               email:
+ *                 type: string
+ *                 example: patient@gmail.com
+ *               dob:
+ *                 type: string
+ *                 format: date
+ *                 example: "1990-05-15"
+ *               gender:
+ *                 type: string
+ *                 enum: [MALE, FEMALE, OTHER]
+ *               address:
+ *                 type: string
+ *                 example: 123 Lê Lợi, TP.HCM
+ *     responses:
+ *       201:
+ *         description: Tạo thành công
+ *       400:
+ *         description: Thiếu dữ liệu bắt buộc
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/', createController);
 
 module.exports = router;

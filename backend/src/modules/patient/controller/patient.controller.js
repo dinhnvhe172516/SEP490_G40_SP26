@@ -52,4 +52,29 @@ const getByIdController = async (req, res) => {
     }
 };
 
-module.exports = { getListController, getByIdController };
+// POST /api/patient
+const createController = async (req, res) => {
+    try {
+        const data = req.body || {};
+        logger.debug('Create patient request', {
+            context: 'PatientController.createController',
+            data
+        });
+
+        const patient = await PatientService.createPatientService(data);
+
+        return new successRes.CreateSuccess(
+            patient,
+            'Patient created successfully'
+        ).send(res);
+
+    } catch (error) {
+        logger.error('Error create patient', {
+            context: 'PatientController.createController',
+            message: error.message,
+        });
+        throw error;
+    }
+};
+
+module.exports = { getListController, getByIdController, createController };
