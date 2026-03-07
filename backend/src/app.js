@@ -106,6 +106,10 @@ app.use('/api/staff', routeStaff);
 const { route: routeAppointment } = require('./modules/appointment');
 app.use('/api/appointment', routeAppointment);
 
+const { route: routePatient } = require('./modules/patient');
+app.use('/api/patient', routePatient);
+
+
 const { route: routeTreatment } = require('./modules/treatment');
 app.use('/api/dentist', routeTreatment);
 

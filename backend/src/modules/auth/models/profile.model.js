@@ -6,8 +6,9 @@ const profileSchema = new Schema(
         account_id: {
             type: Schema.Types.ObjectId,
             ref: "Account",
-            required: true,
+            required: false,
             unique: true,
+            sparse: true,   // cho phép nhiều document có account_id = null
             index: true
         },
 

@@ -44,6 +44,34 @@ const getListService = async (query) => {
                 }
             },
 
+            // Lookup account để lấy phone/email cho bệnh nhân đã có tài khoản
+            {
+                $lookup: {
+                    from: 'accounts',
+                    localField: 'account_id',
+                    foreignField: '_id',
+                    as: 'account'
+                }
+            },
+            {
+                $unwind: {
+                    path: '$account',
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+
+            // Gộp phone/email: ưu tiên lấy từ Profile, nếu null thì lấy từ Account
+            {
+                $addFields: {
+                    'profile.phone': {
+                        $ifNull: ['$profile.phone', '$account.phone_number']
+                    },
+                    'profile.email': {
+                        $ifNull: ['$profile.email', '$account.email']
+                    }
+                }
+            },
+
             { $match: matchCondition },
 
             {
@@ -92,3 +120,5 @@ const getListService = async (query) => {
         throw new errorRes.InternalServerError(error.message);
     }
 };
+
+module.exports = { getListService };
