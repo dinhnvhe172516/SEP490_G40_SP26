@@ -121,4 +121,38 @@ const getListService = async (query) => {
     }
 };
 
-module.exports = { getListService };
+
+const getPatientById = async (id) => {
+    try {
+        // Populate cả profile lẫn account trong 1 query
+        const patient = await PatientModel.findById(id)
+            .populate('profile_id', 'full_name phone email dob gender address avatar_url')
+            .populate('account_id', 'email phone_number');
+
+        if (!patient) {
+            throw new errorRes.NotFoundError('Patient not found');
+        }
+
+        // Merge phone/email: ưu tiên Profile, fallback sang Account
+        const result = patient.toObject(); // chuyển sang plain object để chỉnh sửa
+        if (result.profile_id) {
+            result.profile_id.phone = result.profile_id.phone ?? result.account_id?.phone_number;
+            result.profile_id.email = result.profile_id.email ?? result.account_id?.email;
+        }
+        // Ẩn account khỏi response (FE không cần)
+        delete result.account_id;
+
+        return result;
+
+    } catch (error) {
+        if (error.name === 'NotFoundError') throw error;
+        logger.error('Error getting patient by id', {
+            context: 'PatientService.getPatientById',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
+
+module.exports = { getListService, getPatientById };
