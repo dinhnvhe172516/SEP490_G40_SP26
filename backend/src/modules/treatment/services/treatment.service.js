@@ -276,7 +276,7 @@ const findById = async (id) => {
 }
 
 /**
- * Update only status of treatment - cannot update status if current status is CANCELLED or DONE
+ * Update only status of treatment - cannot update status if current status is CANCELLED or APPROVED
  * @param {ObjectId} id treatment id to find
  * @param {string} status the new status to set
  * @returns treatment object or null if not found
@@ -290,7 +290,7 @@ const updateStatusOnly = async (id, status) => {
         if (treatment.status === status) {
             return treatment; 
         }
-        if (treatment.status === 'CANCELLED' || treatment.status === 'DONE') {
+        if (treatment.status === 'CANCELLED' || treatment.status === 'APPROVED') {
             throw new errorRes.BadRequestError(`Cannot change status from ${treatment.status}`);
         }
         const newData = await model.Treatment.findByIdAndUpdate(
