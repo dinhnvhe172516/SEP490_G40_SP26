@@ -42,8 +42,6 @@ const getListOfPatientService = async (query, patientId) => {
     const limit = Math.max(1, parseInt(query.limit || 5));
     const skip = (page - 1) * limit;
 
-    const patientObjectId = new mongoose.Types.ObjectId(patientId);
-
     // 2. KHỞI TẠO PIPELINE AGGREGATION
     const aggregatePipeline = [];
 
@@ -51,7 +49,7 @@ const getListOfPatientService = async (query, patientId) => {
     const initialMatch = {};
 
     if (patientId) {
-      initialMatch.patient_id = patientObjectId;
+      initialMatch.patient_id = new mongoose.Types.ObjectId(patientId);
     }
     if (filterDentalRecord) {
       initialMatch.status = filterDentalRecord;
@@ -68,9 +66,27 @@ const getListOfPatientService = async (query, patientId) => {
       },
     });
 
+    // Flatten mảng doctor_info thành object
     aggregatePipeline.push({
       $addFields: {
         doctor_info: { $arrayElemAt: ["$doctor_info", 0] },
+      },
+    });
+
+    // --- STAGE 2.5: JOIN với bảng Profile (Lấy full_name, avatar... của Bác sĩ) ---
+    aggregatePipeline.push({
+      $lookup: {
+        from: "profiles", // Tên collection được định nghĩa trong Profile model
+        localField: "doctor_info.profile_id", // Khóa ngoại nằm trong object doctor_info
+        foreignField: "_id", // So khớp với _id của bảng Profile
+        as: "doctor_info.profile", // Gắn kết quả vào một field con tên là 'profile'
+      },
+    });
+
+    // Flatten mảng profile bên trong doctor_info
+    aggregatePipeline.push({
+      $addFields: {
+        "doctor_info.profile": { $arrayElemAt: ["$doctor_info.profile", 0] },
       },
     });
 
@@ -95,7 +111,8 @@ const getListOfPatientService = async (query, patientId) => {
       const searchRegex = { $regex: search, $options: "i" };
       complexMatch.$or = [
         { record_name: searchRegex },
-        { "doctor_info.full_name": searchRegex },
+        // 💡 ĐÃ SỬA LẠI ĐƯỜNG DẪN TÌM KIẾM CHO ĐÚNG VỚI CẤU TRÚC MỚI
+        { "doctor_info.profile.full_name": searchRegex }, 
         { "treatments.tooth_position": searchRegex },
       ];
     }
@@ -116,7 +133,8 @@ const getListOfPatientService = async (query, patientId) => {
           {
             $project: {
               __v: 0,
-              "doctor_info.password": 0, // Che mật khẩu bác sĩ
+              "doctor_info.__v": 0,
+              "doctor_info.profile.__v": 0,
             },
           },
         ],
@@ -139,13 +157,13 @@ const getListOfPatientService = async (query, patientId) => {
       },
     };
   } catch (error) {
-    logger.error("Error getting list of patient dental records", {
+    logger.error("Error getting list of dental records", {
       context: context,
       message: error.message,
       stack: error.stack,
     });
     throw new errorRes.InternalServerError(
-      `An error occurred while fetching list of dental records: ${error.message}`,
+      `An error occurred while fetching list of dental records: ${error.message}`
     );
   }
 };
