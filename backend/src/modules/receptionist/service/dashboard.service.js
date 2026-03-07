@@ -14,7 +14,8 @@ startOfMonth.setHours(0, 0, 0, 0);
 
 exports.getDashboard = async () => {
     try {
-        const [todayCount, pendingCount, unpaidCount, newPatientCount, todayAppointments, recentPatient] = await Promise.all([
+        //thieu unpaidcount
+        const [todayCount, pendingCount, newPatientCount, todayAppointments, recentPatient] = await Promise.all([
             AppointmentModel.countDocuments({
                 appointment_date: { $gte: startOfToday, $lte: endOfToday }
             }),
@@ -40,7 +41,7 @@ exports.getDashboard = async () => {
             PatientModel.find()
                 .sort({ createdAt: -1 })
                 .limit(5)
-                .populate('profile_id', 'full_name dob gender')
+                .populate('profile_id', 'full_name dob')
         ]);
 
         return {
