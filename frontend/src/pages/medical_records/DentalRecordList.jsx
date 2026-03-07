@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { getAllDentalRecords } from '../../services/dentalRecordService';
-import { FilePlus, ChevronRight, Phone, Activity, Loader2 } from 'lucide-react';
-import Button from '../../components/ui/Button';
 import CreateDentalRecordModal from './components/CreateDentalRecordModal';
 import DentalRecordFilter from './components/DentalRecordFilter';
 import DentalRecordCard from './components/DentalRecordCard';
@@ -21,8 +19,8 @@ const DentalRecordList = () => {
     const [records, setRecords] = useState([]);
     const [pagination, setPagination] = useState({ page: 1, totalItems: 0 });
     const [currentPage, setCurrentPage] = useState(1);
+    const [isVisible, setIsVisible] = useState(true); // for page-change animation
 
-    // Filter/search state
     const [inputValue, setInputValue] = useState(queryName);
     const [searchTerm, setSearchTerm] = useState(queryName);
     const [statusFilter, setStatusFilter] = useState('');
@@ -39,6 +37,7 @@ const DentalRecordList = () => {
     // ── Fetch ──────────────────────────────────────────────────────
     const fetchRecords = useCallback(async (page = 1) => {
         setIsLoading(true);
+        setIsVisible(false); // fade out
         setError(null);
         try {
             const params = {
@@ -57,19 +56,26 @@ const DentalRecordList = () => {
             setError('Không thể tải danh sách hồ sơ. Vui lòng thử lại.');
         } finally {
             setIsLoading(false);
+            // Slight delay before fading in for smooth feel
+            setTimeout(() => setIsVisible(true), 60);
         }
     }, [searchTerm, statusFilter, treatmentFilter, sortOrder]);
 
     useEffect(() => { fetchRecords(currentPage); }, [fetchRecords, currentPage]);
     useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter, treatmentFilter, sortOrder]);
 
-    // Debounce search input 400ms
+    // Debounce search 400ms
     useEffect(() => {
         const t = setTimeout(() => setSearchTerm(inputValue), 400);
         return () => clearTimeout(t);
     }, [inputValue]);
 
     // ── Handlers ──────────────────────────────────────────────────
+    const handlePageChange = (page) => {
+        setIsVisible(false);
+        setTimeout(() => setCurrentPage(page), 150);
+    };
+
     const handleClearFilter = () => {
         setInputValue('');
         setStatusFilter('');
@@ -84,43 +90,40 @@ const DentalRecordList = () => {
 
     // ── Render ────────────────────────────────────────────────────
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="space-y-5">
+
+            {/* ── Header ── */}
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-2 border-b border-gray-100">
                 <div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                        <Link to="/dentist/schedule" className="hover:text-blue-600">Lịch hẹn</Link>
-                        <ChevronRight size={14} />
-                        <span className="text-gray-900 font-medium">Hồ Sơ Nha Khoa</span>
-                    </div>
-                    <h1 className="text-3xl font-bold text-gray-900">
-                        {isPatientContext ? `Hồ Sơ: ${queryName}` : 'Hồ Sơ Nha Khoa'}
+                    <nav className="text-xs text-gray-400 mb-1 flex items-center gap-1.5">
+                        <Link to="/dentist/schedule" className="hover:text-teal-500 transition-colors">Lịch hẹn</Link>
+                        <span>/</span>
+                        <span className="text-gray-600">Hồ Sơ Nha Khoa</span>
+                    </nav>
+                    <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
+                        {isPatientContext ? `Hồ sơ của "${queryName}"` : 'Hồ Sơ Nha Khoa'}
                     </h1>
                     {isPatientContext && queryPhone && (
-                        <p className="text-gray-500 mt-1 text-sm flex items-center gap-1">
-                            <Phone size={13} /> {queryPhone}
-                        </p>
+                        <p className="text-sm text-gray-400 mt-0.5">{queryPhone}</p>
                     )}
                 </div>
-                <Button
+                <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center gap-2 self-start md:self-auto"
+                    className="self-start md:self-auto px-5 py-2 bg-teal-500 hover:bg-teal-600 text-white text-sm font-medium rounded-xl transition-colors duration-200 shadow-sm"
                 >
-                    <FilePlus size={18} />
-                    Tạo Hồ Sơ Mới
-                </Button>
+                    Tạo hồ sơ mới
+                </button>
             </div>
 
-            {/* Patient context notice */}
+            {/* ── Patient context notice ── */}
             {isPatientContext && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-                    <strong>Lưu ý:</strong> Hiển thị tất cả hồ sơ tìm theo&nbsp;
-                    <strong>"{queryName}"</strong>.
-                    Nếu có nhiều hồ sơ trùng tên, kiểm tra ngày sinh và giới tính để xác định đúng bệnh nhân.
+                <div className="bg-teal-50 border border-teal-100 rounded-xl px-4 py-3 text-sm text-teal-700">
+                    Hiển thị tất cả hồ sơ khớp với <strong>"{queryName}"</strong>.
+                    Nếu có nhiều kết quả, kiểm tra thêm ngày sinh hoặc số điện thoại để xác định đúng bệnh nhân.
                 </div>
             )}
 
-            {/* Search + Filter */}
+            {/* ── Filter ── */}
             <DentalRecordFilter
                 inputValue={inputValue} onInputChange={setInputValue}
                 statusFilter={statusFilter} onStatusChange={setStatusFilter}
@@ -129,54 +132,74 @@ const DentalRecordList = () => {
                 onClear={handleClearFilter}
             />
 
-            {/* Result count */}
-            <div className="text-sm text-gray-600">
-                Tìm thấy <strong className="text-blue-600">{pagination.totalItems ?? 0}</strong> hồ sơ
+            {/* ── Result summary ── */}
+            <div className="text-sm text-gray-400">
+                {isLoading ? 'Đang tải...' : (
+                    <>Tìm thấy <span className="text-gray-700 font-medium">{pagination.totalItems ?? 0}</span> hồ sơ</>
+                )}
             </div>
 
-            {/* Loading */}
-            {isLoading && (
-                <div className="flex justify-center py-16">
-                    <Loader2 size={36} className="animate-spin text-blue-500" />
-                </div>
-            )}
-
-            {/* Error */}
+            {/* ── Error ── */}
             {error && !isLoading && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700 text-sm flex items-center justify-between">
+                <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600 flex items-center justify-between">
                     <span>{error}</span>
-                    <button onClick={() => fetchRecords(currentPage)} className="underline font-medium">
+                    <button onClick={() => fetchRecords(currentPage)} className="underline font-medium hover:text-red-700">
                         Thử lại
                     </button>
                 </div>
             )}
 
-            {/* Empty state */}
-            {!isLoading && !error && records.length === 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 py-16 text-center text-gray-500">
-                    <Activity size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">Chưa có hồ sơ nha khoa</p>
-                    <p className="text-sm mt-1">Bấm "Tạo Hồ Sơ Mới" để thêm hồ sơ đầu tiên</p>
+            {/* ── Loading skeleton ── */}
+            {isLoading && (
+                <div className="space-y-3">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                        <div key={i} className="bg-white border border-gray-100 rounded-2xl p-6 animate-pulse">
+                            <div className="flex justify-between gap-4">
+                                <div className="flex-1 space-y-3">
+                                    <div className="h-4 bg-gray-100 rounded-lg w-1/3" />
+                                    <div className="h-3 bg-gray-100 rounded-lg w-1/2" />
+                                    <div className="h-3 bg-gray-100 rounded-lg w-2/3" />
+                                </div>
+                                <div className="h-9 w-24 bg-gray-100 rounded-xl shrink-0" />
+                            </div>
+                        </div>
+                    ))}
                 </div>
             )}
 
-            {/* Record list */}
+            {/* ── Empty state ── */}
+            {!isLoading && !error && records.length === 0 && (
+                <div className="bg-white border border-gray-100 rounded-2xl py-20 text-center">
+                    <p className="text-gray-400 text-sm">Chưa có hồ sơ nha khoa nào</p>
+                    <button
+                        onClick={() => setIsCreateModalOpen(true)}
+                        className="mt-3 text-teal-500 text-sm hover:underline"
+                    >
+                        Tạo hồ sơ đầu tiên
+                    </button>
+                </div>
+            )}
+
+            {/* ── Record list (fade transition) ── */}
             {!isLoading && !error && records.length > 0 && (
-                <div className="space-y-4">
+                <div
+                    className="space-y-3 transition-all duration-200"
+                    style={{ opacity: isVisible ? 1 : 0, transform: isVisible ? 'translateY(0)' : 'translateY(6px)' }}
+                >
                     {records.map(record => (
                         <DentalRecordCard key={record._id} record={record} />
                     ))}
                 </div>
             )}
 
-            {/* Pagination */}
+            {/* ── Pagination ── */}
             <DentalRecordPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                onPageChange={handlePageChange}
             />
 
-            {/* Create modal */}
+            {/* ── Create modal ── */}
             <CreateDentalRecordModal
                 isOpen={isCreateModalOpen}
                 onClose={() => setIsCreateModalOpen(false)}

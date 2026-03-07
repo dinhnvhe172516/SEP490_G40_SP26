@@ -1,15 +1,5 @@
-import Card from '../../../components/ui/Card';
-
 /**
- * DentalRecordFilter
- * Thanh tìm kiếm + bộ lọc của trang DentalRecordList (1 hàng ngang)
- *
- * Props:
- *   inputValue, onInputChange
- *   statusFilter, onStatusChange
- *   treatmentFilter, onTreatmentChange
- *   sortOrder, onSortChange
- *   onClear  – xóa tất cả filter
+ * DentalRecordFilter – Thanh tìm kiếm & bộ lọc (tối giản, không icon)
  */
 const DentalRecordFilter = ({
     inputValue, onInputChange,
@@ -21,62 +11,54 @@ const DentalRecordFilter = ({
     const hasFilter = inputValue || statusFilter || treatmentFilter || sortOrder;
 
     return (
-        <Card>
+        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
             <div className="flex flex-wrap gap-3 items-center">
-                {/* Search */}
                 <input
                     type="text"
-                    placeholder="Tìm theo tên hồ sơ, tên bác sĩ, vị trí răng..."
+                    placeholder="Tìm theo tên hồ sơ, bác sĩ, vị trí răng..."
                     value={inputValue}
                     onChange={(e) => onInputChange(e.target.value)}
-                    className="flex-1 min-w-[200px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="flex-1 min-w-[220px] px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white transition"
                 />
-
-                {/* filter_dental_record */}
                 <select
                     value={statusFilter}
                     onChange={(e) => onStatusChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white transition"
                 >
                     <option value="">Trạng thái hồ sơ</option>
                     <option value="IN_PROGRESS">Đang điều trị</option>
                     <option value="COMPLETED">Hoàn thành</option>
                     <option value="CANCELLED">Đã hủy</option>
                 </select>
-
-                {/* filter_treatment */}
                 <select
                     value={treatmentFilter}
                     onChange={(e) => onTreatmentChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white transition"
                 >
                     <option value="">Trạng thái phiếu</option>
                     <option value="PENDING">Chờ phê duyệt</option>
                     <option value="APPROVED">Đã duyệt</option>
                     <option value="REJECTED">Từ chối</option>
                 </select>
-
-                {/* sort by start_date */}
                 <select
                     value={sortOrder}
                     onChange={(e) => onSortChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white transition"
                 >
-                    <option value="">Sắp xếp ngày bắt đầu</option>
+                    <option value="">Sắp xếp</option>
                     <option value="asc">Cũ nhất trước</option>
                     <option value="desc">Mới nhất trước</option>
                 </select>
-
                 {hasFilter && (
                     <button
                         onClick={onClear}
-                        className="text-sm text-red-500 hover:text-red-700 underline whitespace-nowrap"
+                        className="px-3 py-2 text-sm text-gray-400 hover:text-red-500 transition underline-offset-2 hover:underline"
                     >
                         Xóa lọc
                     </button>
                 )}
             </div>
-        </Card>
+        </div>
     );
 };
 
