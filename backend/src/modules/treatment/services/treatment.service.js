@@ -253,70 +253,58 @@ const updateService = async (accountId, data) => {
     }
 };
 
-/*
-    Update Status and Auto-generate Queue Number
-*/
+/**
+ * find treatment by id
+ * @param {ObjectId} id treatment id to find
+ * @returns treatment object or null if not found
+ */
+const findById = async (id) => {
+    try {
+        const data = await model.Treatment.findById(id);
+        return data || null;
+    } catch (error) {
+        logger.error("Error finding treatment by id", {
+            context: "TreatmentService.findById",
+            treatmentId: id,
+            message: error.message,
+            stack: error.stack,
+        });
+        return null;
+    }
+}
+
+/**
+ * Update only status of treatment - cannot update status if current status is CANCELLED or DONE
+ * @param {ObjectId} id treatment id to find
+ * @param {string} status the new status to set
+ * @returns treatment object or null if not found
+ */
 const updateStatusOnly = async (id, status) => {
     try {
-        let newData = null;
-
-        // --- KỊCH BẢN 1: BỆNH NHÂN CHECK-IN TẠI QUẦY ---
-        if (status === "CHECKED_IN") {
-            // Bước 1: Phải tìm lịch hẹn trước để lấy ngày khám (appointment_date)
-            const existingAppt = await AppointmentModel.findById(id);
-
-            if (!existingAppt) {
-                throw new errorRes.NotFoundError("Appointment not found");
-            }
-
-            // Bảo vệ API (Idempotent): Nếu khách ấn Check-in 2 lần liên tiếp, 
-            // hoặc đã có số rồi thì không cấp số mới, trả về kết quả luôn.
-            if (existingAppt.status === "CHECKED_IN" && existingAppt.queue_number) {
-                return existingAppt;
-            }
-
-            // Bước 2: Gọi hàm sinh số thứ tự thông minh từ Model
-            const nextNumber = await AppointmentModel.getNextQueueNumber(existingAppt.appointment_date);
-
-            // Bước 3: Cập nhật ĐỒNG THỜI cả trạng thái và số thứ tự
-            newData = await AppointmentModel.findByIdAndUpdate(
-                id,
-                {
-                    status: status,
-                    queue_number: nextNumber
-                },
-                { new: true } // Trả về object sau khi đã update xong
-            );
+        const treatment = await findById(id);
+        if (!treatment) {
+            throw new errorRes.NotFoundError("Treatment not found");
         }
-
-        // --- KỊCH BẢN 2: CÁC TRẠNG THÁI KHÁC (SCHEDULED, COMPLETED, CANCELLED...) ---
-        else {
-            newData = await AppointmentModel.findByIdAndUpdate(
-                id,
-                { status: status },
-                { new: true }
-            );
+        if (treatment.status === status) {
+            return treatment; 
         }
-
-        // --- KIỂM TRA LẠI KẾT QUẢ ---
-        if (!newData) {
-            throw new errorRes.NotFoundError("Appointment not found or update failed");
+        if (treatment.status === 'CANCELLED' || treatment.status === 'DONE') {
+            throw new errorRes.BadRequestError(`Cannot change status from ${treatment.status}`);
         }
-
+        const newData = await model.Treatment.findByIdAndUpdate(
+            id,
+            { status: status },
+            { new: true }
+        );
         return newData;
-
     } catch (error) {
-        logger.error("Error updating appointment status.", {
-            context: "AppointmentService.updateStatusOnly",
-            appointmentId: id,
+        logger.error("Error updating treatment status.", {
+            context: "TreatmentService.updateStatusOnly",
+            treatmentId: id,
             status: status,
             message: error.message
         });
-
-        // Ném tiếp các lỗi đã được định nghĩa (ví dụ: NotFoundError)
         if (error.statusCode) throw error;
-
-        // Bắt các lỗi hệ thống (Database lỗi, rớt mạng...)
         throw new errorRes.InternalServerError(`Update fails: ${error.message}`);
     }
 };

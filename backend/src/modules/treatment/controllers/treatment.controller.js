@@ -192,32 +192,31 @@ const updateController = async (req, res) => {
   }
 };
 
-// update appointment status only
+/**
+ * upate status of treatment
+ * @param {*} req (status) mới và id của appointment cần cập nhật
+ * @param {*} res 
+ * @returns {object} treatment đã được cập nhật
+ */
 const updateStatusController = async (req, res) => {
+  const context = "TreatmentController.updateStatusController";
   try {
     // 1. Lấy ID của Appointment
     const { id } = req.params;
     const { status } = req.body || {};
 
-    logger.debug("Update appointment status request received", {
-      context: "AppointmentController.updateStatusController",
-      appointmentId: id,
+    logger.debug("Update treatment status request received", {
+      context: context,
+      treatmentId: id,
       status: status,
     });
 
     // 2. Validate Status
-    const validStatuses = [
-      "SCHEDULED",
-      "CHECKED_IN",
-      "IN_CONSULTATION",
-      "COMPLETED",
-      "CANCELLED",
-      "NO_SHOW"
-    ];
+    const validStatuses = ['PLANNED', 'WAITING_APPROVAL', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
 
     if (!status || !validStatuses.includes(status)) {
       logger.warn("Invalid or missing status value", {
-        context: "AppointmentController.updateStatusController",
+        context: context,
         status: status,
         allowed: validStatuses,
       });
@@ -226,36 +225,34 @@ const updateStatusController = async (req, res) => {
       );
     }
 
-    // 3. Gọi Service cập nhật (Đã sửa lỗi: truyền trực tiếp biến status dạng chuỗi)
     const result = await ServiceProcess.updateStatusOnly(id, status);
 
     // Kiểm tra kết quả
     if (!result) {
-      throw new errorRes.NotFoundError("Appointment not found or update failed");
+      throw new errorRes.NotFoundError("Treatment not found or update failed");
     }
 
-    logger.info("Appointment status updated successfully", {
-      context: "AppointmentController.updateStatusController",
-      appointmentId: result._id,
+    logger.info("Treatment status updated successfully", {
+      context: context,
+      treatmentId: result._id,
       newStatus: result.status,
     });
 
     // 4. Trả về kết quả
     return new successRes.UpdateSuccess(
       result,
-      "Appointment status updated successfully"
+      "Treatment status updated successfully"
     ).send(res);
 
   } catch (error) {
-    logger.error("Error updating appointment status", {
-      context: "AppointmentController.updateStatusController",
+    logger.error("Error updating treatment status", {
+      context: context,
       message: error.message,
       stack: error.stack,
     });
     throw error;
   }
 };
-
 
 module.exports = {
   getByIdController,
