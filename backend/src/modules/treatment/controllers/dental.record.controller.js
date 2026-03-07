@@ -3,9 +3,9 @@ const errorRes = require("../../../common/errors");
 const successRes = require("../../../common/success");
 const { cleanObjectData } = require("../../../common/utils/cleanObjectData");
 const Pagination = require("../../../common/responses/Pagination");
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
 
-const {dental: ServiceProcess} = require("../services/index.service");
+const { dental: ServiceProcess } = require("../services/index.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
 const { findStaffByAccountId, findPatientByAccountId } = require("../../auth/service/account.service");
 const { checkDuplicateDental } = require("../services/dental.record.service");
@@ -86,7 +86,7 @@ const getListDentalOfPatientController = async (queryParams, patientId) => {
       patientId: patientId,
     });
 
-    const { data, pagination } = await ServiceProcess.getListOfPatientService(queryParams,patientId);
+    const { data, pagination } = await ServiceProcess.getListOfPatientService(queryParams, patientId);
 
     const paginationData = new Pagination({
       page: pagination.page,
@@ -94,7 +94,7 @@ const getListDentalOfPatientController = async (queryParams, patientId) => {
       totalItems: pagination.totalItems,
     });
 
-    return {data, pagination: paginationData};
+    return { data, pagination: paginationData };
   } catch (error) {
     logger.error("Error get Dental Record", {
       context: context,
@@ -123,8 +123,8 @@ const getListOfPatientController = async (req, res) => {
   const context = "DentalRecordController.getListOfPatientController";
   try {
     const queryParams = req.query;
-    const {account_id: accountPatientId} = req.user;
-    const {patient} = await findPatientByAccountId(accountPatientId);
+    const { account_id: accountPatientId } = req.user;
+    const { patient } = await findPatientByAccountId(accountPatientId);
     if (!patient) {
       logger.warn("Patient not found for account_id", {
         context: context,
@@ -132,7 +132,7 @@ const getListOfPatientController = async (req, res) => {
       });
       throw new errorRes.NotFoundError("Patient not found!")
     };
-    const {data, pagination} = await getListDentalOfPatientController(queryParams, patient._id);
+    const { data, pagination } = await getListDentalOfPatientController(queryParams, patient._id);
 
     return new successRes.GetListSuccess(
       data,
@@ -269,8 +269,8 @@ const createController = async (req, res) => {
     });
 
     // --- 1. FIND DOCTOR & APPOINTMENT ---
-    const {staff: doctor} = await findStaffByAccountId(accountDoctorId);
-    
+    const { staff: doctor } = await findStaffByAccountId(accountDoctorId);
+
     if (!doctor) {
       logger.warn("Doctor not found for account_id", {
         context: context,
@@ -309,10 +309,10 @@ const createController = async (req, res) => {
     // Gán khóa ngoại
     dataCreate.created_by = doctor._id;
     dataCreate.patient_id = patientID;
-    
+
     // --- 2. CLEAN & AUTO-FILL SNAPSHOT DATA ---
     const cleanedData = cleanObjectData(dataCreate);
-    
+
     // --- 3. VALIDATION ---
     // Khai báo các fields BẮT BUỘC dựa theo Schema DentalRecord
     const requiredFields = [
@@ -325,7 +325,7 @@ const createController = async (req, res) => {
 
     // Kiểm tra validation cơ bản
     checkRequiredFields(requiredFields, cleanedData, this, "createController");
-    
+
     // --- 4. CALL SERVICE ---
     const newData = await ServiceProcess.createService(cleanedData);
     if (!newData) {
@@ -335,8 +335,8 @@ const createController = async (req, res) => {
 
     // --- 5. RESPONSE ---
     return new successRes.CreateSuccess(
-        newData, 
-        "Dental record created successfully"
+      newData,
+      "Dental record created successfully"
     ).send(res);
 
   } catch (error) {
@@ -344,7 +344,7 @@ const createController = async (req, res) => {
       context: context,
       message: error.message,
     });
-    throw error; 
+    throw error;
   }
 };
 
@@ -365,7 +365,7 @@ const updateController = async (req, res) => {
     const { id } = req.params;
     const dataUpdate = req.body || {};
     const { account_id: accountDoctorId } = req.user;
-    
+
     logger.debug("Base data for update dental record", {
       context: context,
       dentalRecordId: id,
@@ -392,10 +392,10 @@ const updateController = async (req, res) => {
     // 3. LỌC DỮ LIỆU (Whitelist): Chỉ cho phép lấy các field được phép update
     const allowedUpdates = {};
     const allowedFields = [
-      "full_name", 
-      "phone", 
-      "record_name", 
-      "description", 
+      "full_name",
+      "phone",
+      "record_name",
+      "description",
       "status"
     ];
 
@@ -419,7 +419,7 @@ const updateController = async (req, res) => {
         });
         throw new errorRes.NotFoundError("Dental record not found");
       }
-      
+
       const patientId = currentDentalRecord.patient_id;
       const dentalDuplicate = await ServiceProcess.checkDuplicateDentalExcludeId(patientId, cleanedData.record_name, id);
       if (dentalDuplicate) {
@@ -445,8 +445,8 @@ const updateController = async (req, res) => {
 
     // 6. Gửi response thành công
     return new successRes.UpdateSuccess(
-        updated, 
-        "Dental record updated successfully"
+      updated,
+      "Dental record updated successfully"
     ).send(res);
 
   } catch (error) {
@@ -462,7 +462,7 @@ const updateController = async (req, res) => {
 const findUserByUserInfo = async (req, res) => {
   const context = "DentalRecordController.findUserByUserInfo";
   try {
-    const {search} = req.query;
+    const { search } = req.query;
     if (!search) {
       logger.warn("Missing search query parameter", {
         context: context,
@@ -470,7 +470,7 @@ const findUserByUserInfo = async (req, res) => {
       throw new errorRes.BadRequestError("Search query parameter is required");
     }
     const userList = await ServiceProcess.findDentalByInforUser(search);
-    return new successRes.Success(userList, "Users found successfully").send(res);
+    return new successRes.GetListSuccess(userList, "Users found successfully").send(res);
   } catch (error) {
     logger.error("Error find user by user info", {
       context: context,
