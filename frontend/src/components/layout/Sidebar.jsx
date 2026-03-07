@@ -46,7 +46,6 @@ const Sidebar = ({ role }) => {
                 icon: Stethoscope,
                 label: 'Quản lý hồ sơ nha khoa',
                 children: [
-                    { path: '/dentist/dental-records', icon: ClipboardList, label: 'Xem hồ sơ' },
                     { path: '/dentist/dental-records/search', icon: ClipboardList, label: 'Tìm kiếm hồ sơ' },
                     { path: '/dentist/treatments', icon: ClipboardList, label: 'Xem phiếu điều trị' },
                     { path: '/dentist/treatment-approvals', icon: CheckSquare, label: 'Phê duyệt phiếu' },

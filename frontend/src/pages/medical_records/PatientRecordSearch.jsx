@@ -73,7 +73,6 @@ const PatientRecordSearch = () => {
     }, []);
 
     const handleSelectPatient = (patient) => {
-        console.log(patient?.patient_id);
         setSelectedPatient(patient);
         fetchRecords(patient);
     };

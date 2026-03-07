@@ -6,7 +6,6 @@ import DentistAppointmentList from '../../pages/appointments/DentistAppointmentL
 import DentistPatientList from '../../pages/patients/DentistPatientList';
 import LeaveRequestList from '../../pages/leave_requests/LeaveRequestList';
 import AssistantLeaveRequests from '../../pages/leave_requests/AssistantLeaveRequests/AssistantLeaveRequests';
-import DentalRecordList from '../../pages/medical_records/DentalRecordList';
 import DentalRecordDetail from '../../pages/medical_records/DentalRecordDetail';
 import PatientRecordSearch from '../../pages/medical_records/PatientRecordSearch';
 import TreatmentList from '../../pages/treatments/TreatmentList';
@@ -49,16 +48,6 @@ const dashboardRoutes = [
             <ProtectedRoute allowedRoles={['DOCTOR']}>
                 <DashboardLayout>
                     <LeaveRequestList />
-                </DashboardLayout>
-            </ProtectedRoute>
-        )
-    },
-    {
-        path: '/dentist/dental-records',
-        element: (
-            <ProtectedRoute allowedRoles={['DOCTOR']}>
-                <DashboardLayout>
-                    <DentalRecordList />
                 </DashboardLayout>
             </ProtectedRoute>
         )
