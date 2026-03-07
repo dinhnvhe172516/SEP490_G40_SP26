@@ -3,8 +3,6 @@ const successRes = require('../../../common/success');
 
 const PatientService = require('../service/patient.service');
 
-// GET /api/patient
-// Query: search, status, page, limit
 const getListController = async (req, res) => {
     try {
         logger.debug('Get patient list request', {
@@ -29,4 +27,29 @@ const getListController = async (req, res) => {
     }
 };
 
-module.exports = { getListController };
+// GET /api/patient/:id
+const getByIdController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        logger.debug('Get patient by id request', {
+            context: 'PatientController.getByIdController',
+            id
+        });
+
+        const patient = await PatientService.getPatientById(id);
+
+        return new successRes.GetDetailSuccess(
+            patient,
+            'Patient retrieved successfully'
+        ).send(res);
+
+    } catch (error) {
+        logger.error('Error get patient by id', {
+            context: 'PatientController.getByIdController',
+            message: error.message,
+        });
+        throw error;
+    }
+};
+
+module.exports = { getListController, getByIdController };

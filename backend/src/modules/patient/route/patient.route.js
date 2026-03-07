@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListController } = require('../controller/patient.controller');
+const { getListController, getByIdController } = require('../controller/patient.controller');
 
 /**
  * @swagger
@@ -100,5 +100,65 @@ const { getListController } = require('../controller/patient.controller');
  *         $ref: '#/components/schemas/Error'
  */
 router.get('/', getListController);
+
+/**
+ * @swagger
+ * /api/patient/{id}:
+ *   get:
+ *     summary: Chi tiết bệnh nhân
+ *     tags: [Patient]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ID của bệnh nhân
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     patient_code:
+ *                       type: string
+ *                       example: PT000001
+ *                     status:
+ *                       type: string
+ *                       example: active
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                     profile_id:
+ *                       type: object
+ *                       properties:
+ *                         full_name:
+ *                           type: string
+ *                         phone:
+ *                           type: string
+ *                         email:
+ *                           type: string
+ *                         dob:
+ *                           type: string
+ *                         gender:
+ *                           type: string
+ *                         address:
+ *                           type: string
+ *       404:
+ *         description: Không tìm thấy bệnh nhân
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.get('/:id', getByIdController);
 
 module.exports = router;
