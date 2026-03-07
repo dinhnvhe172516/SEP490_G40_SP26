@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import Button from '../../../components/ui/Button';
 
 const statusConfig = {
     IN_PROGRESS: { label: 'Đang điều trị', style: 'bg-amber-50 text-amber-700 border-amber-200' },
@@ -82,12 +83,14 @@ const DentalRecordCard = ({ record }) => {
                     </div>
 
                     {/* Right: nút xem chi tiết */}
-                    <button
+                    <Button
                         onClick={() => navigate(`/dentist/dental-records/${record._id}`)}
                         className="flex-shrink-0 self-center px-5 py-2 rounded-xl border border-teal-500 text-teal-600 text-sm font-medium hover:bg-teal-500 hover:text-white transition-all duration-200"
+                        variant="outline"
+                        size="sm"
                     >
                         Xem chi tiết
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
