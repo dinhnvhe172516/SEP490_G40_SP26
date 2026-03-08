@@ -684,12 +684,21 @@ const checkinService = async (data) => {
     }
 };
 
+/**
+ * get raw appointment by id without populate
+ * @param {ObjectId} id appointment id to find
+ * @returns appointment object or null if not found
+ */
 const findById = async (id) => {
     try {
+        logger.debug("Finding appointment by id", {
+            context: "AppointmentService.findById",
+            appointmentId: id,
+        });
         if (!id) return null;
         return await AppointmentModel.findById(id).lean();
     } catch (error) {
-        logger.error("Error get qppointment by id", {
+        logger.error("Error get appointment by id", {
             context: "AppointmentService.findById",
             error: error
         });

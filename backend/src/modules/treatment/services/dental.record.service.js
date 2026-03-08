@@ -429,7 +429,7 @@ const checkDuplicateDentalExcludeId = async (
 };
 
 /**
- * only find dental record by id
+ * get raw dental record by id
  *
  * @param {ObjectId} id dental record id for searching
  * @returns Object {dentalRecord} if found, otherwisr return null

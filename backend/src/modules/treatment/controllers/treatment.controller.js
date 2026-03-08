@@ -5,6 +5,7 @@ const { cleanObjectData } = require("../../../common/utils/cleanObjectData");
 
 const ServiceProcess = require("../services/treatment.service");
 const dentalService = require("../services/dental.record.service");
+const appointmentService = require("../../appointment/services/appointment.service");
 const { checkRequiredFields } = require("../../../utils/checkRequiredFields");
 
 
@@ -46,7 +47,7 @@ const getByIdController = async (req, res) => {
 };
 
 /**
- * create new treatment by dental record id 
+ * create new treatment by dental record id and body must have appointment_id
  * - Lưu ý: Đây là controller dành cho việc tạo mới một treatment dựa trên một dental record đã tồn tại.
  * - Client sẽ gửi lên ID của dental record mà treatment này thuộc về, cùng với các thông tin cần thiết để tạo treatment. 
  * - Controller sẽ lấy ID của dental record từ URL params, và các thông tin khác từ body request.
@@ -71,22 +72,54 @@ const createController = async (req, res) => {
       throw new errorRes.BadRequestError("Dental record ID is required in URL");
     }
 
-    const dental = await dentalService.getByIdService(dentalRecordId, null);
-    
+    /*
+      Kiểm tra xem dental record có tồn tại không và có đang ở trạng thái IN_PROGRESS không
+      - Nếu dental record không tồn tại, trả về lỗi NotFound
+      - Nếu dental record tồn tại nhưng không ở trạng thái IN_PROGRESS, trả về lỗi BadRequest (vì chỉ có thể thêm treatment vào dental record đang tiến hành)
+    */
+    const dental = await dentalService.getDentalRecordById(dentalRecordId);
     if (!dental) {
       logger.warn("Dental record not found for given ID", { context, dentalRecordId });
       throw new errorRes.NotFoundError("Dental record not found");
     }
-
     if (dental.status !== 'IN_PROGRESS') {
-      logger.warn("Attempt to add treatment to a closed dental record", { context, status: dental.status });
+      logger.warn("Attempt to add treatment to a closed dental record", { 
+        context, 
+        dentalRecordId,
+        status: dental.status,
+        dental: dental
+      });
       throw new errorRes.BadRequestError(
         `Cannot add treatment. Dental record is currently ${dental.status}.`
       );
     }
-
     cleanedData.record_id = dental._id;
     cleanedData.patient_id = dental.patient_id;
+
+    /*
+      Kiểm tra xem appointment có tồn tại không và có thuộc về cùng một bệnh nhân với dental record không
+      - Nếu appointment không tồn tại, trả về lỗi NotFound
+      - Nếu appointment tồn tại nhưng patient_id của appointment không khớp với patient_id của dental record, 
+      trả về lỗi BadRequest (vì treatment phải liên quan đến một cuộc hẹn của cùng một bệnh nhân)
+    */
+    const appointment = await appointmentService.findById(cleanedData.appointment_id);
+    if (!appointment) {
+      logger.warn("Appointment not found for given ID", { 
+        context, 
+        appointmentId: cleanedData.appointment_id 
+      });
+      throw new errorRes.NotFoundError("Appointment not found");
+    }
+    if (String(appointment.patient_id) !== String(cleanedData.patient_id)) {
+      logger.warn("Appointment patient ID does not match dental record patient ID", { 
+        context, 
+        appointmentId: cleanedData.appointment_id, 
+        appointmentPatientId: appointment.patient_id,
+        dentalRecordPatientId: cleanedData.patient_id
+      });
+      throw new errorRes.BadRequestError("Appointment does not belong to the same patient as the dental record");
+    }
+    cleanedData.doctor_id = appointment.doctor_id;
 
     const requiredFields = [
       "record_id",
