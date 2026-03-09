@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const InvoiceModel = require('../model/invoice.model');
 const ServiceModel = require('../../service/models/service.model');
 const PatientModel = require('../../patient/model/patient.model');
@@ -158,7 +159,7 @@ const createInvoice = async (data) => {
         // Tạo invoice — pre-save hook sẽ tự gen invoice_code và tính lại total_amount
         const invoice = await InvoiceModel.create({
             patient_id,
-            appointment_id: appointment_id || null,
+            appointment_id: (appointment_id && mongoose.isValidObjectId(appointment_id)) ? appointment_id : null,
             items: builtItems,
             status: 'PENDING',
             note: note || '',
