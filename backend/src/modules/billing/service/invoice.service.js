@@ -1,4 +1,6 @@
 const InvoiceModel = require('../model/invoice.model');
+const ServiceModel = require('../../service/models/service.model');
+const PatientModel = require('../../patient/model/patient.model');
 const Pagination = require('../../../common/responses/Pagination');
 const logger = require('../../../common/utils/logger');
 const errorRes = require('../../../common/errors');
@@ -121,4 +123,59 @@ const getInvoiceById = async (id) => {
 };
 
 
-module.exports = { getListInvoice, getInvoiceById };
+const createInvoice = async (data) => {
+    try {
+        const { patient_id, appointment_id, items, note, created_by } = data;
+
+        // Validate bắt buộc
+        if (!patient_id) throw new errorRes.BadRequestError('patient_id is required');
+        if (!items || items.length === 0) throw new errorRes.BadRequestError('items cannot be empty');
+
+        // Kiểm tra patient tồn tại
+        const patient = await PatientModel.findById(patient_id);
+        if (!patient) throw new errorRes.NotFoundError('Patient not found');
+
+        // Lấy thông tin dịch vụ từ DB cho từng item
+        // → lưu service_name và unit_price tại thời điểm tạo HĐ
+        // → tránh bị ảnh hưởng nếu dịch vụ thay đổi giá sau này
+        const builtItems = await Promise.all(
+            items.map(async (item) => {
+                if (!item.service_id) throw new errorRes.BadRequestError('service_id is required for each item');
+                const quantity = item.quantity || 1;
+
+                const service = await ServiceModel.findById(item.service_id);
+                if (!service) throw new errorRes.NotFoundError(`Service ${item.service_id} not found`);
+
+                return {
+                    service_id: service._id,
+                    service_name: service.service_name,  // snapshot tên dịch vụ
+                    unit_price: service.price,            // snapshot giá tại thời điểm tạo
+                    quantity,
+                    amount: service.price * quantity      // pre-save hook cũng tính lại, nhưng set trước cho rõ
+                };
+            })
+        );
+
+        // Tạo invoice — pre-save hook sẽ tự gen invoice_code và tính lại total_amount
+        const invoice = await InvoiceModel.create({
+            patient_id,
+            appointment_id: appointment_id || null,
+            items: builtItems,
+            status: 'PENDING',
+            note: note || '',
+            created_by: created_by || null,
+        });
+
+        return invoice;
+
+    } catch (error) {
+        if (['BadRequestError', 'NotFoundError'].includes(error.name)) throw error;
+        logger.error('Error creating invoice', {
+            context: 'InvoiceService.createInvoice',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
+module.exports = { getListInvoice, getInvoiceById, createInvoice };
