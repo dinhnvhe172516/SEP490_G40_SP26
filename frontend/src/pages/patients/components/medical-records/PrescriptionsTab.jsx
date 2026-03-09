@@ -65,7 +65,7 @@ const PrescriptionsTab = ({ treatments }) => {
                                         <tr key={i} className={`border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors`}>
                                             <td className="px-4 py-2.5 text-gray-500">{i + 1}</td>
                                             <td className="px-4 py-2.5 font-medium text-gray-800">
-                                                {med.medicine_id?.name || med.medicine_id || `Thuốc #${i + 1}`}
+                                                {med.medicine_id?.medicine_name || med.medicine_id?.name || `Thuốc #${i + 1}`}
                                             </td>
                                             <td className="px-4 py-2.5 text-center text-gray-700 font-medium bg-gray-50/50">{med.quantity}</td>
                                             <td className="px-4 py-2.5 text-gray-600">{med.usage_instruction || '—'}</td>

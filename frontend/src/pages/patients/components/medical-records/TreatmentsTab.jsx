@@ -74,7 +74,7 @@ const TreatmentsTab = ({ treatments, onViewDetail }) => {
                                             {t.medicine_usage.map((med, i) => (
                                                 <tr key={i} className="border-b border-blue-50/50 last:border-0 hover:bg-white/50 transition-colors">
                                                     <td className="px-3 py-2 font-medium text-gray-800">
-                                                        {med.medicine_id?.name || med.medicine_id || `Thuốc #${i + 1}`}
+                                                        {med.medicine_id?.medicine_name || med.medicine_id?.name || `Thuốc #${i + 1}`}
                                                     </td>
                                                     <td className="px-3 py-2 text-center text-gray-700 font-medium">{med.quantity}</td>
                                                     <td className="px-3 py-2 text-gray-600 text-xs">{med.usage_instruction || '—'}</td>

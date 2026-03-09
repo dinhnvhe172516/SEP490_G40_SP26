@@ -103,7 +103,7 @@ const TreatmentDetailModal = ({ treatment, onClose }) => {
                                         {treatment.medicine_usage.map((med, i) => (
                                             <tr key={i} className="border-t border-gray-100">
                                                 <td className="px-3 py-2 text-gray-800">
-                                                    {med.medicine_id?.name || med.medicine_id || `Thuốc #${i + 1}`}
+                                                    {med.medicine_id?.medicine_name || med.medicine_id?.name || `Thuốc #${i + 1}`}
                                                 </td>
                                                 <td className="px-3 py-2 text-center text-gray-700">{med.quantity}</td>
                                                 <td className="px-3 py-2 text-gray-600">{med.usage_instruction || '—'}</td>

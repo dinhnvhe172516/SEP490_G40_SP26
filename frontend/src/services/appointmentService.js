@@ -31,6 +31,16 @@ const appointmentService = {
         }
     },
 
+    // Cập nhật thông tin cuộc hẹn (ngày, giờ, lý do)
+    updateAppointment: async (id, data) => {
+        try {
+            const response = await apiClient.patch(`/api/appointment/${id}`, data);
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Hủy cuộc hẹn (cập nhật trạng thái thành CANCELLED)
     cancelAppointment: async (id) => {
         try {

@@ -163,27 +163,50 @@ const PatientAppointments = () => {
     /**
      * Handler: Submit form cập nhật
      */
-    const handleUpdateSubmit = (e) => {
+    const handleUpdateSubmit = async (e) => {
         e.preventDefault();
 
-        // Cập nhật appointment trong state
-        setAppointments(prev =>
-            prev.map(apt =>
-                apt.id === selectedAppointment.id
-                    ? { ...apt, ...updateForm }
-                    : apt
-            )
-        );
+        try {
+            const appointmentId = selectedAppointment._id || selectedAppointment.id;
 
-        // Đóng modal và hiển thị thông báo
-        setShowUpdateModal(false);
-        setToast({
-            show: true,
-            type: 'success',
-            message: '✅ Cập nhật lịch khám thành công!'
-        });
-        setSelectedAppointment(null);
-        setUpdateForm({ date: '', time: '', reason: '' });
+            // Gọi API cập nhật lịch khám
+            await appointmentService.updateAppointment(appointmentId, {
+                appointment_date: updateForm.date,
+                appointment_time: updateForm.time,
+                reason: updateForm.reason,
+            });
+
+            // Cập nhật lại state danh sách cho đồng bộ UI
+            setAppointments(prev =>
+                prev.map(apt =>
+                    (apt._id || apt.id) === appointmentId
+                        ? {
+                            ...apt,
+                            appointment_date: updateForm.date,
+                            appointment_time: updateForm.time,
+                            reason: updateForm.reason,
+                        }
+                        : apt
+                )
+            );
+
+            // Đóng modal và hiển thị thông báo
+            setShowUpdateModal(false);
+            setToast({
+                show: true,
+                type: 'success',
+                message: '✅ Cập nhật lịch khám thành công!'
+            });
+            setSelectedAppointment(null);
+            setUpdateForm({ date: '', time: '', reason: '' });
+        } catch (error) {
+            console.error('Error updating appointment:', error);
+            setToast({
+                show: true,
+                type: 'error',
+                message: error.response?.data?.message || '❌ Lỗi khi cập nhật lịch khám. Vui lòng thử lại!'
+            });
+        }
     };
 
     /**
