@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListController, getByIdController } = require('../controller/invoice.controller');
+const { getListController, getByIdController, createController } = require('../controller/invoice.controller');
 
 /**
  * @swagger
@@ -67,5 +67,54 @@ router.get('/', getListController);
  *         $ref: '#/components/schemas/Error'
  */
 router.get('/:id', getByIdController);
+
+/**
+ * @swagger
+ * /api/billing:
+ *   post:
+ *     summary: Tạo hóa đơn mới
+ *     tags: [Billing]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - patient_id
+ *               - items
+ *             properties:
+ *               patient_id:
+ *                 type: string
+ *                 example: "69857c47e1599b377c9337b4"
+ *               appointment_id:
+ *                 type: string
+ *                 example: "68ab3f1c2e..."
+ *               items:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required: [service_id]
+ *                   properties:
+ *                     service_id:
+ *                       type: string
+ *                       example: "699d1560e55c8a9dfeafa112"
+ *                     quantity:
+ *                       type: integer
+ *                       default: 1
+ *               note:
+ *                 type: string
+ *                 example: "Ghi chú thêm"
+ *     responses:
+ *       201:
+ *         description: Tạo thành công
+ *       400:
+ *         description: Thiếu dữ liệu bắt buộc
+ *       404:
+ *         description: Không tìm thấy patient hoặc service
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/', createController);
 
 module.exports = router;
