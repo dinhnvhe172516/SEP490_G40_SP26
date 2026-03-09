@@ -106,11 +106,24 @@ app.use('/api/staff', routeStaff);
 const { route: routeAppointment } = require('./modules/appointment');
 app.use('/api/appointment', routeAppointment);
 
+const { route: routePatient } = require('./modules/patient');
+app.use('/api/patient', routePatient);
+
+const { route: routeBilling } = require('./modules/billing');
+app.use('/api/billing', routeBilling);
+
+
+
 const { route: routeTreatment } = require('./modules/treatment');
 app.use('/api/dentist', routeTreatment);
 
 const { inventoryRoute } = require('./modules/inventory');
 app.use('/api/inventory', inventoryRoute);
+
+const { route: receptionistRoute } = require('./modules/receptionist');
+app.use('/api/receptionist', receptionistRoute);
+
+
 // 404 Handler - Must be after all routes
 app.use((req, res, next) => {
     res.status(404).json({
