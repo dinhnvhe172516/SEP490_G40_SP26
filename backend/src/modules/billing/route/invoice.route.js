@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListController } = require('../controller/invoice.controller');
+const { getListController, getByIdController } = require('../controller/invoice.controller');
 
 /**
  * @swagger
@@ -44,5 +44,28 @@ const { getListController } = require('../controller/invoice.controller');
  *         $ref: '#/components/schemas/Error'
  */
 router.get('/', getListController);
+
+/**
+ * @swagger
+ * /api/billing/{id}:
+ *   get:
+ *     summary: Chi tiết hóa đơn
+ *     tags: [Billing]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: MongoDB ID của hóa đơn
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       404:
+ *         description: Không tìm thấy hóa đơn
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.get('/:id', getByIdController);
 
 module.exports = router;
