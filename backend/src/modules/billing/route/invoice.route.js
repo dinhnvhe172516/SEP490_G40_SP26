@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getListController, getByIdController, createController } = require('../controller/invoice.controller');
+const { getListController, getByIdController, createController, updateStatusController } = require('../controller/invoice.controller');
 
 /**
  * @swagger
@@ -116,5 +116,44 @@ router.get('/:id', getByIdController);
  *         $ref: '#/components/schemas/Error'
  */
 router.post('/', createController);
+
+/**
+ * @swagger
+ * /api/billing/{id}/status:
+ *   put:
+ *     summary: Cập nhật trạng thái hóa đơn (Thanh toán / Hủy)
+ *     tags: [Billing]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [status]
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [COMPLETED, CANCELLED]
+ *                 example: "COMPLETED"
+ *               note:
+ *                 type: string
+ *                 example: "Bệnh nhân chuyển khoản đủ"
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ *       400:
+ *         description: Trạng thái không hợp lệ hoặc HĐ đã xử lý
+ *       404:
+ *         description: Không tìm thấy HĐ
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/status', updateStatusController);
 
 module.exports = router;
