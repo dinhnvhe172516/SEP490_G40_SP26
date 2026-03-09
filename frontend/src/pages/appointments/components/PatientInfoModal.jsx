@@ -13,7 +13,7 @@ const PatientInfoModal = ({ isOpen, onClose, appointment, onConfirm }) => {
             setForm({
                 name: appointment.patient_id?.full_name || appointment.patientName || "",
                 dob: appointment.patient_id?.dob ? new Date(appointment.patient_id.dob).toISOString().split('T')[0] : "",
-                gender: appointment.patient_id?.gender ? "Nam" : "Nữ", // boolean conversion if needed, assuming true is Nam
+                gender: appointment.patient_id?.gender ? "Nam" : "Nữ",
                 phone: appointment.patient_id?.phone || appointment.patientPhone || "",
             });
         }
