@@ -1,4 +1,5 @@
 const Medicine = require("../model/medicine.model");
+const MedicineCategory = require("../model/medicine-category.model");
 
 /**
  * Lấy danh sách thuốc có phân trang, tìm kiếm và lọc theo danh mục
@@ -24,7 +25,8 @@ exports.getMedicines = async ({ page = 1, limit = 10, search, category }) => {
 
     const [medicines, totalCount] = await Promise.all([
         Medicine.find(query)
-            .select("medicine_name category manufacturer price quantity min_quantity expiry_date unit dosage_form status batch_number")
+            .select("medicine_name category manufacturer price quantity expiry_date unit dosage_form status")
+            .populate("category", "name")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNum),
@@ -43,10 +45,12 @@ exports.getMedicines = async ({ page = 1, limit = 10, search, category }) => {
 };
 
 /**
- * Lấy danh sách danh mục thuốc (distinct)
+ * Lấy danh sách danh mục thuốc (từ bảng MedicineCategory)
  */
 exports.getCategories = async () => {
-    return await Medicine.distinct("category");
+    return await MedicineCategory.find({ status: "active" })
+        .select("name description")
+        .sort({ name: 1 });
 };
 
 /**
@@ -190,7 +194,7 @@ exports.updateMedicine = async (id, data) => {
  * Lấy chi tiết thuốc theo ID
  */
 exports.getMedicineById = async (id) => {
-    const medicine = await Medicine.findById(id);
+    const medicine = await Medicine.findById(id).populate("category", "name description");
     if (!medicine) {
         const error = new Error("Không tìm thấy thuốc");
         error.statusCode = 404;
