@@ -5,7 +5,7 @@ import serviceService from '../../../../services/serviceService';
 // Assuming appointmentService is used to fetch patients/appointments
 import appointmentService from '../../../../services/appointmentService';
 
-const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
+const CreateInvoiceModal = ({ isOpen, onClose, onSuccess, initialPatient }) => {
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
@@ -27,13 +27,22 @@ const CreateInvoiceModal = ({ isOpen, onClose, onSuccess }) => {
         if (isOpen) {
             fetchInitialData();
             // Reset form
-            setSelectedApt(null);
-            setSearchApt('');
+            if (initialPatient) {
+                // If opened from patient list, we might not have an appointment_id
+                // but the createInvoice API requires it if we want to link.
+                // However, the backend says appointment_id is optional in route but recommended.
+                // If no appointment, we just pass patient_id.
+                setSelectedApt(initialPatient);
+                setSearchApt(initialPatient.full_name || initialPatient.name || '');
+            } else {
+                setSelectedApt(null);
+                setSearchApt('');
+            }
             setItems([{ service_id: '', quantity: 1, price: 0 }]);
             setNote('');
             setError(null);
         }
-    }, [isOpen]);
+    }, [isOpen, initialPatient]);
 
     useEffect(() => {
         // Filter appointments based on search

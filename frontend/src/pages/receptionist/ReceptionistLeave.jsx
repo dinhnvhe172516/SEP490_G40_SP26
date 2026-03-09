@@ -4,53 +4,54 @@ import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import { formatDate } from '../../utils/dateUtils';
 import LeaveRequestModal from './components/modals/LeaveRequestModal';
-
-// Mock leave requests data
-const mockLeaveRequests = [
-    {
-        id: 'leave_rec_001',
-        startDate: '2026-05-10',
-        endDate: '2026-05-12',
-        leaveType: 'annual',
-        reason: 'Nghỉ phép năm',
-        status: 'approved',
-        submittedAt: '2026-04-10',
-        approvedBy: 'Quản lý',
-        approvedAt: '2026-04-11',
-        isDraft: false
-    },
-    {
-        id: 'leave_rec_002',
-        startDate: '2026-06-01',
-        endDate: '2026-06-02',
-        leaveType: 'sick',
-        reason: 'Nghỉ ốm',
-        status: 'pending',
-        submittedAt: '2026-05-15',
-        isDraft: false
-    }
-];
+import * as leaveRequestService from '../../services/leaveRequestService';
+import Toast from '../../components/ui/Toast';
+import { Loader2 } from 'lucide-react';
 
 const ReceptionistLeave = () => {
+    const [leaveRequests, setLeaveRequests] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [showModal, setShowModal] = useState(false);
     const [modalMode, setModalMode] = useState('create'); // 'create' or 'edit'
 
-    const filteredRequests = mockLeaveRequests.filter(req => {
+    const fetchLeaveRequests = async () => {
+        setLoading(true);
+        try {
+            const res = await leaveRequestService.getMyLeaveRequests();
+            const data = res.data?.data || res.data || [];
+            setLeaveRequests(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error('Lỗi khi tải danh sách nghỉ phép:', error);
+            setToast({ show: true, message: 'Không thể tải danh sách nghỉ phép', type: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useState(() => {
+        fetchLeaveRequests();
+    }, []);
+
+    const filteredRequests = leaveRequests.filter(req => {
         if (filterStatus === 'all') return true;
-        return req.status === filterStatus;
+        return req.status === filterStatus.toUpperCase();
     });
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'approved':
+            case 'APPROVED':
                 return { label: 'Đã duyệt', variant: 'success', icon: CheckCircle };
-            case 'pending':
+            case 'PENDING':
                 return { label: 'Chờ duyệt', variant: 'warning', icon: Clock };
-            case 'rejected':
+            case 'REJECTED':
                 return { label: 'Từ chối', variant: 'danger', icon: XCircle };
-            case 'draft':
+            case 'CANCELLED':
+                return { label: 'Đã hủy', variant: 'danger', icon: XCircle };
+            case 'DRAFT':
                 return { label: 'Bản nháp', variant: 'default', icon: Edit };
             default:
                 return { label: status, variant: 'default', icon: AlertCircle };
@@ -59,10 +60,13 @@ const ReceptionistLeave = () => {
 
     const getLeaveTypeName = (type) => {
         const types = {
-            annual: 'Phép năm',
-            sick: 'Nghỉ ốm',
-            personal: 'Việc riêng',
-            other: 'Khác'
+            ANNUAL: 'Phép năm',
+            SICK: 'Nghỉ ốm',
+            PERSONAL_LEAVE: 'Việc riêng',
+            MATERNITY: 'Thai sản',
+            BEREAVEMENT: 'Tang chế',
+            EMERGENCY: 'Khẩn cấp',
+            UNPAID: 'Nghỉ không lương'
         };
         return types[type] || type;
     };
@@ -87,18 +91,22 @@ const ReceptionistLeave = () => {
         setShowModal(true);
     };
 
-    const handleDeleteClick = (requestId) => {
-        if (confirm('Bạn có chắc muốn xóa bản nháp này?')) {
-            // TODO: Call API to delete draft
-            console.log('Deleting draft:', requestId);
+    const handleDeleteClick = async (requestId) => {
+        if (window.confirm('Bạn có chắc muốn hủy yêu cầu nghỉ phép này?')) {
+            try {
+                await leaveRequestService.cancelLeaveRequest(requestId);
+                setToast({ show: true, message: 'Hủy yêu cầu thành công', type: 'success' });
+                fetchLeaveRequests();
+            } catch (error) {
+                console.error('Lỗi khi hủy đơn:', error);
+                setToast({ show: true, message: error.response?.data?.message || 'Không thể hủy đơn', type: 'error' });
+            }
         }
     };
 
     const handleSubmitClick = (requestId) => {
-        if (confirm('Bạn có chắc muốn gửi yêu cầu nghỉ phép này?')) {
-            // TODO: Call API to submit leave request
-            console.log('Submitting leave request:', requestId);
-        }
+        // In this implementation, submission is done during creation/edit
+        // But if there's a specific 'SUBMIT' status logic needed later, we can add it.
     };
 
     const closeModal = () => {
@@ -106,16 +114,29 @@ const ReceptionistLeave = () => {
         setSelectedRequest(null);
     };
 
-    const handleSaveRequest = (data, isDraft) => {
-        // TODO: Call API to save leave request
-        console.log('Saving leave request:', data, 'isDraft:', isDraft);
+    const handleSaveRequest = async (data, isDraft) => {
+        // isDraft is unused for now as backend seems to default to PENDING
+        try {
+            if (modalMode === 'create') {
+                await leaveRequestService.createLeaveRequest(data);
+                setToast({ show: true, message: 'Gửi yêu cầu thành công!', type: 'success' });
+            } else {
+                await leaveRequestService.updateLeaveRequest(selectedRequest._id, data);
+                setToast({ show: true, message: 'Cập nhật thành công!', type: 'success' });
+            }
+            fetchLeaveRequests();
+            setShowModal(false);
+        } catch (error) {
+            console.error('Lỗi khi lưu đơn:', error);
+            setToast({ show: true, message: error.response?.data?.message || 'Không thể lưu đơn', type: 'error' });
+        }
     };
 
     const stats = {
-        total: mockLeaveRequests.length,
-        pending: mockLeaveRequests.filter(r => r.status === 'pending').length,
-        approved: mockLeaveRequests.filter(r => r.status === 'approved').length,
-        rejected: mockLeaveRequests.filter(r => r.status === 'rejected').length
+        total: leaveRequests.length,
+        pending: leaveRequests.filter(r => r.status === 'PENDING').length,
+        approved: leaveRequests.filter(r => r.status === 'APPROVED').length,
+        rejected: leaveRequests.filter(r => r.status === 'REJECTED').length
     };
 
     return (
@@ -212,12 +233,17 @@ const ReceptionistLeave = () => {
             </Card>
 
             {/* Leave Requests List */}
-            <div className="grid grid-cols-1 gap-4">
-                {filteredRequests.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 min-h-[400px]">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 italic text-gray-400">
+                        <Loader2 className="animate-spin mb-2" size={32} />
+                        Đang tải danh sách...
+                    </div>
+                ) : filteredRequests.length > 0 ? (
                     filteredRequests.map((request) => {
                         const statusInfo = getStatusInfo(request.status);
                         const StatusIcon = statusInfo.icon;
-                        const days = calculateDays(request.startDate, request.endDate);
+                        const days = calculateDays(request.startedDate, request.endDate);
 
                         return (
                             <Card key={request.id} className="hover:shadow-lg transition-shadow">
@@ -235,7 +261,7 @@ const ReceptionistLeave = () => {
                                         <div className="flex-1">
                                             <div className="flex items-center gap-3 mb-2">
                                                 <h3 className="text-lg font-bold text-gray-900">
-                                                    {getLeaveTypeName(request.leaveType)}
+                                                    {getLeaveTypeName(request.type)}
                                                 </h3>
                                                 <Badge variant={statusInfo.variant} className="ml-2">
                                                     <StatusIcon size={14} className="inline mr-1" />
@@ -246,7 +272,7 @@ const ReceptionistLeave = () => {
                                             <div className="text-sm text-gray-700 space-y-1.5">
                                                 <p className="flex items-center gap-2">
                                                     <span className="font-semibold text-gray-500 w-16">Từ:</span>
-                                                    <span className="font-medium bg-gray-100 px-2 py-0.5 rounded">{formatDate(request.startDate)}</span>
+                                                    <span className="font-medium bg-gray-100 px-2 py-0.5 rounded">{formatDate(request.startedDate)}</span>
                                                     <span className="text-gray-400">→</span>
                                                     <span className="font-semibold text-gray-500 w-10">Đến:</span>
                                                     <span className="font-medium bg-gray-100 px-2 py-0.5 rounded">{formatDate(request.endDate)}</span>
@@ -256,18 +282,18 @@ const ReceptionistLeave = () => {
                                                     <span className="flex-1 italic">{request.reason}</span>
                                                 </p>
 
-                                                {request.status === 'approved' && (
+                                                {request.status === 'APPROVED' && (
                                                     <p className="text-green-600 bg-green-50 px-3 py-2 rounded-lg mt-3 text-xs inline-flex items-center gap-1 border border-green-100">
                                                         <CheckCircle size={14} />
-                                                        Đã duyệt bởi <span className="font-semibold">{request.approvedBy}</span> vào {formatDate(request.approvedAt)}
+                                                        Đã duyệt vào {formatDate(request.updatedAt)}
                                                     </p>
                                                 )}
 
-                                                {request.status === 'rejected' && (
+                                                {request.status === 'REJECTED' && (
                                                     <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                                                         <p className="text-red-700 text-sm flex items-start gap-2">
                                                             <XCircle size={16} className="mt-0.5 flex-shrink-0" />
-                                                            <span><strong>Lý do từ chối:</strong> {request.rejectionReason}</span>
+                                                            <span><strong>Lý do từ chối:</strong> {request.rejectionReason || 'Không có lý do cụ thể'}</span>
                                                         </p>
                                                     </div>
                                                 )}
@@ -277,7 +303,7 @@ const ReceptionistLeave = () => {
 
                                     {/* Actions */}
                                     <div className="flex gap-2 ml-4">
-                                        {request.isDraft && (
+                                        {request.status === 'PENDING' && (
                                             <>
                                                 <button
                                                     onClick={() => handleEditClick(request)}
@@ -287,18 +313,11 @@ const ReceptionistLeave = () => {
                                                     <Edit size={20} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDeleteClick(request.id)}
+                                                    onClick={() => handleDeleteClick(request._id)}
                                                     className="p-2.5 text-red-600 hover:bg-red-50 rounded-xl transition-colors border border-transparent hover:border-red-100"
-                                                    title="Xóa"
+                                                    title="Hủy yêu cầu"
                                                 >
                                                     <Trash2 size={20} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleSubmitClick(request.id)}
-                                                    className="p-2.5 text-green-600 hover:bg-green-50 rounded-xl transition-colors border border-transparent hover:border-green-100"
-                                                    title="Gửi yêu cầu"
-                                                >
-                                                    <Send size={20} />
                                                 </button>
                                             </>
                                         )}
@@ -327,6 +346,13 @@ const ReceptionistLeave = () => {
                 isOpen={showModal}
                 onClose={closeModal}
                 onSave={handleSaveRequest}
+            />
+
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast({ ...toast, show: false })}
             />
         </div>
     );

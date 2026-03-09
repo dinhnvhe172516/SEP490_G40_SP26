@@ -21,6 +21,16 @@ const appointmentService = {
         }
     },
 
+    // Nhân viên tạo cuộc hẹn cho khách
+    staffCreateAppointment: async (appointmentData) => {
+        try {
+            const response = await apiClient.post('/api/appointment/staff', appointmentData);
+            return response;
+        } catch (error) {
+            throw error;
+        }
+    },
+
     // Lấy chi tiết một cuộc hẹn theo ID
     getAppointmentById: async (id) => {
         try {

@@ -3,26 +3,26 @@ import { useState, useEffect } from 'react';
 
 const LeaveRequestModal = ({ request, mode, isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({
-        startDate: '',
+        startedDate: '',
         endDate: '',
-        leaveType: 'annual',
+        type: 'ANNUAL',
         reason: ''
     });
 
     useEffect(() => {
         if (mode === 'edit' && request) {
             setFormData({
-                startDate: request.startDate || '',
+                startedDate: request.startedDate || '',
                 endDate: request.endDate || '',
-                leaveType: request.leaveType || 'annual',
+                type: request.type || 'ANNUAL',
                 reason: request.reason || ''
             });
         } else if (mode === 'create') {
             // Reset form for create mode
             setFormData({
-                startDate: '',
+                startedDate: '',
                 endDate: '',
-                leaveType: 'annual',
+                type: 'ANNUAL',
                 reason: ''
             });
         }
@@ -54,8 +54,8 @@ const LeaveRequestModal = ({ request, mode, isOpen, onClose, onSave }) => {
     };
 
     const calculateDays = () => {
-        if (formData.startDate && formData.endDate) {
-            const start = new Date(formData.startDate);
+        if (formData.startedDate && formData.endDate) {
+            const start = new Date(formData.startedDate);
             const end = new Date(formData.endDate);
             const diffTime = Math.abs(end - start);
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
@@ -101,8 +101,8 @@ const LeaveRequestModal = ({ request, mode, isOpen, onClose, onSave }) => {
                             </label>
                             <input
                                 type="date"
-                                name="startDate"
-                                value={formData.startDate}
+                                name="startedDate"
+                                value={formData.startedDate}
                                 onChange={handleChange}
                                 required
                                 min={new Date().toISOString().split('T')[0]}
@@ -119,7 +119,7 @@ const LeaveRequestModal = ({ request, mode, isOpen, onClose, onSave }) => {
                                 value={formData.endDate}
                                 onChange={handleChange}
                                 required
-                                min={formData.startDate || new Date().toISOString().split('T')[0]}
+                                min={formData.startedDate || new Date().toISOString().split('T')[0]}
                                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                             />
                         </div>
@@ -142,16 +142,19 @@ const LeaveRequestModal = ({ request, mode, isOpen, onClose, onSave }) => {
                                 Loại nghỉ phép <span className="text-red-500">*</span>
                             </label>
                             <select
-                                name="leaveType"
-                                value={formData.leaveType}
+                                name="type"
+                                value={formData.type}
                                 onChange={handleChange}
                                 required
                                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                             >
-                                <option value="annual">Phép năm (Có hưởng lương)</option>
-                                <option value="sick">Nghỉ ốm (Cần giấy khám bệnh)</option>
-                                <option value="personal">Việc riêng (Không hưởng lương)</option>
-                                <option value="other">Lý do khác</option>
+                                <option value="ANNUAL">Phép năm (Có hưởng lương)</option>
+                                <option value="SICK">Nghỉ ốm (Cần giấy khám bệnh)</option>
+                                <option value="PERSONAL_LEAVE">Việc riêng (Không hưởng lương)</option>
+                                <option value="MATERNITY">Thai sản (Maternity)</option>
+                                <option value="BEREAVEMENT">Tang chế (Bereavement)</option>
+                                <option value="EMERGENCY">Khẩn cấp (Emergency)</option>
+                                <option value="UNPAID">Nghỉ không lương (Unpaid)</option>
                             </select>
                         </div>
 

@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { X, Save, UserPlus } from 'lucide-react';
+import { X, Save, UserPlus, Loader2 } from 'lucide-react';
+import patientService from '../../../../services/patientService';
+import Toast from '../../../../components/ui/Toast';
 
 const AddPatientModal = ({ isOpen, onClose, onSave }) => {
     const [formData, setFormData] = useState({
-        name: '',
+        full_name: '',
         email: '',
         phone: '',
         dob: '',
         gender: '',
         address: ''
     });
+    const [loading, setLoading] = useState(false);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     if (!isOpen) return null;
 
@@ -21,25 +25,40 @@ const AddPatientModal = ({ isOpen, onClose, onSave }) => {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // TODO: Call API to create patient
-        console.log('Creating new patient:', formData);
-        if (onSave) {
-            onSave(formData);
+        setLoading(true);
+        try {
+            const response = await patientService.createPatient(formData);
+            setToast({ show: true, message: 'Đăng ký bệnh nhân thành công!', type: 'success' });
+
+            if (onSave) {
+                onSave(response.data?.data || response.data);
+            }
+
+            // Reset form
+            setFormData({
+                full_name: '',
+                email: '',
+                phone: '',
+                dob: '',
+                gender: '',
+                address: ''
+            });
+
+            setTimeout(() => {
+                onClose();
+            }, 1500);
+        } catch (error) {
+            console.error('Error creating patient:', error);
+            setToast({
+                show: true,
+                message: error.response?.data?.message || 'Có lỗi xảy ra khi đăng ký bệnh nhân.',
+                type: 'error'
+            });
+        } finally {
+            setLoading(false);
         }
-
-        // Reset form after successful submission
-        setFormData({
-            name: '',
-            email: '',
-            phone: '',
-            dob: '',
-            gender: '',
-            address: ''
-        });
-
-        onClose();
     };
 
     return (
@@ -79,8 +98,8 @@ const AddPatientModal = ({ isOpen, onClose, onSave }) => {
                                     </label>
                                     <input
                                         type="text"
-                                        name="name"
-                                        value={formData.name}
+                                        name="full_name"
+                                        value={formData.full_name}
                                         onChange={handleChange}
                                         required
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -111,9 +130,9 @@ const AddPatientModal = ({ isOpen, onClose, onSave }) => {
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                                     >
                                         <option value="">Chọn giới tính</option>
-                                        <option value="Nam">Nam</option>
-                                        <option value="Nữ">Nữ</option>
-                                        <option value="Khác">Khác</option>
+                                        <option value="MALE">Nam</option>
+                                        <option value="FEMALE">Nữ</option>
+                                        <option value="OTHER">Khác</option>
                                     </select>
                                 </div>
                             </div>
@@ -188,13 +207,21 @@ const AddPatientModal = ({ isOpen, onClose, onSave }) => {
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors flex items-center gap-2"
+                            disabled={loading}
+                            className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
                         >
-                            <Save size={18} />
-                            Đăng Ký
+                            {loading ? <Loader2 className="animate-spin" size={18} /> : <Save size={18} />}
+                            {loading ? 'Đang xử lý...' : 'Đăng Ký'}
                         </button>
                     </div>
                 </form>
+
+                <Toast
+                    show={toast.show}
+                    message={toast.message}
+                    type={toast.type}
+                    onClose={() => setToast({ ...toast, show: false })}
+                />
             </div>
         </div>
     );
