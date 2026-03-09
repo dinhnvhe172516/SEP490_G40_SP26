@@ -116,7 +116,7 @@ const PatientRecordSearch = () => {
         setSelectedPatient(null);
         setRecords([]);
         // Clear params in URL if needed
-        navigate('/dentist/dental-records', { replace: true });
+        navigate('/dentist/dental-records/search', { replace: true });
     };
 
     // Sau khi tạo hồ sơ thành công: reload danh sách và navigate đến chi tiết
