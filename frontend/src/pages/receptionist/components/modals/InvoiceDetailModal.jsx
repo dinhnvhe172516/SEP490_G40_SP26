@@ -5,21 +5,15 @@ import { formatDate } from '../../../../utils/dateUtils';
 const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
     if (!isOpen || !invoice) return null;
 
-    // Mock invoice items for demonstration
-    const mockItems = [
-        { id: 1, name: 'Khám tổng quát', price: 200000, quantity: 1, total: 200000 },
-        { id: 2, name: 'Chụp X-quang răng', price: 150000, quantity: 2, total: 300000 },
-        { id: 3, name: 'Trám răng thẩm mỹ', price: 500000, quantity: 1, total: 500000 }
-    ];
+    const displayItems = invoice.items || [];
+    const totalAmount = invoice.total_amount || invoice.total || 0;
 
-    // If total doesn't match mock items, adjust the last item or add a generic one
-    const calcMockTotal = mockItems.reduce((sum, item) => sum + item.total, 0);
-    let displayItems = [...mockItems];
-    if (invoice.total !== calcMockTotal) {
-        displayItems = [
-            { id: 1, name: 'Dịch vụ nha khoa', price: invoice.total, quantity: 1, total: invoice.total }
-        ];
-    }
+    // For pending invoices, paid amount is 0.
+    const paidAmount = invoice.status === 'COMPLETED' ? totalAmount : (invoice.paid || 0);
+    const invoiceCode = invoice.invoice_code || (invoice._id && invoice._id.substring(invoice._id.length - 6).toUpperCase()) || invoice.code;
+    const createdAt = invoice.createdAt || invoice.invoice_date || invoice.date;
+    const patientName = invoice.patient?.profile?.full_name || invoice.patient_id?.profile_id?.full_name || invoice.patientName || 'Khách vãng lai';
+    const patientCode = invoice.patient?.patient_code || invoice.patient_id?.patient_code || '';
 
     const getStatusInfo = (status) => {
         switch (status) {
@@ -36,7 +30,7 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
 
     const statusInfo = getStatusInfo(invoice.status);
     const StatusIcon = statusInfo.icon;
-    const remainingAmount = invoice.total - invoice.paid;
+    const remainingAmount = totalAmount - paidAmount;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -47,7 +41,7 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                     <div>
                         <h2 className="text-xl font-bold text-gray-900">Chi tiết hóa đơn</h2>
-                        <p className="text-sm text-gray-500 font-medium">#{invoice.code}</p>
+                        <p className="text-sm text-gray-500 font-medium">#{invoiceCode}</p>
                     </div>
                     <div className="flex items-center gap-3">
                         <Badge variant={statusInfo.variant} className="px-3 py-1">
@@ -67,12 +61,15 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
                         <div className="grid grid-cols-2 gap-6">
                             <div>
                                 <p className="text-sm text-gray-500 mb-1">Thông tin khách hàng</p>
-                                <p className="font-bold text-gray-900 text-lg">{invoice.patientName}</p>
+                                <p className="font-bold text-gray-900 text-lg">
+                                    {patientName}
+                                    {patientCode && <span className="ml-2 text-sm font-normal text-gray-500 font-mono">({patientCode})</span>}
+                                </p>
                                 {/* We can add phone/email here if available in the future */}
                             </div>
                             <div className="text-right">
                                 <p className="text-sm text-gray-500 mb-1">Ngày lập hóa đơn</p>
-                                <p className="font-semibold text-gray-900">{formatDate(invoice.date)}</p>
+                                <p className="font-semibold text-gray-900">{formatDate(createdAt)}</p>
                             </div>
                         </div>
                     </div>
@@ -91,15 +88,21 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-100">
-                                {displayItems.map((item, index) => (
-                                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{item.name}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 text-right">{item.price.toLocaleString('vi-VN')}đ</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600 text-center">{item.quantity}</td>
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">{item.total.toLocaleString('vi-VN')}đ</td>
-                                    </tr>
-                                ))}
+                                {displayItems.map((item, index) => {
+                                    const itemName = item.service_name || item.service_id?.service_name || item.name;
+                                    const itemPrice = item.unit_price || item.service_id?.price || item.price || 0;
+                                    const itemTotal = item.amount || item.total || (itemPrice * (item.quantity || 1));
+
+                                    return (
+                                        <tr key={item._id || item.id || index} className="hover:bg-gray-50 transition-colors">
+                                            <td className="px-4 py-3 text-sm text-gray-500">{index + 1}</td>
+                                            <td className="px-4 py-3 text-sm font-medium text-gray-900">{itemName}</td>
+                                            <td className="px-4 py-3 text-sm text-gray-600 text-right">{itemPrice.toLocaleString('vi-VN')}đ</td>
+                                            <td className="px-4 py-3 text-sm text-gray-600 text-center">{item.quantity}</td>
+                                            <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">{itemTotal.toLocaleString('vi-VN')}đ</td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -109,11 +112,11 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
                         <div className="w-full max-w-sm space-y-3 bg-gray-50 p-5 rounded-xl border border-gray-100">
                             <div className="flex justify-between items-center text-sm text-gray-600">
                                 <span>Tổng cộng:</span>
-                                <span className="font-medium text-gray-900">{invoice.total.toLocaleString('vi-VN')}đ</span>
+                                <span className="font-medium text-gray-900">{totalAmount.toLocaleString('vi-VN')}đ</span>
                             </div>
                             <div className="flex justify-between items-center text-sm text-gray-600">
                                 <span>Đã thanh toán:</span>
-                                <span className="font-medium text-green-600">{invoice.paid.toLocaleString('vi-VN')}đ</span>
+                                <span className="font-medium text-green-600">{paidAmount.toLocaleString('vi-VN')}đ</span>
                             </div>
                             <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
                                 <span className="font-bold text-gray-900">Còn lại:</span>
@@ -145,7 +148,7 @@ const InvoiceDetailModal = ({ invoice, isOpen, onClose, onPaymentClick }) => {
                         >
                             Đóng
                         </button>
-                        {invoice.status !== 'Paid' && (
+                        {invoice.status === 'PENDING' && (
                             <button
                                 onClick={() => {
                                     onClose();
