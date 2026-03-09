@@ -149,19 +149,42 @@ const getListOfPatientService = async (query, patientId) => {
     }
     aggregatePipeline.push({ $match: initialMatch });
 
-    // --- STAGE 2: JOIN với bảng Staff (Bác sĩ) ---
+    // --- STAGE 2: JOIN LẤY THÔNG TIN BÁC SĨ (STAFF + ACCOUNT) ---
+    // 2.1: Lấy Staff ID
     aggregatePipeline.push({
       $lookup: {
         from: "staffs",
         localField: "created_by",
         foreignField: "_id",
-        as: "doctor_info",
+        as: "doctor_staff",
       },
     });
 
     aggregatePipeline.push({
       $addFields: {
-        doctor_info: { $arrayElemAt: ["$doctor_info", 0] },
+        doctor_staff: { $arrayElemAt: ["$doctor_staff", 0] },
+      },
+    });
+
+    // 2.2 Lấy thông tin Tên từ bảng Profiles
+    aggregatePipeline.push({
+      $lookup: {
+        from: "profiles",
+        localField: "doctor_staff.profile_id",
+        foreignField: "_id",
+        as: "doctor_profile",
+      },
+    });
+
+    // 2.3 Gộp lại thành doctor_info như cũ
+    aggregatePipeline.push({
+      $addFields: {
+        doctor_info: {
+          $mergeObjects: [
+            "$doctor_staff",
+            { full_name: { $arrayElemAt: ["$doctor_profile.full_name", 0] } }
+          ]
+        }
       },
     });
 
@@ -208,6 +231,8 @@ const getListOfPatientService = async (query, patientId) => {
             $project: {
               __v: 0,
               "doctor_info.password": 0, // Che mật khẩu bác sĩ
+              "doctor_profile": 0, // Ẩn biến tạm
+              "doctor_staff": 0    // Ẩn biến tạm
             },
           },
         ],
