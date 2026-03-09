@@ -93,7 +93,7 @@ const LeaveRequestForm = ({ onSubmit, onCancel, initialData }) => {
             </div>
 
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                <button
+                <Button
                     type="button"
                     onClick={onCancel}
                     disabled={isSubmitting}

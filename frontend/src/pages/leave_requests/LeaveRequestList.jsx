@@ -1,12 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { getMyLeaveRequests, createLeaveRequest } from '../../services/leaveRequestService';
+import { Plus } from 'lucide-react';
 
 import LeaveRequestStats from './components/LeaveRequestStats';
 import LeaveRequestTable from './components/LeaveRequestTable';
 import LeaveRequestForm from './components/LeaveRequestForm';
-import { useAuth } from '../../contexts/AuthContext';
 import { mockLeaveRequests } from '../../utils/mockData';
+
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
+import Modal from '../../components/ui/Modal';
+import Badge from '../../components/ui/Badge';
 
 const LeaveRequestList = () => {
     const { user } = useAuth();
