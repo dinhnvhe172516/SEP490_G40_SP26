@@ -77,4 +77,34 @@ const createController = async (req, res) => {
     }
 };
 
-module.exports = { getListController, getByIdController, createController };
+// PUT /api/billing/:id/status
+const updateStatusController = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, note } = req.body;
+        
+        // Sẽ lấy user ID từ token sau khi có middleware auth
+        const updated_by = req.user?.id;
+
+        logger.debug('Update invoice status request', {
+            context: 'InvoiceController.updateStatusController',
+            id, status
+        });
+
+        const invoice = await InvoiceService.updateInvoiceStatus(id, status, note, updated_by);
+
+        return new successRes.UpdateSuccess(
+            invoice,
+            'Invoice status updated successfully'
+        ).send(res);
+
+    } catch (error) {
+        logger.error('Error update invoice status', {
+            context: 'InvoiceController.updateStatusController',
+            message: error.message,
+        });
+        throw error;
+    }
+};
+
+module.exports = { getListController, getByIdController, createController, updateStatusController };
