@@ -7,11 +7,22 @@ import ReceptionistInvoices from '../../pages/receptionist/ReceptionistInvoices'
 import ReceptionistServices from '../../pages/receptionist/ReceptionistServices';
 import ReceptionistEquipment from '../../pages/receptionist/ReceptionistEquipment';
 import ReceptionistLeave from '../../pages/receptionist/ReceptionistLeave';
+import ReceptionistCheckIn from '../../pages/receptionist/ReceptionistCheckIn';
 
 /**
  * Receptionist Routes - Protected routes for Receptionist role
  */
 const receptionistRoutes = [
+    {
+        path: '/receptionist/check-in',
+        element: (
+            <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
+                <ReceptionistLayout>
+                    <ReceptionistCheckIn />
+                </ReceptionistLayout>
+            </ProtectedRoute>
+        )
+    },
     {
         path: '/receptionist/patients',
         element: (

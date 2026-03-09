@@ -8,7 +8,8 @@ import {
     Wrench,
     LogOut,
     Menu,
-    Clock
+    Clock,
+    UserCheck
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -19,6 +20,7 @@ const ReceptionistSidebar = () => {
 
     const menuItems = [
         { path: '/receptionist/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+        { path: '/receptionist/check-in', icon: UserCheck, label: 'Tiếp đón' },
         { path: '/receptionist/patients', icon: Users, label: 'Bệnh nhân' },
         { path: '/receptionist/appointments', icon: Calendar, label: 'Lịch hẹn' },
         { path: '/receptionist/invoices', icon: DollarSign, label: 'Hóa đơn' },

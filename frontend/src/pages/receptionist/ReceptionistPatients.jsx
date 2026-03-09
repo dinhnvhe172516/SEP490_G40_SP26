@@ -11,6 +11,7 @@ import CreateInvoiceModal from './components/modals/CreateInvoiceModal';
 
 import patientService from '../../services/patientService';
 import appointmentService from '../../services/appointmentService';
+import { formatDate } from '../../utils/dateUtils';
 
 const ReceptionistPatients = () => {
     const [patients, setPatients] = useState([]);
@@ -220,7 +221,7 @@ const ReceptionistPatients = () => {
                                     const pName = profile.full_name || patient.name || 'N/A';
                                     const pPhone = profile.phone || patient.phone || 'N/A';
                                     const pEmail = profile.email || patient.email || 'N/A';
-                                    const pDob = profile.dob || patient.dob || 'N/A';
+                                    const pDob = formatDate(profile.dob || patient.dob);
                                     const isActive = patient.status?.toUpperCase() === 'ACTIVE';
 
                                     return (
@@ -348,7 +349,7 @@ const ReceptionistPatients = () => {
                     patientName={selectedPatient.profile?.full_name || selectedPatient.name}
                     patientPhone={selectedPatient.profile?.phone || selectedPatient.phone}
                     patientEmail={selectedPatient.profile?.email || selectedPatient.email}
-                    patientDob={selectedPatient.profile?.dob || selectedPatient.dob}
+                    patientDob={formatDate(selectedPatient.profile?.dob || selectedPatient.dob)}
                     patientGender={selectedPatient.profile?.gender || selectedPatient.gender}
                     patientAddress={selectedPatient.profile?.address || selectedPatient.address}
                     patientStatus={selectedPatient.status?.toUpperCase()}
