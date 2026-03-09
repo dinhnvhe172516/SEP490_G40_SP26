@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/AuthContext"
-import { getDoctorAppointments } from "../../services/appointmentService"
+import appointmentService from "../../services/appointmentService"
 
 import AppointmentDetailModal from "./components/AppointmentDetailModal"
 import PatientInfoModal from "./components/PatientInfoModal"
@@ -57,7 +57,7 @@ const DentistAppointmentList = () => {
         params.sort = sortOrder;
       }
 
-      const res = await getDoctorAppointments(params);
+      const res = await appointmentService.getDoctorAppointments(params);
 
       if (res?.data) {
         const responseData = res.data;
