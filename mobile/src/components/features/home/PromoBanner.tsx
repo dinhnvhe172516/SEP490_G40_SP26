@@ -1,8 +1,17 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { ThemedText } from '@/src/components/ui/themed-text';
 
-export function PromoBanner() {
+export function PromoBanner({ isLoggedIn }: { isLoggedIn: boolean }) {
+    const handleBookNow = () => {
+        if (!isLoggedIn) {
+            router.push('/(auth)/login');
+        } else {
+            Alert.alert("Tính năng đang phát triển", "Màn hình Đặt lịch đang được xây dựng.");
+        }
+    };
+
     return (
         <View style={styles.container}>
             <Image
@@ -16,7 +25,7 @@ export function PromoBanner() {
                     <ThemedText style={styles.tag}>ƯU ĐÃI ĐẶC BIỆT</ThemedText>
                     <ThemedText style={styles.title}>Kiểm tra răng{'\n'}định kỳ</ThemedText>
                 </View>
-                <TouchableOpacity style={styles.button}>
+                <TouchableOpacity style={styles.button} onPress={handleBookNow}>
                     <ThemedText style={styles.buttonText}>Đặt lịch ngay</ThemedText>
                 </TouchableOpacity>
             </View>

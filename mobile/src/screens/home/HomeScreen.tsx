@@ -27,6 +27,7 @@ export function HomeScreenWrapper() {
     const services = servicesResponse?.data || [];
     const appointments = appointmentsResponse?.data || [];
 
+    const isLoggedIn = !!profile?.avatar_url;
 
     return (
         <SafeAreaProvider style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
@@ -45,7 +46,7 @@ export function HomeScreenWrapper() {
                 </View>
 
                 <View style={styles.sectionSpacer}>
-                    <PromoBanner />
+                    <PromoBanner isLoggedIn={isLoggedIn} />
                 </View>
 
                 <View style={styles.sectionSpacer}>

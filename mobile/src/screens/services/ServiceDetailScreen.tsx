@@ -3,7 +3,8 @@ import { Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/src/components/ui/themed-text';
-import { useServiceDetail } from '@/src/hooks/useHomeData';
+import { useServiceDetail, useProfileData } from '@/src/hooks/useHomeData';
+import { Alert } from 'react-native';
 
 type Props = {
     serviceId: string;
@@ -12,6 +13,19 @@ type Props = {
 export function ServiceDetailScreen({ serviceId }: Props) {
     const insets = useSafeAreaInsets();
     const { data: service, isLoading, isError } = useServiceDetail(serviceId);
+    const { data: profileData } = useProfileData();
+
+    // The backend profile query ensures we know tracking status
+    const isLoggedIn = !!profileData?.data || !!profileData?.full_name || !!profileData?.avatar_url;
+
+    const handleBookNow = () => {
+        if (!isLoggedIn) {
+            router.push('/(auth)/login');
+        } else {
+            // Placeholder for booking navigation when it's built
+            Alert.alert("Tính năng đang phát triển", "Màn hình Đặt lịch đang được xây dựng.");
+        }
+    };
 
     if (isLoading) {
         return (
@@ -118,6 +132,7 @@ export function ServiceDetailScreen({ serviceId }: Props) {
                     style={[styles.primaryButton, service.status !== 'AVAILABLE' && styles.primaryButtonDisabled]}
                     activeOpacity={0.9}
                     disabled={service.status !== 'AVAILABLE'}
+                    onPress={handleBookNow}
                 >
                     <ThemedText style={styles.primaryButtonText}>
                         {service.status === 'AVAILABLE' ? 'Đặt lịch ngay' : 'Tạm ngưng nhận lịch'}
