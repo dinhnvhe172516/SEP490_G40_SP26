@@ -20,3 +20,13 @@ export function useRegister() {
         },
     });
 }
+
+// Logout
+export function useLogout() {
+    return useMutation({
+        mutationFn: async (refreshToken: string | null) => {
+            const { data } = await apiClient.post('/api/auth/logout', { refreshToken });
+            return data;
+        },
+    });
+}
