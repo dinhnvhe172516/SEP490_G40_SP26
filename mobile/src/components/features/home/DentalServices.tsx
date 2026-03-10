@@ -1,15 +1,19 @@
 import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '@/src/components/ui/themed-text';
 import { Image } from 'expo-image';
+import { Link } from 'expo-router';
 
 export function DentalServices({ services, isLoading }: { services: any[], isLoading: boolean }) {
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <ThemedText style={styles.sectionTitle}>Dịch vụ nổi bật</ThemedText>
-                <TouchableOpacity>
-                    <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
-                </TouchableOpacity>
+                {/* @ts-ignore */}
+                <Link href="/services" asChild>
+                    <TouchableOpacity>
+                        <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
+                    </TouchableOpacity>
+                </Link>
             </View>
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
