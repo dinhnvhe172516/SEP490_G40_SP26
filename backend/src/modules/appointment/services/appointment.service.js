@@ -34,6 +34,8 @@ const getListService = async (query, doctor_id) => {
         // 1. Lấy và chuẩn hóa các tham số từ query
         const search = query.search?.trim();
         const statusFilter = query.status ? query.status.toUpperCase() : null;
+        const appointmentDate = query.appointment_date;
+        const filterDoctorId = query.doctor_id || doctor_id; // Check both Places
         const sortOrder = query.sort === "desc" ? -1 : 1;
         const page = Math.max(1, parseInt(query.page || 1));
         const limit = Math.max(1, parseInt(query.limit || 5));
@@ -47,9 +49,23 @@ const getListService = async (query, doctor_id) => {
             matchCondition.status = statusFilter;
         }
 
+        // Lọc theo ngày (appointment_date)
+        if (appointmentDate) {
+            const startOfDay = new Date(appointmentDate);
+            startOfDay.setUTCHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(appointmentDate);
+            endOfDay.setUTCHours(23, 59, 59, 999);
+
+            matchCondition.appointment_date = {
+                $gte: startOfDay,
+                $lte: endOfDay
+            };
+        }
+
         // Lọc theo doctor_id (Phải ép kiểu về ObjectId trong Aggregation)
-        if (doctor_id) {
-            matchCondition.doctor_id = new mongoose.Types.ObjectId(doctor_id);
+        if (filterDoctorId) {
+            matchCondition.doctor_id = new mongoose.Types.ObjectId(filterDoctorId);
         }
 
         // Tìm kiếm (Search) theo tên, số điện thoại, email

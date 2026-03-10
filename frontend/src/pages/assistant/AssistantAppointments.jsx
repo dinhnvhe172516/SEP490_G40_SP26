@@ -1,98 +1,100 @@
-import { useState } from 'react';
-import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye, Loader2, RefreshCw, Phone } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import Toast from '../../components/ui/Toast';
 import PrepareAppointmentModal from './modals/PrepareAppointmentModal';
 import ViewAppointmentModal from './modals/ViewAppointmentModal';
 import ReportEquipmentModal from './modals/ReportEquipmentModal';
-
-// Mock appointments data
-const mockAppointments = [
-    {
-        id: 'apt_001',
-        time: '08:00',
-        date: '2026-01-17',
-        patientName: 'Nguyễn Văn A',
-        patientPhone: '0901234567',
-        doctorName: 'BS. Nguyễn Văn Anh',
-        reason: 'Khám tổng quát',
-        status: 'pending',
-        preparationStatus: 'not_prepared'
-    },
-    {
-        id: 'apt_002',
-        time: '09:30',
-        date: '2026-01-17',
-        patientName: 'Trần Thị B',
-        patientPhone: '0912345678',
-        doctorName: 'BS. Trần Thị Bình',
-        reason: 'Nhổ răng khôn',
-        status: 'confirmed',
-        preparationStatus: 'prepared'
-    },
-    {
-        id: 'apt_003',
-        time: '10:00',
-        date: '2026-01-17',
-        patientName: 'Lê Văn C',
-        patientPhone: '0923456789',
-        doctorName: 'BS. Nguyễn Văn Anh',
-        reason: 'Trám răng',
-        status: 'confirmed',
-        preparationStatus: 'not_prepared'
-    },
-    {
-        id: 'apt_004',
-        time: '14:00',
-        date: '2026-01-17',
-        patientName: 'Phạm Thị D',
-        patientPhone: '0934567890',
-        doctorName: 'BS. Lê Hoàng Cường',
-        reason: 'Tẩy trắng răng',
-        status: 'confirmed',
-        preparationStatus: 'in_progress'
-    },
-    {
-        id: 'apt_005',
-        time: '15:30',
-        date: '2026-01-18',
-        patientName: 'Hoàng Văn E',
-        patientPhone: '0945678901',
-        doctorName: 'BS. Nguyễn Văn Anh',
-        reason: 'Niềng răng - Tư vấn',
-        status: 'pending',
-        preparationStatus: 'not_prepared'
-    }
-];
+import appointmentService from '../../services/appointmentService';
+import staffService from '../../services/staffService';
+import { formatDate } from '../../utils/dateUtils';
 
 const AssistantAppointments = () => {
-    const [selectedDate, setSelectedDate] = useState('2026-01-17');
+    const todayStr = new Date().toISOString().split('T')[0];
+    const [selectedDate, setSelectedDate] = useState(todayStr);
     const [filterDoctor, setFilterDoctor] = useState('all');
     const [filterStatus, setFilterStatus] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
+
+    const [appointments, setAppointments] = useState([]);
+    const [doctors, setDoctors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [showPrepareModal, setShowPrepareModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
 
-    const filteredAppointments = mockAppointments.filter(apt => {
-        const matchesDate = apt.date === selectedDate;
-        const matchesDoctor = filterDoctor === 'all' || apt.doctorName === filterDoctor;
-        const matchesStatus = filterStatus === 'all' || apt.preparationStatus === filterStatus;
-        const matchesSearch = apt.patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            apt.patientPhone.includes(searchTerm);
-        return matchesDate && matchesDoctor && matchesStatus && matchesSearch;
-    });
+    // --- FETCH DATA ---
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            // 1. Fetch appointments for selected date
+            const apptParams = {
+                appointment_date: selectedDate,
+                limit: 6
+            };
+            if (filterDoctor !== 'all') {
+                apptParams.doctor_id = filterDoctor;
+            }
+            if (filterStatus !== 'all') {
+                apptParams.status = filterStatus;
+            }
 
-    const getPreparationStatusInfo = (status) => {
+            const apptResponse = await appointmentService.getStaffAppointments(apptParams);
+
+            // Lấy dữ liệu từ response dựa theo chuẩn cấu trúc: response.data.data là mảng
+            let apptData = [];
+            if (apptResponse && apptResponse.data) {
+                if (Array.isArray(apptResponse.data.data)) {
+                    apptData = apptResponse.data.data;
+                } else if (Array.isArray(apptResponse.data)) {
+                    apptData = apptResponse.data;
+                }
+            }
+            setAppointments(apptData);
+
+            // 2. Fetch doctors for the filter
+            if (doctors.length === 0) {
+                const staffResponse = await staffService.getStaffs({ role_name: 'DOCTOR' });
+                setDoctors(staffResponse.data || []);
+            }
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            setToast({ show: true, message: 'Lỗi khi tải dữ liệu!', type: 'error' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchData();
+    }, [selectedDate, filterDoctor, filterStatus]);
+
+    const filteredAppointments = useMemo(() => {
+        return appointments.filter(apt => {
+            const patientName = apt.full_name || '';
+            const patientPhone = apt.phone || '';
+            const matchesSearch = patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                patientPhone.includes(searchTerm);
+            return matchesSearch;
+        });
+    }, [appointments, searchTerm]);
+
+    const getStatusInfo = (status) => {
         switch (status) {
-            case 'prepared':
-                return { label: 'Đã chuẩn bị', variant: 'success', icon: CheckCircle };
-            case 'in_progress':
-                return { label: 'Đang chuẩn bị', variant: 'warning', icon: Clock };
-            case 'not_prepared':
-                return { label: 'Chưa chuẩn bị', variant: 'danger', icon: XCircle };
+            case 'COMPLETED':
+                return { label: 'Hoàn thành', variant: 'primary', icon: CheckCircle };
+            case 'IN_CONSULTATION':
+                return { label: 'Đang khám', variant: 'success', icon: Clock };
+            case 'CHECKED_IN':
+                return { label: 'Đã đến', variant: 'success', icon: Clock };
+            case 'SCHEDULED':
+                return { label: 'Chờ khám', variant: 'warning', icon: Clock };
+            case 'CANCELLED':
+                return { label: 'Đã hủy', variant: 'danger', icon: XCircle };
             default:
                 return { label: status, variant: 'default', icon: Clock };
         }
@@ -120,25 +122,40 @@ const AssistantAppointments = () => {
         setSelectedAppointment(null);
     };
 
+    const handleUpdateStatus = async (appointmentId, newStatus, doctorId) => {
+        try {
+            // Pass doctorId to synchronize with backend signature
+            await appointmentService.updateAppointmentStatus(appointmentId, newStatus, doctorId);
+            setToast({ show: true, message: 'Cập nhật trạng thái thành công!', type: 'success' });
+            fetchData();
+        } catch (error) {
+            console.error('Error updating status:', error);
+            setToast({ show: true, message: 'Lỗi khi cập nhật trạng thái!', type: 'error' });
+        }
+    };
+
     const handlePreparationComplete = (appointmentId, data) => {
-        // TODO: Call API to update preparation status
+        // Here we could update to a specific status or just log for now
+        // Assistant flow usually involves ensuring it's ready for the doctor
         console.log('Preparation completed:', appointmentId, data);
+        setToast({ show: true, message: 'Chuẩn bị đã được ghi nhận!', type: 'success' });
     };
-
-    const handleReportSubmit = (appointmentId, data) => {
-        // TODO: Call API to submit equipment report
-        console.log('Equipment report:', appointmentId, data);
-    };
-
-    // Get unique doctors for filter
-    const doctors = ['all', ...new Set(mockAppointments.map(apt => apt.doctorName))];
 
     return (
         <div>
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-gray-900">Quản Lý Lịch Khám</h1>
-                <p className="text-gray-600 mt-1">Chuẩn bị và theo dõi lịch hẹn</p>
+            <div className="mb-8 flex justify-between items-center">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">Quản Lý Lịch Khám</h1>
+                    <p className="text-gray-600 mt-1">Chuẩn bị và theo dõi lịch hẹn</p>
+                </div>
+                <button
+                    onClick={fetchData}
+                    className="p-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition-colors"
+                    title="Tải lại"
+                >
+                    <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
+                </button>
             </div>
 
             {/* Filters */}
@@ -167,9 +184,11 @@ const AssistantAppointments = () => {
                             onChange={(e) => setFilterDoctor(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                         >
-                            <option value="all">Tất cả</option>
-                            {doctors.filter(d => d !== 'all').map(doctor => (
-                                <option key={doctor} value={doctor}>{doctor}</option>
+                            <option value="all">Tất cả bác sĩ</option>
+                            {doctors.map(doctor => (
+                                <option key={doctor._id} value={doctor._id}>
+                                    {doctor.profile_id?.full_name || doctor.name}
+                                </option>
                             ))}
                         </select>
                     </div>
@@ -177,17 +196,18 @@ const AssistantAppointments = () => {
                     {/* Status Filter */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Trạng thái chuẩn bị
+                            Trạng thái
                         </label>
                         <select
                             value={filterStatus}
                             onChange={(e) => setFilterStatus(e.target.value)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
                         >
-                            <option value="all">Tất cả</option>
-                            <option value="not_prepared">Chưa chuẩn bị</option>
-                            <option value="in_progress">Đang chuẩn bị</option>
-                            <option value="prepared">Đã chuẩn bị</option>
+                            <option value="all">Tất cả trạng thái</option>
+                            <option value="SCHEDULED">Chờ khám</option>
+                            <option value="CHECKED_IN">Đã đến</option>
+                            <option value="IN_CONSULTATION">Đang khám</option>
+                            <option value="COMPLETED">Hoàn thành</option>
                         </select>
                     </div>
 
@@ -212,41 +232,48 @@ const AssistantAppointments = () => {
 
             {/* Appointments List */}
             <div className="grid grid-cols-1 gap-4">
-                {filteredAppointments.length > 0 ? (
+                {loading ? (
+                    <Card>
+                        <div className="text-center py-16">
+                            <Loader2 size={40} className="mx-auto text-primary-500 animate-spin mb-4" />
+                            <p className="text-gray-500">Đang tải lịch hẹn...</p>
+                        </div>
+                    </Card>
+                ) : filteredAppointments.length > 0 ? (
                     filteredAppointments.map((apt) => {
-                        const prepStatusInfo = getPreparationStatusInfo(apt.preparationStatus);
-                        const PrepStatusIcon = prepStatusInfo.icon;
+                        const statusInfo = getStatusInfo(apt.status);
+                        const StatusIcon = statusInfo.icon;
 
                         return (
-                            <Card key={apt.id} className="hover:shadow-lg transition-shadow">
+                            <Card key={apt._id} className="hover:shadow-lg transition-shadow">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-4 flex-1">
                                         {/* Time */}
                                         <div className="bg-primary-100 p-4 rounded-lg text-center min-w-[80px]">
                                             <div className="text-xs text-primary-600 font-medium">Giờ</div>
-                                            <div className="text-lg font-bold text-primary-700">{apt.time}</div>
+                                            <div className="text-lg font-bold text-primary-700">{apt.appointment_time}</div>
                                         </div>
 
                                         {/* Patient Info */}
                                         <div className="flex-1">
-                                            <h3 className="text-lg font-semibold text-gray-900">{apt.patientName}</h3>
+                                            <h3 className="text-lg font-semibold text-gray-900">{apt.full_name}</h3>
                                             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                                                <Clock size={14} />
-                                                {apt.patientPhone}
+                                                <Phone size={14} />
+                                                {apt.phone}
                                             </div>
                                             <p className="text-sm text-gray-700 mt-2">
-                                                <span className="font-medium">Lý do:</span> {apt.reason}
+                                                <span className="font-medium">Dịch vụ:</span> {apt.book_service?.map(s => s.service_id?.service_name).join(', ') || 'Khám chung'}
                                             </p>
                                             <p className="text-sm text-gray-600 mt-1">
-                                                <span className="font-medium">Bác sĩ:</span> {apt.doctorName}
+                                                <span className="font-medium">Bác sĩ:</span> {apt.doctor_info?.profile?.full_name || 'Chưa chỉ định'}
                                             </p>
                                         </div>
 
-                                        {/* Preparation Status Badge */}
+                                        {/* Status Badge */}
                                         <div>
-                                            <Badge variant={prepStatusInfo.variant}>
-                                                <PrepStatusIcon size={14} className="inline mr-1" />
-                                                {prepStatusInfo.label}
+                                            <Badge variant={statusInfo.variant}>
+                                                <StatusIcon size={14} className="inline mr-1" />
+                                                {statusInfo.label}
                                             </Badge>
                                         </div>
                                     </div>
@@ -260,13 +287,17 @@ const AssistantAppointments = () => {
                                         >
                                             <Eye size={20} />
                                         </button>
-                                        <button
-                                            onClick={() => handlePrepareClick(apt)}
-                                            className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                            title="Chuẩn bị"
-                                        >
-                                            <CheckCircle size={20} />
-                                        </button>
+
+                                        {apt.status === 'CHECKED_IN' && (
+                                            <button
+                                                onClick={() => handlePrepareClick(apt)}
+                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                                                title="Chuẩn bị"
+                                            >
+                                                <CheckCircle size={20} />
+                                            </button>
+                                        )}
+
                                         <button
                                             onClick={() => handleReportClick(apt)}
                                             className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
@@ -305,7 +336,13 @@ const AssistantAppointments = () => {
                 appointment={selectedAppointment}
                 isOpen={showReportModal}
                 onClose={closeModals}
-                onSubmit={handleReportSubmit}
+            />
+
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast({ ...toast, show: false })}
             />
         </div>
     );

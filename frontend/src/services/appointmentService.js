@@ -71,7 +71,7 @@ const appointmentService = {
         }
     },
 
-    // Lấy danh sách cuộc hẹn cho nhân viên (Receptionist/Admin)
+    // Lấy danh sách cuộc hẹn cho nhân viên (Receptionist/Admin/Doctor_Assistant)
     getStaffAppointments: async (params) => {
         try {
             const response = await apiClient.get('/api/appointment/staff', { params });
@@ -82,9 +82,12 @@ const appointmentService = {
     },
 
     // Cập nhật trạng thái cuộc hẹn (Confirmed, Completed, ...)
-    updateAppointmentStatus: async (id, status) => {
+    updateAppointmentStatus: async (id, status, doctorId = null) => {
         try {
-            const response = await apiClient.patch(`/api/appointment/status/${id}`, { status });
+            const response = await apiClient.patch(`/api/appointment/status/${id}`, {
+                status,
+                ...(doctorId && { doctorId })
+            });
             return response;
         } catch (error) {
             throw error;
