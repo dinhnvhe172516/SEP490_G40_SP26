@@ -1,4 +1,5 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { Link } from 'expo-router';
 import { Image } from 'expo-image';
 import { ThemedText } from '@/src/components/ui/themed-text';
 
@@ -18,20 +19,42 @@ export function HomeHeader({ profile, isLoading }: { profile: any, isLoading: bo
     const userName = profile?.full_name || 'Khách hàng';
     const avatarUrl = profile?.avatar_url;
 
+    // Check if user is logged in based on avatarUrl presence
+    // (This works as a quick UI check based on your profile structure)
+    const isLoggedIn = !!profile?.avatar_url;
+
+    // Default abstract avatar style if no image
+    const AbstractAvatar = (
+        <View style={styles.defaultAvatarBadge}>
+            <ThemedText style={styles.defaultAvatarInitial}>
+                {userName.charAt(0).toUpperCase()}
+            </ThemedText>
+        </View>
+    );
+
     return (
         <View style={styles.header}>
             <View>
-                <ThemedText style={styles.greeting}>Xin chào,</ThemedText>
+                <ThemedText style={styles.greeting}>{isLoggedIn ? 'Xin chào,' : 'Chào mừng,'}</ThemedText>
                 <ThemedText type="title" style={styles.userName}>{userName}</ThemedText>
+                {!isLoggedIn && (
+                    <ThemedText style={styles.loginHint}>Nhấn vào đây để đăng nhập</ThemedText>
+                )}
             </View>
-            <View style={styles.avatarContainer}>
-                <Image
-                    source={{ uri: avatarUrl }}
-                    style={styles.avatar}
-                    contentFit="cover"
-                />
-                <View style={styles.notificationBadge} />
-            </View>
+            <Link href="/(auth)/login" asChild>
+                <TouchableOpacity style={styles.avatarContainer} activeOpacity={0.7}>
+                    {isLoggedIn ? (
+                        <Image
+                            source={{ uri: avatarUrl }}
+                            style={styles.avatar}
+                            contentFit="cover"
+                        />
+                    ) : (
+                        AbstractAvatar
+                    )}
+                    {isLoggedIn && <View style={styles.notificationBadge} />}
+                </TouchableOpacity>
+            </Link>
         </View>
     );
 }
@@ -73,6 +96,26 @@ const styles = StyleSheet.create({
         backgroundColor: '#EF4444',
         borderWidth: 2,
         borderColor: '#FFFFFF',
+    },
+    loginHint: {
+        fontSize: 13,
+        color: '#9CA3AF',
+        marginTop: 2,
+    },
+    defaultAvatarBadge: {
+        width: 52,
+        height: 52,
+        borderRadius: 26,
+        backgroundColor: '#111827',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: '#F3F4F6',
+    },
+    defaultAvatarInitial: {
+        color: '#FFFFFF',
+        fontSize: 20,
+        fontWeight: '700',
     },
     skeletonText: {
         backgroundColor: '#E5E7EB',
