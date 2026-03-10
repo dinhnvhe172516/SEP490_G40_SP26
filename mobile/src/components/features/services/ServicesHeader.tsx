@@ -18,7 +18,7 @@ export function ServicesHeader() {
                 />
             </TouchableOpacity>
             <ThemedText style={styles.headerTitle}>Danh sách dịch vụ</ThemedText>
-            <View style={{ width: 24 }} /> {/* Balancing spacer */}
+            <View style={{ width: 24 }} />
         </View>
     );
 }

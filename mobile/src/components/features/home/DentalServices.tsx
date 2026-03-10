@@ -8,8 +8,7 @@ export function DentalServices({ services, isLoading }: { services: any[], isLoa
         <View style={styles.container}>
             <View style={styles.header}>
                 <ThemedText style={styles.sectionTitle}>Dịch vụ nổi bật</ThemedText>
-                {/* @ts-ignore */}
-                <Link href="/services" asChild>
+                <Link href={"/services" as any} asChild>
                     <TouchableOpacity>
                         <ThemedText style={styles.seeAllText}>Xem tất cả</ThemedText>
                     </TouchableOpacity>
