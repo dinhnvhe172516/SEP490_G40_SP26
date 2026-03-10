@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye, Loader2, RefreshCw, Phone } from 'lucide-react';
+import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye, Loader2, RefreshCw, Phone, UserPlus } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Toast from '../../components/ui/Toast';
-import PrepareAppointmentModal from './modals/PrepareAppointmentModal';
 import ViewAppointmentModal from './modals/ViewAppointmentModal';
+import AssignDoctorModal from './modals/AssignDoctorModal';
 import ReportEquipmentModal from './modals/ReportEquipmentModal';
 import appointmentService from '../../services/appointmentService';
 import staffService from '../../services/staffService';
@@ -23,7 +23,7 @@ const AssistantAppointments = () => {
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const [selectedAppointment, setSelectedAppointment] = useState(null);
-    const [showPrepareModal, setShowPrepareModal] = useState(false);
+    const [showAssignModal, setShowAssignModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
 
@@ -59,7 +59,15 @@ const AssistantAppointments = () => {
             // 2. Fetch doctors for the filter
             if (doctors.length === 0) {
                 const staffResponse = await staffService.getStaffs({ role_name: 'DOCTOR' });
-                setDoctors(staffResponse.data || []);
+                let docsData = [];
+                if (staffResponse && staffResponse.data) {
+                    if (Array.isArray(staffResponse.data.data)) {
+                        docsData = staffResponse.data.data;
+                    } else if (Array.isArray(staffResponse.data)) {
+                        docsData = staffResponse.data;
+                    }
+                }
+                setDoctors(docsData);
             }
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -100,9 +108,9 @@ const AssistantAppointments = () => {
         }
     };
 
-    const handlePrepareClick = (appointment) => {
+    const handleAssignClick = (appointment) => {
         setSelectedAppointment(appointment);
-        setShowPrepareModal(true);
+        setShowAssignModal(true);
     };
 
     const handleViewClick = (appointment) => {
@@ -116,7 +124,7 @@ const AssistantAppointments = () => {
     };
 
     const closeModals = () => {
-        setShowPrepareModal(false);
+        setShowAssignModal(false);
         setShowViewModal(false);
         setShowReportModal(false);
         setSelectedAppointment(null);
@@ -134,11 +142,10 @@ const AssistantAppointments = () => {
         }
     };
 
-    const handlePreparationComplete = (appointmentId, data) => {
-        // Here we could update to a specific status or just log for now
-        // Assistant flow usually involves ensuring it's ready for the doctor
-        console.log('Preparation completed:', appointmentId, data);
-        setToast({ show: true, message: 'Chuẩn bị đã được ghi nhận!', type: 'success' });
+    const handleAssignComplete = async (appointmentId, data) => {
+        // Here we update the status to IN_CONSULTATION and assign the doctor
+        console.log('Doctor assigned:', appointmentId, data);
+        await handleUpdateStatus(appointmentId, 'IN_CONSULTATION', data.doctorId);
     };
 
     return (
@@ -187,7 +194,7 @@ const AssistantAppointments = () => {
                             <option value="all">Tất cả bác sĩ</option>
                             {doctors.map(doctor => (
                                 <option key={doctor._id} value={doctor._id}>
-                                    {doctor.profile_id?.full_name || doctor.name}
+                                    {doctor.profile?.full_name || doctor.name || 'Không xác định'}
                                 </option>
                             ))}
                         </select>
@@ -293,11 +300,12 @@ const AssistantAppointments = () => {
 
                                         {apt.status === 'CHECKED_IN' && (
                                             <button
-                                                onClick={() => handlePrepareClick(apt)}
-                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                                title="Chuẩn bị"
+                                                onClick={() => handleAssignClick(apt)}
+                                                className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-1 font-medium"
+                                                title="Gán bác sĩ & Bắt đầu khám"
                                             >
-                                                <CheckCircle size={20} />
+                                                <UserPlus size={18} />
+                                                <span className="text-sm">Bắt đầu khám</span>
                                             </button>
                                         )}
 
@@ -329,11 +337,12 @@ const AssistantAppointments = () => {
                 isOpen={showViewModal}
                 onClose={closeModals}
             />
-            <PrepareAppointmentModal
+            <AssignDoctorModal
                 appointment={selectedAppointment}
-                isOpen={showPrepareModal}
+                isOpen={showAssignModal}
                 onClose={closeModals}
-                onComplete={handlePreparationComplete}
+                onComplete={handleAssignComplete}
+                doctors={doctors}
             />
             <ReportEquipmentModal
                 appointment={selectedAppointment}
