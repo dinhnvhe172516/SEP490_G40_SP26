@@ -53,9 +53,12 @@ export function HomeHeader({ profile, isLoading }: { profile: any, isLoading: bo
             await SecureStore.deleteItemAsync('access_token');
             await SecureStore.deleteItemAsync('refresh_token');
 
-            // Remove cached data and refetch to trigger unauthenticated state
-            queryClient.removeQueries({ queryKey: ['profile'] });
-            queryClient.removeQueries({ queryKey: ['appointments', 'patient'] });
+            // Đè dữ liệu hiện tại bằng null để UI cập nhật trở về trạng thái chưa đăng nhập ngay lập tức
+            queryClient.setQueryData(['profile'], null);
+            queryClient.setQueryData(['appointments', 'patient'], null);
+
+            // Xoá sạch bộ đệm toàn bộ ứng dụng
+            queryClient.clear();
         }
     };
 
