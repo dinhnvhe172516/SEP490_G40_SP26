@@ -1,19 +1,63 @@
-import { StyleSheet, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { Link, Stack, router } from 'expo-router';
 import { Image } from 'expo-image';
-import { ThemedText } from '@/src/components/ui/themed-text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQueryClient } from '@tanstack/react-query';
+import * as SecureStore from 'expo-secure-store';
+
+import { ThemedText } from '@/src/components/ui/themed-text';
+import { useLogin } from '@/src/hooks/useAuth';
 
 export default function LoginScreen() {
     const insets = useSafeAreaInsets();
+    const queryClient = useQueryClient();
+    const loginMutation = useLogin();
 
-    const handleLogin = () => {
-        // Logic đăng nhập sẽ được thêm sau
-        // Tạm thời quay lại trang trước
-        if (router.canGoBack()) {
-            router.back();
-        } else {
-            router.replace('/');
+    const [identifier, setIdentifier] = useState('');
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+
+    const handleLogin = async () => {
+        if (!identifier || !password) {
+            setErrorMsg('Vui lòng nhập đầy đủ thông tin');
+            return;
+        }
+
+        try {
+            setIsLoading(true);
+            setErrorMsg('');
+
+            // Call real login API using mutation instead of useQuery directly
+            const responseData = await loginMutation.mutateAsync({ identifier, password });
+
+            // Extract tokens (adjust fields based on your backend response structure)
+            const resData = responseData?.data as any;
+            const accessToken = resData?.token;
+            const refreshToken = resData?.refreshToken;
+
+            if (accessToken) {
+                await SecureStore.setItemAsync('access_token', accessToken);
+                if (refreshToken) {
+                    await SecureStore.setItemAsync('refresh_token', refreshToken);
+                }
+
+                // Invalidate profile query to refetch authenticated data
+                queryClient.invalidateQueries({ queryKey: ['profile'] });
+                queryClient.invalidateQueries({ queryKey: ['appointments', 'patient'] });
+
+                router.replace('/');
+            } else {
+                setErrorMsg('Không nhận được token từ máy chủ. Vui lòng thử lại.');
+            }
+
+        } catch (err: any) {
+            console.error('Login error:', err);
+            const msg = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.';
+            setErrorMsg(msg);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -43,6 +87,7 @@ export default function LoginScreen() {
                 <View style={styles.header}>
                     <ThemedText type="title" style={styles.title}>Đăng nhập</ThemedText>
                     <ThemedText style={styles.subtitle}>Vui lòng nhập thông tin để quản lý sức khỏe răng miệng của bạn.</ThemedText>
+                    {errorMsg ? <ThemedText style={styles.errorText}>{errorMsg}</ThemedText> : null}
                 </View>
 
                 {/* Form Section */}
@@ -51,10 +96,13 @@ export default function LoginScreen() {
                         <ThemedText style={styles.label}>TÀI KHOẢN</ThemedText>
                         <TextInput
                             style={styles.input}
-                            placeholder="Email hoặc số điện thoại"
+                            placeholder="Email hoặc tên đăng nhập"
                             placeholderTextColor="#9CA3AF"
                             autoCapitalize="none"
                             keyboardType="email-address"
+                            value={identifier}
+                            onChangeText={setIdentifier}
+                            editable={!isLoading}
                         />
                     </View>
 
@@ -65,6 +113,9 @@ export default function LoginScreen() {
                             placeholder="Nhập mật khẩu"
                             placeholderTextColor="#9CA3AF"
                             secureTextEntry={true}
+                            value={password}
+                            onChangeText={setPassword}
+                            editable={!isLoading}
                         />
                     </View>
 
@@ -75,8 +126,17 @@ export default function LoginScreen() {
 
                 {/* Action Section */}
                 <View style={styles.actionContainer}>
-                    <TouchableOpacity style={styles.loginButton} activeOpacity={0.8} onPress={handleLogin}>
-                        <ThemedText style={styles.loginButtonText}>Đăng nhập</ThemedText>
+                    <TouchableOpacity
+                        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                        activeOpacity={0.8}
+                        onPress={handleLogin}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <ActivityIndicator color="#FFFFFF" size="small" />
+                        ) : (
+                            <ThemedText style={styles.loginButtonText}>Đăng nhập</ThemedText>
+                        )}
                     </TouchableOpacity>
 
                     <View style={styles.registerContainer}>
@@ -133,6 +193,12 @@ const styles = StyleSheet.create({
         color: '#6B7280',
         lineHeight: 22,
     },
+    errorText: {
+        color: '#EF4444',
+        fontSize: 14,
+        marginTop: 12,
+        fontWeight: '500',
+    },
     formContainer: {
         gap: 24,
         marginBottom: 40,
@@ -172,6 +238,12 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         paddingVertical: 18,
         alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 56,
+    },
+    loginButtonDisabled: {
+        backgroundColor: '#4B5563',
+        opacity: 0.8,
     },
     loginButtonText: {
         color: '#FFFFFF',
