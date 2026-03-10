@@ -2,9 +2,11 @@ import React, { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../../contexts/AuthContext"
 import appointmentService from "../../services/appointmentService"
+import { getDentalRecordsByPatient } from "../../services/dentalRecordService"
 
 import AppointmentDetailModal from "./components/AppointmentDetailModal"
 import PatientInfoModal from "./components/PatientInfoModal"
+import CreateDentalRecordModal from "../medical_records/components/CreateDentalRecordModal"
 import AppointmentFilters from "./components/AppointmentFilters"
 import AppointmentTable from "./components/AppointmentTable"
 import AppointmentPagination from "./components/AppointmentPagination"
@@ -29,6 +31,7 @@ const DentistAppointmentList = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [isPatientInfoModalOpen, setIsPatientInfoModalOpen] = useState(false)
+  const [isCreateRecordModalOpen, setIsCreateRecordModalOpen] = useState(false)
   const [appointmentForRecord, setAppointmentForRecord] = useState(null)
 
   // Debounce search term
@@ -94,8 +97,29 @@ const DentistAppointmentList = () => {
     setIsDetailModalOpen(true)
   }
 
-  const handleCreateRecord = (appointment) => {
+  const handleCreateRecord = async (appointment) => {
     setAppointmentForRecord(appointment)
+
+    if (appointment.status === 'IN_CONSULTATION') {
+      try {
+        const patientObj = appointment.patient_id || {};
+        const patientId = patientObj._id || patientObj.id || patientObj;
+
+        if (patientId && typeof patientId === 'string') {
+          const res = await getDentalRecordsByPatient(patientId);
+          const records = res.data || [];
+          if (records.length === 0) {
+            // No existing records -> open Create Modal directly
+            setIsCreateRecordModalOpen(true);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to check patient records:", err);
+      }
+    }
+
+    // Default flow if condition not met, or fallback
     setIsPatientInfoModalOpen(true)
   }
 
@@ -110,11 +134,29 @@ const DentistAppointmentList = () => {
     navigate(`/dentist/dental-records/search?${params.toString()}`)
   }
 
+  const handleCreateRecordSuccess = (newRecord) => {
+    setIsCreateRecordModalOpen(false);
+    if (newRecord?._id) {
+      navigate(`/dentist/dental-records/${newRecord._id}`);
+    } else {
+      // Fallback
+      handlePatientInfoConfirm({
+        name: appointmentForRecord?.patient_id?.full_name || '',
+        dob: appointmentForRecord?.patient_id?.dob ? new Date(appointmentForRecord.patient_id.dob).toISOString().split('T')[0] : '',
+        gender: appointmentForRecord?.patient_id?.gender ? "MALE" : "FEMALE",
+        phone: appointmentForRecord?.patient_id?.phone || '',
+      });
+    }
+  }
+
   const handleClearFilters = () => {
     setSearchTerm("");
     setSortOrder("");
     setPage(1);
   }
+
+  // Helpers for exact bindings
+  const patientData = appointmentForRecord?.patient_id || {};
 
   return (
     <div className="space-y-6">
@@ -180,6 +222,18 @@ const DentistAppointmentList = () => {
         onClose={() => setIsPatientInfoModalOpen(false)}
         appointment={appointmentForRecord}
         onConfirm={handlePatientInfoConfirm}
+      />
+
+      <CreateDentalRecordModal
+        isOpen={isCreateRecordModalOpen}
+        onClose={() => setIsCreateRecordModalOpen(false)}
+        onSuccess={handleCreateRecordSuccess}
+        patientId={patientData._id || patientData.id}
+        patientName={patientData.full_name || appointmentForRecord?.full_name || ''}
+        patientPhone={patientData.phone || appointmentForRecord?.phone || ''}
+        patientEmail={patientData.email || appointmentForRecord?.email || ''}
+        patientGender={patientData.gender === true ? 'MALE' : patientData.gender === false ? 'FEMALE' : ''}
+        patientDateOfBirth={patientData.dob || ''}
       />
     </div>
   )
