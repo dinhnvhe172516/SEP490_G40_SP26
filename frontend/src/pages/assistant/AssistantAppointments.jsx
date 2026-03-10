@@ -333,6 +333,17 @@ const AssistantAppointments = () => {
                                             </button>
                                         )}
 
+                                        {apt.status === 'IN_CONSULTATION' && (
+                                            <button
+                                                onClick={() => handleUpdateStatus(apt._id, 'COMPLETED')}
+                                                className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center gap-1 font-medium"
+                                                title="Hoàn thành khám"
+                                            >
+                                                <CheckCircle size={18} />
+                                                <span className="text-sm">Hoàn thành</span>
+                                            </button>
+                                        )}
+
                                         <button
                                             onClick={() => handleReportClick(apt)}
                                             className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
