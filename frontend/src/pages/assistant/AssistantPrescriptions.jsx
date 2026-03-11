@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Pill, Search, Eye, Edit, CheckCircle, Clock, AlertCircle, Filter, X, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Pill, Search, Eye, Edit, CheckCircle, Clock, AlertCircle, X, Plus, Trash2 } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import treatmentService from '../../services/treatmentService';
+import inventoryService from '../../services/inventoryService';
 
 // ─── STATUS HELPERS ──────────────────────────────────────────────────────────
 const getStatusInfo = (status) => {
@@ -16,6 +17,104 @@ const getStatusInfo = (status) => {
         REJECTED: { label: 'Bị từ chối', variant: 'danger', icon: X },
     };
     return map[status] || { label: status, variant: 'default', icon: Clock };
+};
+
+// ─── MEDICINE SEARCH INPUT ────────────────────────────────────────────────────
+const MedicineSearchInput = ({ value, onChange }) => {
+    const [query, setQuery] = useState(value?.medicine_name || '');
+    const [results, setResults] = useState([]);
+    const [isOpen, setIsOpen] = useState(false);
+    const [isSearching, setIsSearching] = useState(false);
+    const wrapperRef = useRef(null);
+    const debounceRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handler = (e) => { if (wrapperRef.current && !wrapperRef.current.contains(e.target)) setIsOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    // Sync display name when value changes externally
+    useEffect(() => {
+        if (value?.medicine_name) setQuery(value.medicine_name);
+    }, [value?.medicine_name]);
+
+    const handleInput = (e) => {
+        const q = e.target.value;
+        setQuery(q);
+        setIsOpen(true);
+        clearTimeout(debounceRef.current);
+        if (q.trim().length < 1) { setResults([]); return; }
+        debounceRef.current = setTimeout(async () => {
+            setIsSearching(true);
+            try {
+                const res = await inventoryService.getMedicines({ search: q, limit: 10, status: 'AVAILABLE' });
+                const list = res?.data?.data || res?.data || [];
+                setResults(Array.isArray(list) ? list : []);
+            } catch {
+                setResults([]);
+            } finally {
+                setIsSearching(false);
+            }
+        }, 300);
+    };
+
+    const handleSelect = (med) => {
+        setQuery(med.medicine_name);
+        setIsOpen(false);
+        onChange({ id: med._id, medicine_name: med.medicine_name, unit: med.unit, quantity_in_stock: med.quantity });
+    };
+
+    const handleClear = () => {
+        setQuery('');
+        setResults([]);
+        onChange(null);
+    };
+
+    return (
+        <div ref={wrapperRef} className="relative">
+            <div className="relative">
+                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input
+                    type="text"
+                    value={query}
+                    onChange={handleInput}
+                    onFocus={() => query.length > 0 && setIsOpen(true)}
+                    placeholder="Tìm tên thuốc..."
+                    className="w-full pl-8 pr-8 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition"
+                />
+                {query && (
+                    <button type="button" onClick={handleClear} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                        <X size={14} />
+                    </button>
+                )}
+            </div>
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white rounded-xl border border-gray-200 shadow-lg max-h-52 overflow-y-auto">
+                    {isSearching && <p className="text-xs text-gray-400 text-center py-3">Đang tìm...</p>}
+                    {!isSearching && results.length === 0 && query.length > 0 && (
+                        <p className="text-xs text-gray-400 text-center py-3">Không tìm thấy thuốc</p>
+                    )}
+                    {results.map((med) => (
+                        <button
+                            key={med._id}
+                            type="button"
+                            onMouseDown={() => handleSelect(med)}
+                            className="w-full text-left px-3 py-2.5 hover:bg-teal-50 transition-colors border-b border-gray-50 last:border-0"
+                        >
+                            <p className="text-sm font-medium text-gray-800">{med.medicine_name}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                                {med.dosage_form && <span>{med.dosage_form} · </span>}
+                                {med.unit} · Tồn kho: <span className={med.quantity <= 0 ? 'text-red-500' : 'text-green-600'}>{med.quantity}</span>
+                                {med.dosage && <span> · {med.dosage}</span>}
+                            </p>
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
 };
 
 // ─── VIEW MEDICINE MODAL ──────────────────────────────────────────────────────
@@ -78,8 +177,11 @@ const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
         if (isOpen && treatment) {
             setMedicines(
                 (treatment.medicine_usage || []).map((m) => ({
-                    medicine_id: m.medicine_id?._id || m.medicine_id || '',
-                    medicineName: m.medicine_id?.name || m.medicine_id?.medicine_name || '',
+                    // chosen holds { id, medicine_name } from the picker
+                    chosen: {
+                        id: m.medicine_id?._id || m.medicine_id || '',
+                        medicine_name: m.medicine_id?.name || m.medicine_id?.medicine_name || '',
+                    },
                     quantity: m.quantity ?? 1,
                     usage_instruction: m.usage_instruction || '',
                     note: m.note || '',
@@ -95,8 +197,11 @@ const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
     const handleChange = (idx, field, value) =>
         setMedicines((prev) => prev.map((m, i) => (i === idx ? { ...m, [field]: field === 'quantity' ? Number(value) : value } : m)));
 
+    const handleMedicinePick = (idx, picked) =>
+        setMedicines((prev) => prev.map((m, i) => (i === idx ? { ...m, chosen: picked } : m)));
+
     const handleAdd = () =>
-        setMedicines((prev) => [...prev, { medicine_id: '', medicineName: '', quantity: 1, usage_instruction: '', note: '', dispensed: false }]);
+        setMedicines((prev) => [...prev, { chosen: null, quantity: 1, usage_instruction: '', note: '', dispensed: false }]);
 
     const handleRemove = (idx) => setMedicines((prev) => prev.filter((_, i) => i !== idx));
 
@@ -106,8 +211,8 @@ const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
         setError(null);
         try {
             await treatmentService.updateTreatmentMedicine(treatment._id, {
-                medicine_usage: medicines.filter((m) => m.medicine_id).map((m) => ({
-                    medicine_id: m.medicine_id,
+                medicine_usage: medicines.filter((m) => m.chosen?.id).map((m) => ({
+                    medicine_id: m.chosen.id,
                     quantity: m.quantity,
                     usage_instruction: m.usage_instruction || undefined,
                     note: m.note || undefined,
@@ -146,13 +251,15 @@ const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
                                 </button>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-xs font-medium text-gray-600 mb-1">Medicine ID <span className="text-red-400">*</span></label>
-                                    <input type="text" value={m.medicine_id} required
-                                        onChange={(e) => handleChange(idx, 'medicine_id', e.target.value)}
-                                        placeholder="ObjectId của thuốc"
-                                        className="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 transition" />
-                                    {m.medicineName && <p className="text-xs text-teal-600 mt-1">✓ {m.medicineName}</p>}
+                                <div className="col-span-2">
+                                    <label className="block text-xs font-medium text-gray-600 mb-1">Thuốc <span className="text-red-400">*</span></label>
+                                    <MedicineSearchInput
+                                        value={m.chosen}
+                                        onChange={(picked) => handleMedicinePick(idx, picked)}
+                                    />
+                                    {!m.chosen?.id && (
+                                        <p className="text-xs text-red-400 mt-1">Vui lòng chọn thuốc từ danh sách</p>
+                                    )}
                                 </div>
                                 <div>
                                     <label className="block text-xs font-medium text-gray-600 mb-1">Số lượng</label>
