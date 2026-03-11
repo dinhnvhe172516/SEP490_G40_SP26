@@ -49,6 +49,9 @@ const treatmentSchema = new Schema(
         performed_date: {
             type: Date
         },
+        end_date: { // NEW FIELD ADDED PER REQUEST
+            type: Date
+        },
         result: {
             type: String,
             trim: true
@@ -177,5 +180,7 @@ treatmentSchema.post('findOneAndUpdate', async function (doc) {
 
 // Đánh Index để tăng tốc độ truy vấn sau này
 treatmentSchema.index({ patient_id: 1, appointment_id: 1 });
+
+treatmentSchema.statics.checkAndCompleteDentalRecord = checkAndCompleteDentalRecord;
 
 module.exports = mongoose.model("Treatment", treatmentSchema);

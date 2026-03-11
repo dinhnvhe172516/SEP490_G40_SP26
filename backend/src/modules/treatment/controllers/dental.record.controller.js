@@ -594,14 +594,16 @@ const getListTreatmentPlansController = async (req, res) => {
         id: t._id,
         name: t.tooth_position || t.note || 'Unnamed Phase',
         startDate: t.planned_date,
-        // Map backend status to frontend expected status ('completed', 'in_progress', 'pending')
+        endDate: t.end_date,
         status: t.status === 'DONE' ? 'completed' : (t.status === 'IN_PROGRESS' ? 'in_progress' : 'pending')
       }));
 
       return {
         id: record._id,
+        patient_id: record.patient_id,
         patientName: record.full_name,
         patientPhone: record.phone,
+        doctor_id: record.created_by,
         doctorName: record.doctor_info?.profile?.full_name || 'N/A',
         planName: record.record_name,
         diagnosis: record.diagnosis || '',

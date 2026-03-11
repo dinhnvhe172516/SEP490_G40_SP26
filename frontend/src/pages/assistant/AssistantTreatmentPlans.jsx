@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { ClipboardList, Search, Plus, Eye, Edit, CheckCircle, Clock, AlertCircle, Filter, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import Toast from '../../components/ui/Toast';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import TreatmentPlanModal from './modals/TreatmentPlanModal';
 import treatmentPlanService from '../../services/treatmentPlanService';
 import patientService from '../../services/patientService';
 import staffService from '../../services/staffService';
+import appointmentService from '../../services/appointmentService';
 
 const AssistantTreatmentPlans = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterDoctor, setFilterDoctor] = useState('all');
+    const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const [selectedPlan, setSelectedPlan] = useState(null);
     const [showModal, setShowModal] = useState(false);
@@ -28,10 +30,12 @@ const AssistantTreatmentPlans = () => {
     const loadData = async () => {
         try {
             setIsLoading(true);
-            const [plansRes, patientsRes, staffRes] = await Promise.all([
+            const today = new Date().toISOString().split('T')[0];
+            const [plansRes, patientsRes, staffRes, appointmentsRes] = await Promise.all([
                 treatmentPlanService.getTreatmentPlans({ limit: 4, page: currentPage }),
                 patientService.getAllPatients({ limit: 1000 }),
-                staffService.getStaffs({ limit: 1000 })
+                staffService.getStaffs({ limit: 1000 }),
+                appointmentService.getStaffAppointments({ appointment_date: today, limit: 1000 })
             ]);
             setPlans(plansRes?.data || []);
             const apiPagi = plansRes?.pagination || { totalItems: 0, size: 4, page: 1 };
@@ -39,13 +43,28 @@ const AssistantTreatmentPlans = () => {
                 ...apiPagi,
                 totalPages: apiPagi.totalPages || Math.ceil(apiPagi.totalItems / (apiPagi.size || 4)) || 1
             });
-            setPatients(patientsRes?.data?.data || patientsRes?.data || []);
+
+            // Lọc bệnh nhân: Chỉ lấy những bệnh nhân có lịch khám hôm nay (Assistant view)
+            const allPatients = patientsRes?.data?.data || patientsRes?.data || [];
+            const todayAppointments = appointmentsRes?.data?.data || appointmentsRes?.data || [];
+
+            // Trích xuất danh sách ID bệnh nhân từ lịch khám hôm nay
+            const todayPatientIds = new Set(
+                todayAppointments
+                    .map(app => app.patient_id?.toString() || app.patient_id)
+                    .filter(Boolean)
+            );
+
+            const todayPatients = allPatients.filter(p => todayPatientIds.has(p._id.toString()));
+            setPatients(todayPatients);
+
             // Filter only doctors
             const allStaff = staffRes?.data?.data || staffRes?.data || [];
-            const docs = allStaff.filter(s => s.account_id?.role_id?.name === 'DOCTOR' || s.role === 'DOCTOR' || (s.account_id && s.account_id.role === 'DOCTOR') || (s.specialization)); // Ensure robust filtering, but usually role_id.name is standard
-            setDoctorsList(docs.length > 0 ? docs : allStaff); // Fallback to all staff if filter fails
+            const docs = allStaff.filter(s => s.account?.role_id?.name === 'DOCTOR');
+            // Remove fallback to allStaff so it doesn't accidentally show non-doctors
+            setDoctorsList(docs);
         } catch (error) {
-            toast.error('Gặp lỗi khi tải dữ liệu');
+            setToast({ show: true, message: 'Gặp lỗi khi tải dữ liệu', type: 'error' });
             console.error(error);
         } finally {
             setIsLoading(false);
@@ -124,15 +143,15 @@ const AssistantTreatmentPlans = () => {
 
             if (modalMode === 'create') {
                 await treatmentPlanService.createTreatmentPlan(payload);
-                toast.success('Đã tạo kế hoạch mới thành công!');
+                setToast({ show: true, message: 'Đã tạo kế hoạch mới thành công!', type: 'success' });
             } else if (modalMode === 'edit') {
                 await treatmentPlanService.updateTreatmentPlan(selectedPlan.id, payload);
-                toast.success('Đã cập nhật kế hoạch thành công!');
+                setToast({ show: true, message: 'Đã cập nhật kế hoạch thành công!', type: 'success' });
             }
             closeModal();
             loadData(); // Reload list
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Có lỗi xảy ra khi lưu kế hoạch');
+            setToast({ show: true, message: error.response?.data?.message || 'Có lỗi xảy ra khi lưu kế hoạch', type: 'error' });
             console.error(error);
         }
     };
@@ -444,6 +463,13 @@ const AssistantTreatmentPlans = () => {
                 onSave={handleSave}
                 patients={patients}
                 doctors={doctorsList}
+            />
+
+            <Toast
+                show={toast.show}
+                message={toast.message}
+                type={toast.type}
+                onClose={() => setToast(prev => ({ ...prev, show: false }))}
             />
         </div>
     );

@@ -266,6 +266,12 @@ const getByIdService = async (id, treatmentStatus) => {
       .populate("doctor_id")
       .sort({ createdAt: -1 })
       .lean();
+    // 2.5 Rename end_date to endDate for frontend consumption
+    treatments.forEach(t => {
+      if (t.phase === 'PLAN' && t.end_date) {
+        t.endDate = t.end_date;
+      }
+    });
 
     // 3. Ghép và trả về
     dentalRecord.treatments = treatments;
@@ -659,9 +665,9 @@ const createTreatmentPlanService = async (data, accountDoctorId) => {
         doctor_id: dentalRecordData.created_by,
         phase: 'PLAN',
         tooth_position: phase.name, // Using tooth_position or note to store phase name since Schema has tooth_position, result, note
-        note: phase.name, // Will use note as phase name
+        note: phase.name,
         planned_date: phase.startDate || null,
-        // Optional endDate can be mapped to end_date of record, but Treatment doesn't have end_date, so we'll store it in note if needed
+        end_date: phase.endDate || null,
         status: phase.status === 'completed' ? 'DONE' : (phase.status === 'in_progress' ? 'IN_PROGRESS' : 'PLANNED')
       }));
 
@@ -720,6 +726,7 @@ const updateTreatmentPlanService = async (id, data) => {
           phase: 'PLAN',
           note: phase.name,
           planned_date: phase.startDate || null,
+          end_date: phase.endDate || null,
           status: phase.status === 'completed' ? 'DONE' : (phase.status === 'in_progress' ? 'IN_PROGRESS' : 'PLANNED')
         }));
 
@@ -729,6 +736,12 @@ const updateTreatmentPlanService = async (id, data) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    // Gọi trigger bằng tay sau khi đã commit transaction xong
+    // Vì transaction đã đóng nên logic checkAndCompleteDentalRecord sẽ lấy được dữ liệu mới nhất
+    if (Model.Treatment.checkAndCompleteDentalRecord) {
+      await Model.Treatment.checkAndCompleteDentalRecord(id);
+    }
 
     return getDentalRecordById(id);
   } catch (error) {
