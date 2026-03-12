@@ -5,6 +5,7 @@ import AssistantMedicalRecords from '../../pages/assistant/AssistantMedicalRecor
 import AssistantLeaveRequests from '../../pages/assistant/AssistantLeaveRequests';
 import AssistantTreatmentPlans from '../../pages/assistant/AssistantTreatmentPlans';
 import AssistantPrescriptions from '../../pages/assistant/AssistantPrescriptions';
+import AssistantEquipment from '../../pages/assistant/AssistantEquipment';
 
 /**
  * Assistant Routes - Role-specific routes for Dental Assistant
@@ -61,7 +62,18 @@ const assistantRoutes = [
                 </AssistantLayout>
             </ProtectedRoute>
         )
+    },
+    {
+        path: '/assistant/equipment',
+        element: (
+            <ProtectedRoute allowedRoles={['ASSISTANT']}>
+                <AssistantLayout>
+                    <AssistantEquipment />
+                </AssistantLayout>
+            </ProtectedRoute>
+        )
     }
 ];
 
 export default assistantRoutes;
+
