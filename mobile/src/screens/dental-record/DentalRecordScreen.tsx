@@ -93,8 +93,7 @@ export function DentalRecordScreen() {
     const { data: recordData, isLoading, refetch, isRefetching } = useDentalRecordData();
 
     const profile = profileData?.data || {};
-    const records: any[] = recordData?.data?.data ?? recordData?.data ?? [];
-
+    const records: any[] = recordData?.data || [];
     const totalRecords = records.length;
     const lastVisit = records[0]?.start_date;
     const inProgressCount = records.filter(r => r.status === 'IN_PROGRESS').length;
@@ -141,7 +140,7 @@ export function DentalRecordScreen() {
                         <EmptyDentalRecord />
                     ) : (
                         <View style={styles.recordList}>
-                            <ThemedText style={styles.sectionTitle}>Danh sách bệnh án</ThemedText>
+                            <ThemedText style={styles.sectionTitle}>Danh sách hồ sơ nha khoa</ThemedText>
                             {records.map(rec => (
                                 <DentalRecordItem key={rec._id} record={rec} />
                             ))}

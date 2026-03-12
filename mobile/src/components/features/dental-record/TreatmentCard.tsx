@@ -1,7 +1,9 @@
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { ThemedText } from '@/src/components/ui/themed-text';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useState } from 'react';
+import { TreatmentDetailModal } from './TreatmentDetailModal';
 
 type Treatment = {
     _id: string;
@@ -12,7 +14,7 @@ type Treatment = {
     performed_date?: string;
     planned_date?: string;
     status: string;
-    medicine_usage?: { medicine_id?: { name?: string }; quantity?: number; usage_instruction?: string }[];
+    medicine_usage?: { medicine_id?: { medicine_name?: string }; quantity?: number; usage_instruction?: string }[];
 };
 
 type Props = {
@@ -34,7 +36,7 @@ const PHASE_LABEL: Record<string, string> = {
     SESSION: 'Buổi khám',
 };
 
-function TreatmentRow({ item, isLast }: { item: Treatment; isLast: boolean }) {
+function TreatmentRow({ item, onPress }: { item: Treatment; onPress: () => void }) {
     const status = TREATMENT_STATUS[item.status] || { label: item.status, color: '#6B7280', bg: '#F9FAFB' };
 
     let dateDisplay = '';
@@ -47,60 +49,50 @@ function TreatmentRow({ item, isLast }: { item: Treatment; isLast: boolean }) {
     } catch (e) { console.log(e); }
 
     return (
-        <View style={[styles.row, isLast && styles.rowLast]}>
-            {/* Phase Tag */}
-            <View style={[styles.phaseTag, item.phase === 'PLAN' ? styles.phaseTagPlan : styles.phaseTagSession]}>
-                <ThemedText style={styles.phaseTagText}>{PHASE_LABEL[item.phase]}</ThemedText>
+        <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.7}>
+            <View style={styles.rowLeft}>
+                <ThemedText style={styles.title}>
+                    {item.tooth_position || item.note || 'Điều trị chung'}
+                </ThemedText>
+
+                <ThemedText style={styles.meta}>
+                    {PHASE_LABEL[item.phase]} • {dateDisplay}
+                </ThemedText>
             </View>
 
-            <View style={styles.rowContent}>
-                <View style={styles.rowTop}>
-                    <ThemedText style={styles.toothPosition} numberOfLines={1}>
-                        {item.tooth_position || item.note || 'Điều trị chung'}
-                    </ThemedText>
-                    <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
-                        <ThemedText style={[styles.statusText, { color: status.color }]}>{status.label}</ThemedText>
-                    </View>
-                </View>
-
-                {!!item.result && (
-                    <ThemedText style={styles.resultText} numberOfLines={2}>
-                        Kết quả: {item.result}
-                    </ThemedText>
-                )}
-
-                {!!dateDisplay && (
-                    <ThemedText style={styles.dateText}>{dateDisplay}</ThemedText>
-                )}
-
-                {/* Thuốc */}
-                {item.medicine_usage && item.medicine_usage.length > 0 && (
-                    <View style={styles.medicineBox}>
-                        <ThemedText style={styles.medicineTitle}>💊 Đơn thuốc</ThemedText>
-                        {item.medicine_usage.map((m, idx) => (
-                            <ThemedText key={idx} style={styles.medicineItem}>
-                                • {m.medicine_id?.name || 'Thuốc'} × {m.quantity}
-                                {m.usage_instruction ? ` — ${m.usage_instruction}` : ''}
-                            </ThemedText>
-                        ))}
-                    </View>
-                )}
+            <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
+                <ThemedText style={[styles.statusText, { color: status.color }]}>
+                    {status.label}
+                </ThemedText>
             </View>
-        </View>
+        </TouchableOpacity>
     );
 }
 
 export function TreatmentCard({ treatments }: Props) {
+    const [selected, setSelected] = useState<Treatment | null>(null);
+
     if (!treatments || treatments.length === 0) return null;
 
     return (
         <View style={styles.container}>
             <ThemedText style={styles.sectionTitle}>Phiếu điều trị</ThemedText>
+
             <View style={styles.card}>
-                {treatments.map((t, index) => (
-                    <TreatmentRow key={t._id} item={t} isLast={index === treatments.length - 1} />
+                {treatments.map(t => (
+                    <TreatmentRow
+                        key={t._id}
+                        item={t}
+                        onPress={() => setSelected(t)}
+                    />
                 ))}
             </View>
+
+            <TreatmentDetailModal
+                visible={!!selected}
+                treatment={selected}
+                onClose={() => setSelected(null)}
+            />
         </View>
     );
 }
@@ -122,10 +114,11 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         padding: 14,
-        gap: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#F3F4F6'
     },
     rowLast: { borderBottomWidth: 0 },
     phaseTag: {
@@ -136,51 +129,23 @@ const styles = StyleSheet.create({
         minWidth: 72,
         alignItems: 'center',
     },
-    phaseTagPlan: { backgroundColor: '#EFF6FF' },
-    phaseTagSession: { backgroundColor: '#F0FDF4' },
-    phaseTagText: { fontSize: 11, fontWeight: '700', color: '#374151' },
-    rowContent: { flex: 1 },
-    rowTop: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 6,
-    },
-    toothPosition: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#111827',
-        flex: 1,
-        marginRight: 8,
-    },
     statusBadge: {
         paddingHorizontal: 7,
         paddingVertical: 3,
         borderRadius: 6,
     },
     statusText: { fontSize: 11, fontWeight: '600' },
-    resultText: {
-        fontSize: 13,
+    rowLeft: {
+        flex: 1
+    },
+    title: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#111827'
+    },
+    meta: {
+        fontSize: 12,
         color: '#6B7280',
-        marginBottom: 4,
-        lineHeight: 18,
-    },
-    dateText: { fontSize: 12, color: '#9CA3AF' },
-    medicineBox: {
-        marginTop: 8,
-        backgroundColor: '#FFFBEB',
-        borderRadius: 10,
-        padding: 10,
-    },
-    medicineTitle: {
-        fontSize: 12,
-        fontWeight: '700',
-        color: '#92400E',
-        marginBottom: 4,
-    },
-    medicineItem: {
-        fontSize: 12,
-        color: '#78350F',
-        lineHeight: 18,
+        marginTop: 2
     },
 });
