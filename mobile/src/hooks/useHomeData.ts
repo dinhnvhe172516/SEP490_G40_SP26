@@ -97,3 +97,37 @@ export function useCreateAppointment() {
     });
 }
 
+// ==========================================
+// PROFILE UPDATE API
+// ==========================================
+
+export function useUpdateProfile() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (payload: {
+            full_name?: string;
+            dob?: string;
+            gender?: string;
+            address?: string;
+        }) => {
+            const { data } = await apiClient.patch('/api/profile/update', payload);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['profile'] });
+        },
+    });
+}
+
+// ==========================================
+// CHANGE PASSWORD API
+// ==========================================
+
+export function useChangePassword() {
+    return useMutation({
+        mutationFn: async (payload: { currentPassword: string; newPassword: string }) => {
+            const { data } = await apiClient.post('/api/auth/change-password', payload);
+            return data;
+        },
+    });
+}

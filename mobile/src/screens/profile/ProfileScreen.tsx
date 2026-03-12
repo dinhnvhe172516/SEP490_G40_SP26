@@ -1,8 +1,9 @@
-import { StyleSheet, View, ScrollView } from 'react-native';
-import { Stack } from 'expo-router';
+import { StyleSheet, View, ScrollView, TouchableOpacity, Text } from 'react-native';
+import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
+
 
 import { useProfileData } from '@/src/hooks/useHomeData';
 
@@ -81,6 +82,29 @@ export function ProfileScreen() {
                     ]}
                 />
 
+                {/* Settings Menu Card */}
+                <View style={styles.menuCard}>
+                    <TouchableOpacity
+                        style={styles.menuRow}
+                        activeOpacity={0.6}
+                        onPress={() => router.push('/profile/edit' as any)}
+                    >
+                        <Text style={styles.menuLabel}>Chỉnh sửa hồ sơ</Text>
+                        <Text style={styles.menuChevron}>›</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.menuDivider} />
+
+                    <TouchableOpacity
+                        style={styles.menuRow}
+                        activeOpacity={0.6}
+                        onPress={() => router.push('/profile/change-password' as any)}
+                    >
+                        <Text style={styles.menuLabel}>Thay đổi mật khẩu</Text>
+                        <Text style={styles.menuChevron}>›</Text>
+                    </TouchableOpacity>
+                </View>
+
                 <ProfileLogoutButton />
             </ScrollView>
         </View>
@@ -105,5 +129,40 @@ const styles = StyleSheet.create({
         margin: 20,
         backgroundColor: '#F3F4F6',
         borderRadius: 20,
+    },
+    menuCard: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#F3F4F6',
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    menuRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 18,
+    },
+    menuLabel: {
+        fontSize: 15,
+        fontWeight: '500',
+        color: '#111827',
+    },
+    menuChevron: {
+        fontSize: 22,
+        color: '#9CA3AF',
+        lineHeight: 26,
+    },
+    menuDivider: {
+        height: 1,
+        backgroundColor: '#F3F4F6',
+        marginHorizontal: 20,
     },
 });
