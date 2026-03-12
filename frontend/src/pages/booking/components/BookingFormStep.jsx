@@ -11,7 +11,6 @@ const BookingFormStep = ({ bookingData, onSubmit, user }) => {
     const [phone, setPhone] = useState(initialPhone);
     const [email, setEmail] = useState(initialEmail);
     const [reason, setReason] = useState('');
-    const [notes, setNotes] = useState('');
 
     // Pre-fill if user object loads asynchronously later
     useEffect(() => {
@@ -26,8 +25,7 @@ const BookingFormStep = ({ bookingData, onSubmit, user }) => {
         e.preventDefault();
         if (reason.trim() && fullName.trim() && phone.trim() && email.trim()) {
             onSubmit({
-                reason,
-                notes,
+                reason: reason.trim(),
                 full_name: fullName.trim(),
                 phone: phone.trim(),
                 email: email.trim()
@@ -172,20 +170,6 @@ const BookingFormStep = ({ bookingData, onSubmit, user }) => {
                     </p>
                 </div>
 
-                {/* Notes (Optional) */}
-                <div>
-                    <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-                        <ClipboardList size={18} className="text-gray-400" />
-                        Ghi chú thêm (không bắt buộc)
-                    </label>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Thông tin bổ sung (tiền sử bệnh, dị ứng thuốc, ...)"
-                        rows={3}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
-                    />
-                </div>
 
                 {/* Submit Button */}
                 <button
