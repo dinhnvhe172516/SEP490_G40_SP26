@@ -36,7 +36,6 @@ const AssistantMedicalRecords = () => {
             };
 
             const response = await getAllDentalRecords(params);
-            console.log("Results: ", response);
             if (response && response.data) {
                 setRecords(response.data);
                 if (response.pagination) {
@@ -78,8 +77,6 @@ const AssistantMedicalRecords = () => {
             (record.doctor_info && record.doctor_info.profile && record.doctor_info.profile.full_name === filterDoctor);
         return matchesSearch && matchesDoctor;
     });
-
-    console.log("Filtered Records: ", filteredRecords);
 
     const getStatusInfo = (status) => {
         switch (status) {
