@@ -296,9 +296,97 @@ const getListOfPatientService = async (query, account_id) => {
                     data: [
                         { $skip: skip },
                         { $limit: limit },
+
+                        // Lookup thông tin bác sĩ
+                        {
+                            $lookup: {
+                                from: "staffs",
+                                localField: "doctor_id",
+                                foreignField: "_id",
+                                as: "doctor_info"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                doctor_info: { $arrayElemAt: ["$doctor_info", 0] }
+                            }
+                        },
+
+                        // Lookup Profile của bác sĩ
+                        {
+                            $lookup: {
+                                from: "profiles",
+                                localField: "doctor_info.profile_id",
+                                foreignField: "_id",
+                                as: "doctor_profile"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                "doctor_info.profile_id": { $arrayElemAt: ["$doctor_profile", 0] },
+                                doctor_name: { 
+                                    $arrayElemAt: ["$doctor_profile.full_name", 0]
+                                }
+                            }
+                        },
+                        // Overwrite doctor_id với object thông tin bác sĩ (giống populate)
+                        {
+                            $addFields: {
+                                doctor_id: "$doctor_info"
+                            }
+                        },
+
+                        // Lookup thông tin các dịch vụ
+                        {
+                            $lookup: {
+                                from: "services",
+                                localField: "book_service.service_id",
+                                foreignField: "_id",
+                                as: "services_data"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                book_service: {
+                                    $map: {
+                                        input: "$book_service",
+                                        as: "bs",
+                                        in: {
+                                            $mergeObjects: [
+                                                "$$bs",
+                                                {
+                                                    service_name: {
+                                                        $let: {
+                                                            vars: {
+                                                                matchedService: {
+                                                                    $arrayElemAt: [
+                                                                        {
+                                                                            $filter: {
+                                                                                input: "$services_data",
+                                                                                cond: { $eq: ["$$this._id", "$$bs.service_id"] }
+                                                                            }
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                }
+                                                            },
+                                                            in: "$$matchedService.service_name"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+
                         {
                             $project: {
-                                __v: 0 // Loại bỏ trường __v dư thừa
+                                __v: 0,
+                                services_data: 0,
+                                doctor_info: 0,
+                                doctor_profile: 0
                             }
                         }
                     ],

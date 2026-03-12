@@ -44,6 +44,9 @@ const AppointmentCard = ({
     const isUpdatable = appointment.status === 'SCHEDULED' && !isPast;
     const isCancelable = appointment.status === 'SCHEDULED' && !isPast;
 
+    // Lấy tên dịch vụ đầu tiên để hiển thị làm tiêu đề (nếu có)
+    const displayTitle = appointment.book_service?.[0]?.service_name || appointment.reason;
+
     return (
         <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-shadow p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -60,7 +63,7 @@ const AppointmentCard = ({
                             {/* Title & Status */}
                             <div className="flex items-center gap-3 mb-2">
                                 <h3 className="text-lg font-semibold text-gray-900">
-                                    {appointment.reason}
+                                    {displayTitle}
                                 </h3>
                                 <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(appointment.status)}`}>
                                     {getStatusText(appointment.status)}
@@ -73,7 +76,7 @@ const AppointmentCard = ({
                                 <div className="flex items-center gap-2">
                                     <User size={16} />
                                     <span className="font-medium">Bác sĩ:</span>
-                                    <span>{appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</span>
+                                    <span>{appointment.doctor_id?.profile_id?.full_name || appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</span>
                                 </div>
 
                                 {/* Date */}
