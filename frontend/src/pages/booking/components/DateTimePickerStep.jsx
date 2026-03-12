@@ -30,7 +30,6 @@ const DateTimePickerStep = ({ onSelect, selectedService }) => {
             const [hour, minute] = time.split(':').map(Number);
             const slotTimeInMinutes = hour * 60 + minute;
             // Cho phép đặt lịch cách hiện tại ít nhất 30 phút (tùy chọn) 
-            // Ở đây tôi để slotTime > currentTime cho đơn giản
             return slotTimeInMinutes > currentTimeInMinutes + 30;
         });
     };
