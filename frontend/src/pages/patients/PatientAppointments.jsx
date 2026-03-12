@@ -13,6 +13,7 @@ import AppointmentStats from './components/AppointmentStats';
 import AppointmentDetailModal from './components/modals/AppointmentDetailModal';
 import AppointmentUpdateModal from './components/modals/AppointmentUpdateModal';
 import AppointmentCancelModal from './components/modals/AppointmentCancelModal';
+import SharedPagination from '../../components/ui/SharedPagination';
 
 /**
  * PatientAppointments - Trang quản lý lịch khám của bệnh nhân
@@ -37,9 +38,15 @@ const PatientAppointments = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // State cho search và filter
+    // State cho search và filter (Backend side)
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
+
+    // State phân trang
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const pageSize = 5;
 
     // State quản lý modals
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -57,46 +64,50 @@ const PatientAppointments = () => {
         reason: ''
     });
 
-    // Effect: Load appointments từ API khi component mount
-    useEffect(() => {
-        const fetchAppointments = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await appointmentService.getPatientAppointments();
-                const data = res.data || [];
-                setAppointments(data);
-                setFilteredAppointments(data);
-            } catch (err) {
-                setError('Không thể tải danh sách lịch khám. Vui lòng thử lại!');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const fetchAppointments = async (page = 1) => {
+        setLoading(true);
+        setError(null);
+        try {
+            const params = {
+                page,
+                limit: pageSize,
+                search: searchTerm || undefined,
+                status: statusFilter === 'all' ? undefined : statusFilter,
+                sort: 'desc' // Luôn hiện lịch mới lên đầu
+            };
+            const res = await appointmentService.getPatientAppointments(params);
 
-        fetchAppointments();
-    }, []);
+            // Theo format GetListSuccess của backend
+            const data = res.data || [];
+            const pagination = res.pagination || {};
 
-    // Effect: Lọc appointments khi search/filter thay đổi
-    useEffect(() => {
-        let filtered = appointments;
-
-        // Lọc theo trạng thái
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(apt => apt.status === statusFilter);
+            setAppointments(data);
+            setTotalItems(pagination.totalItems || 0);
+            setTotalPages(Math.ceil((pagination.totalItems || 0) / pageSize) || 1);
+            setCurrentPage(page);
+        } catch (err) {
+            setError('Không thể tải danh sách lịch khám. Vui lòng thử lại!');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
+    };
 
-        // Lọc theo search term (dùng field từ backend)
-        if (searchTerm) {
-            filtered = filtered.filter(apt =>
-                (apt.doctor_name || apt.doctorName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (apt.note || apt.reason || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-                (apt.service_name || apt.serviceName || '').toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
+    // Effect: Load lại khi Filter/Search thay đổi (Debounce search)
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            fetchAppointments(1);
+        }, 500);
 
-        setFilteredAppointments(filtered);
-    }, [searchTerm, statusFilter, appointments]);
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, statusFilter]);
+
+    // Handler khi đổi trang
+    const handlePageChange = (page) => {
+        fetchAppointments(page);
+        // Scroll lên đầu danh sách cho dễ nhìn
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     /**
      * Hàm lấy class CSS cho status badge theo trạng thái
@@ -306,13 +317,13 @@ const PatientAppointments = () => {
                             />
 
                             {/* Stats Component */}
-                            {filteredAppointments.length > 0 && (
+                            {appointments.length > 0 && (
                                 <AppointmentStats appointments={appointments} />
                             )}
 
                             {/* Appointments List */}
                             <div className="space-y-4">
-                                {filteredAppointments.length === 0 ? (
+                                {appointments.length === 0 ? (
                                     // Empty State
                                     <div className="bg-white rounded-2xl shadow-lg p-12 text-center">
                                         <Calendar size={64} className="mx-auto text-gray-300 mb-4" />
@@ -327,17 +338,28 @@ const PatientAppointments = () => {
                                     </div>
                                 ) : (
                                     // Appointment Cards
-                                    filteredAppointments.map((appointment) => (
-                                        <AppointmentCard
-                                            key={appointment.id || appointment._id}
-                                            appointment={appointment}
-                                            onViewDetail={handleDetailClick}
-                                            onUpdate={handleUpdateClick}
-                                            onCancel={handleCancelClick}
-                                            getStatusColor={getStatusColor}
-                                            getStatusText={getStatusText}
+                                    <>
+                                        {appointments.map((appointment) => (
+                                            <AppointmentCard
+                                                key={appointment.id || appointment._id}
+                                                appointment={appointment}
+                                                onViewDetail={handleDetailClick}
+                                                onUpdate={handleUpdateClick}
+                                                onCancel={handleCancelClick}
+                                                getStatusColor={getStatusColor}
+                                                getStatusText={getStatusText}
+                                            />
+                                        ))}
+
+                                        {/* Pagination Component */}
+                                        <SharedPagination
+                                            currentPage={currentPage}
+                                            totalPages={totalPages}
+                                            totalItems={totalItems}
+                                            onPageChange={handlePageChange}
+                                            itemLabel="lịch khám"
                                         />
-                                    ))
+                                    </>
                                 )}
                             </div>
 

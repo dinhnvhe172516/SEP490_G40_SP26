@@ -2,21 +2,24 @@ import React, { useState } from 'react';
 import { Calendar, Clock } from 'lucide-react';
 
 const DateTimePickerStep = ({ onSelect, selectedService }) => {
-    const [selectedDate, setSelectedDate] = useState('');
+    // Get today's date string in YYYY-MM-DD format
+    const getTodayDate = () => {
+        return new Date().toISOString().split('T')[0];
+    };
+
+    const [selectedDate, setSelectedDate] = useState(getTodayDate());
     const [selectedTime, setSelectedTime] = useState('');
 
     // Generate available time slots
     const timeSlots = [
-        '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+        '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
         '13:00', '13:30', '14:00', '14:30', '15:00', '15:30',
-        '16:00', '16:30', '17:00', '17:30'
+        '16:00', '16:30', '17:00'
     ];
 
-    // Get minimum date (tomorrow)
+    // Get minimum date (today)
     const getMinDate = () => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        return tomorrow.toISOString().split('T')[0];
+        return getTodayDate();
     };
 
     // Get maximum date (3 months from now)
@@ -86,8 +89,8 @@ const DateTimePickerStep = ({ onSelect, selectedService }) => {
                                     key={time}
                                     onClick={() => setSelectedTime(time)}
                                     className={`py-3 rounded-lg font-medium transition-all ${selectedTime === time
-                                            ? 'bg-primary-600 text-white shadow-lg scale-105'
-                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        ? 'bg-primary-600 text-white shadow-lg scale-105'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                                         }`}
                                 >
                                     {time}

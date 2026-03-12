@@ -287,8 +287,8 @@ const getListOfPatientService = async (query, account_id) => {
         const aggregatePipeline = [
             { $match: matchCondition },
 
-            // Sắp xếp theo ngày hẹn (appointment_date)
-            { $sort: { appointment_date: sortOrder } },
+            // Sắp xếp theo thời gian tạo (createdAt) giảm dần để hiện cái mới nhất lên đầu
+            { $sort: { createdAt: sortOrder } },
 
             // Phân trang
             {
