@@ -61,26 +61,12 @@ const MainNavigation = () => {
                         Bảng giá
                     </Link>
 
-                    <div className="relative group">
-                        <Link
-                            to="/pricing"
-                            className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-all flex items-center gap-1"
-                        >
-                            Dịch vụ
-                            <ChevronDown size={14} className="group-hover:rotate-180 transition-transform" />
-                        </Link>
-                        {/* Dropdown */}
-                        <div className="absolute left-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                            <div className="py-1">
-                                <Link to="/pricing" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Nha Khoa Tổng Quát</Link>
-                                <Link to="/service/rang-su-emax" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Nha Khoa Thẩm Mỹ</Link>
-                                <Link to="/service/nieng-rang-mac-cai-kim-loai" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Niềng Răng</Link>
-                                <Link to="/service/implant-straumann-slactive" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Cấy Ghép Implant</Link>
-                                <Link to="/pricing" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Nha Khoa Trẻ Em</Link>
-                                <Link to="/pricing" className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">Điều Trị Tủy</Link>
-                            </div>
-                        </div>
-                    </div>
+                    <Link
+                        to="/services"
+                        className="px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 rounded-md transition-all"
+                    >
+                        Dịch vụ
+                    </Link>
 
                     <Link
                         to="/doctors"
