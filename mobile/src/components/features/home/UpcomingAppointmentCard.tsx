@@ -56,7 +56,6 @@ export function UpcomingAppointmentCard({ appointments, isLoading }: Props) {
                     <ThemedText style={styles.sectionTitle}>Lịch hẹn sắp tới</ThemedText>
                 </View>
                 <View style={styles.emptyCard}>
-                    <ThemedText style={styles.emptyIcon}>📅</ThemedText>
                     <ThemedText style={styles.emptyTitle}>Chưa có lịch hẹn</ThemedText>
                     <ThemedText style={styles.emptySubtitle}>Đặt lịch ngay để chăm sóc sức khỏe của bạn</ThemedText>
                 </View>
@@ -177,10 +176,6 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E5E7EB',
         borderStyle: 'dashed',
-    },
-    emptyIcon: {
-        fontSize: 36,
-        marginBottom: 12,
     },
     emptyTitle: {
         fontSize: 16,

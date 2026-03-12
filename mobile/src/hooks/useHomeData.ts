@@ -131,3 +131,19 @@ export function useChangePassword() {
         },
     });
 }
+
+// ==========================================
+// DENTAL RECORD - Full appointment history
+// ==========================================
+
+export function useDentalRecordData() {
+    return useQuery({
+        queryKey: ['dental-record'],
+        queryFn: async () => {
+            const { data } = await apiClient.get('/api/dentist/patient/dental-record', {
+                params: { limit: 50, sort: 'desc' },
+            });
+            return data;
+        },
+    });
+}
