@@ -29,6 +29,8 @@ export function HomeScreenWrapper() {
 
     const isLoggedIn = !!profile?.avatar_url;
 
+    console.log(appointments);
+
     return (
         <SafeAreaProvider style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
             <StatusBar style="dark" />

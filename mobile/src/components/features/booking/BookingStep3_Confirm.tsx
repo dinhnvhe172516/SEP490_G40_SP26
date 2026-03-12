@@ -22,7 +22,9 @@ export function BookingStep3_Confirm({ bookingData, profile }: Props) {
         if (bookingData.selectedDate) {
             displayDate = format(new Date(bookingData.selectedDate), 'EEEE, dd MMMM yyyy', { locale: vi });
         }
-    } catch (e) { }
+    } catch (e) {
+        console.log(e);
+    }
 
     const handleConfirm = async () => {
         try {
