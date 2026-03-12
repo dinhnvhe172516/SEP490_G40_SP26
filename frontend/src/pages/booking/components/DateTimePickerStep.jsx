@@ -17,6 +17,26 @@ const DateTimePickerStep = ({ onSelect, selectedService }) => {
         '16:00', '16:30', '17:00'
     ];
 
+    // Lọc các khung giờ dựa trên thời gian hiện tại nếu là ngày hôm nay
+    const getFilteredTimeSlots = () => {
+        if (selectedDate !== getTodayDate()) return timeSlots;
+
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        const currentTimeInMinutes = currentHour * 60 + currentMinute;
+
+        return timeSlots.filter(time => {
+            const [hour, minute] = time.split(':').map(Number);
+            const slotTimeInMinutes = hour * 60 + minute;
+            // Cho phép đặt lịch cách hiện tại ít nhất 30 phút (tùy chọn) 
+            // Ở đây tôi để slotTime > currentTime cho đơn giản
+            return slotTimeInMinutes > currentTimeInMinutes + 30;
+        });
+    };
+
+    const filteredTimeSlots = getFilteredTimeSlots();
+
     // Get minimum date (today)
     const getMinDate = () => {
         return getTodayDate();
@@ -84,7 +104,7 @@ const DateTimePickerStep = ({ onSelect, selectedService }) => {
                             Chọn giờ khám
                         </label>
                         <div className="grid grid-cols-4 gap-3">
-                            {timeSlots.map(time => (
+                            {filteredTimeSlots.map(time => (
                                 <button
                                     key={time}
                                     onClick={() => setSelectedTime(time)}
