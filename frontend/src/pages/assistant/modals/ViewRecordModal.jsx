@@ -26,8 +26,8 @@ const ViewRecordModal = ({ record, isOpen, onClose }) => {
         }
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[24px] shadow-2xl p-8 max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 border border-gray-100">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-2">
                         <div className="p-2 bg-blue-100 rounded-lg">
@@ -139,7 +139,7 @@ const ViewRecordModal = ({ record, isOpen, onClose }) => {
                 <div className="flex justify-end gap-3 pt-4 border-t">
                     <button
                         onClick={onClose}
-                        className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                        className="px-8 py-2.5 bg-teal-500 text-white rounded-xl font-bold hover:bg-teal-600 transition-all active:scale-95 shadow-lg shadow-teal-100"
                     >
                         Đóng
                     </button>
