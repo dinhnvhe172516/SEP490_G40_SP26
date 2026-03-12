@@ -37,7 +37,9 @@ export function ProfileScreen() {
             const d = typeof profile.dob === 'string' ? parseISO(profile.dob) : new Date(profile.dob);
             dobDisplay = format(d, 'dd/MM/yyyy', { locale: vi });
         }
-    } catch (_e) { }
+    } catch (e) {
+        console.log(e);
+    }
 
     if (isLoading) {
         return (
