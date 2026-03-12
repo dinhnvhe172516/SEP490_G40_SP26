@@ -11,10 +11,10 @@ const UpdateRecordModal = ({ record, isOpen, onClose, onSave }) => {
 
     useEffect(() => {
         if (record) {
-            const treatmentInfo = record.treatment || (record.treatments?.length > 0 
-                ? record.treatments.map(t => t.note).filter(Boolean).join('\n') 
+            const treatmentInfo = record.treatment || (record.treatments?.length > 0
+                ? record.treatments.map(t => t.note).filter(Boolean).join('\n')
                 : '');
-                
+
             let prescriptionInfo = record.prescription || '';
             if (!prescriptionInfo && record.treatments) {
                 const meds = [];

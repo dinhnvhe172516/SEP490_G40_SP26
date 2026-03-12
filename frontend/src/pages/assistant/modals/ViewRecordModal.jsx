@@ -3,27 +3,27 @@ import { X, FileText, User, Phone, Calendar, Stethoscope, Pill, ClipboardList } 
 const ViewRecordModal = ({ record, isOpen, onClose }) => {
     if (!isOpen || !record) return null;
 
-        const formattedDate = record.start_date || record.createdAt || record.date 
-            ? new Date(record.start_date || record.createdAt || record.date).toLocaleDateString('vi-VN') 
-            : 'Chưa xác định';
-            
-        // Extract treatment and prescription info from nested arrays if they exist
-        const treatmentInfo = record.treatment || (record.treatments?.length > 0 
-            ? record.treatments.map(t => t.note).filter(Boolean).join('\n') 
-            : null);
-            
-        let prescriptionInfo = record.prescription;
-        if (!prescriptionInfo && record.treatments) {
-            const meds = [];
-            record.treatments.forEach(t => {
-                if (t.medicine_usage && t.medicine_usage.length > 0) {
-                    t.medicine_usage.forEach(m => {
-                        meds.push(m.note ? m.note : JSON.stringify(m)); // Fallback if schema varies
-                    });
-                }
-            });
-            if (meds.length > 0) prescriptionInfo = meds.join('\n');
-        }
+    const formattedDate = record.start_date || record.createdAt || record.date
+        ? new Date(record.start_date || record.createdAt || record.date).toLocaleDateString('vi-VN')
+        : 'Chưa xác định';
+
+    // Extract treatment and prescription info from nested arrays if they exist
+    const treatmentInfo = record.treatment || (record.treatments?.length > 0
+        ? record.treatments.map(t => t.note).filter(Boolean).join('\n')
+        : null);
+
+    let prescriptionInfo = record.prescription;
+    if (!prescriptionInfo && record.treatments) {
+        const meds = [];
+        record.treatments.forEach(t => {
+            if (t.medicine_usage && t.medicine_usage.length > 0) {
+                t.medicine_usage.forEach(m => {
+                    meds.push(m.note ? m.note : JSON.stringify(m)); // Fallback if schema varies
+                });
+            }
+        });
+        if (meds.length > 0) prescriptionInfo = meds.join('\n');
+    }
 
     return (
         <div className="fixed inset-0 bg-white/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">

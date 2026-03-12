@@ -138,8 +138,8 @@ export const ViewMedicineModal = ({ treatment, isOpen, onClose }) => {
                                 </p>
                             </div>
                         </div>
-                        <button 
-                            onClick={onClose} 
+                        <button
+                            onClick={onClose}
                             className="bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-gray-600 p-2.5 rounded-full transition-all duration-200"
                         >
                             <X size={20} />
@@ -180,7 +180,7 @@ export const ViewMedicineModal = ({ treatment, isOpen, onClose }) => {
                                                     SL: {m.quantity}
                                                 </span>
                                             </div>
-                                            
+
                                             <div className="mt-3 space-y-2.5">
                                                 {m.usage_instruction && (
                                                     <div className="flex items-start gap-2.5">
@@ -198,7 +198,7 @@ export const ViewMedicineModal = ({ treatment, isOpen, onClose }) => {
                                                 )}
                                                 {m.dispensed && (
                                                     <div className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 uppercase tracking-wider">
-                                                        <CheckCircle size={14} /> 
+                                                        <CheckCircle size={14} />
                                                         Đã cấp phát thuốc
                                                     </div>
                                                 )}
@@ -213,8 +213,8 @@ export const ViewMedicineModal = ({ treatment, isOpen, onClose }) => {
 
                 {/* Footer */}
                 <div className="px-8 py-6 border-t border-gray-100 bg-white sticky bottom-0 flex justify-end">
-                    <button 
-                        onClick={onClose} 
+                    <button
+                        onClick={onClose}
                         className="w-full sm:w-auto px-10 py-3 rounded-2xl bg-teal-500 text-white text-sm font-bold hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-100"
                     >
                         Đóng
@@ -313,7 +313,7 @@ export const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
                             <button type="button" onClick={handleAdd} className="mt-4 text-teal-600 font-bold text-sm hover:underline">Thêm thuốc ngay</button>
                         </div>
                     )}
-                    
+
                     {medicines.map((m, idx) => (
                         <div key={idx} className="bg-white rounded-[24px] border border-gray-200 shadow-sm overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
                             <div className="px-5 py-3 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
@@ -321,16 +321,16 @@ export const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
                                     <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-teal-600 shadow-sm">{idx + 1}</span>
                                     Thông tin thuốc
                                 </span>
-                                <button 
-                                    type="button" 
-                                    onClick={() => handleRemove(idx)} 
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemove(idx)}
                                     className="p-1.5 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
                                     title="Xóa thuốc"
                                 >
                                     <Trash2 size={18} />
                                 </button>
                             </div>
-                            
+
                             <div className="p-5 space-y-4">
                                 <div>
                                     <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Tên thuốc <span className="text-rose-500">*</span></label>
@@ -344,47 +344,47 @@ export const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
                                         </p>
                                     )}
                                 </div>
-                                
+
                                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
                                     <div>
                                         <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Số lượng</label>
                                         <div className="relative">
-                                            <input 
-                                                type="number" 
-                                                min={1} 
+                                            <input
+                                                type="number"
+                                                min={1}
                                                 value={m.quantity}
                                                 onChange={(e) => handleChange(idx, 'quantity', e.target.value)}
-                                                className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all" 
+                                                className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all"
                                             />
                                         </div>
                                     </div>
                                     <div className="sm:col-span-3">
                                         <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Hướng dẫn dùng thuốc</label>
-                                        <input 
-                                            type="text" 
+                                        <input
+                                            type="text"
                                             value={m.usage_instruction}
                                             onChange={(e) => handleChange(idx, 'usage_instruction', e.target.value)}
                                             placeholder="VD: Uống 2 viên / ngày sau ăn"
-                                            className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all" 
+                                            className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all"
                                         />
                                     </div>
                                 </div>
-                                
+
                                 <div>
                                     <label className="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Ghi chú thêm</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         value={m.note}
                                         onChange={(e) => handleChange(idx, 'note', e.target.value)}
                                         placeholder="Nhập ghi chú (optional)..."
-                                        className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all" 
+                                        className="w-full px-4 py-2.5 bg-gray-50/50 border border-gray-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-teal-400/20 focus:border-teal-400 transition-all"
                                     />
                                 </div>
-                                
+
                                 <div className="pt-2 border-t border-gray-50 flex items-center gap-3">
                                     <label className="relative inline-flex items-center cursor-pointer">
-                                        <input 
-                                            type="checkbox" 
+                                        <input
+                                            type="checkbox"
                                             className="sr-only peer"
                                             checked={m.dispensed}
                                             onChange={(e) => handleChange(idx, 'dispensed', e.target.checked)}
@@ -396,16 +396,16 @@ export const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
                             </div>
                         </div>
                     ))}
-                    
-                    <button 
-                        type="button" 
+
+                    <button
+                        type="button"
                         onClick={handleAdd}
                         className="group w-full py-5 border-2 border-dashed border-gray-200 rounded-[28px] text-sm text-gray-400 hover:text-teal-500 hover:border-teal-500 hover:bg-teal-50/30 transition-all duration-300 flex flex-col items-center justify-center gap-1"
                     >
                         <Plus size={24} className="group-hover:scale-125 transition-transform" />
                         <span className="font-extrabold uppercase tracking-widest text-[11px]">Thêm thuốc vào đơn</span>
                     </button>
-                    
+
                     {error && (
                         <div className="animate-in shake duration-300 px-5 py-4 bg-rose-50 border border-rose-100 rounded-[20px] flex items-center gap-3 text-rose-600">
                             <Info size={18} className="shrink-0" />
@@ -416,16 +416,16 @@ export const EditMedicineModal = ({ treatment, isOpen, onClose, onSave }) => {
 
                 {/* Footer */}
                 <div className="px-8 py-6 border-t border-gray-100 bg-white flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0">
-                    <button 
-                        type="button" 
-                        onClick={onClose} 
+                    <button
+                        type="button"
+                        onClick={onClose}
                         className="order-2 sm:order-1 px-8 py-3 rounded-2xl bg-white border border-gray-200 text-sm font-extrabold text-gray-500 hover:bg-gray-50 hover:text-gray-700 active:scale-95 transition-all"
                     >
                         Hủy bỏ
                     </button>
-                    <button 
-                        type="submit" 
-                        form="medicine-form" 
+                    <button
+                        type="submit"
+                        form="medicine-form"
                         disabled={isSaving}
                         className="order-1 sm:order-2 px-10 py-3 rounded-2xl bg-teal-500 text-white text-sm font-[900] hover:bg-teal-600 active:scale-95 transition-all shadow-lg shadow-teal-500/25 disabled:opacity-50 disabled:active:scale-100"
                     >
