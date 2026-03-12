@@ -40,12 +40,13 @@ const ServiceDetail = () => {
                 setError(null);
                 const [detailRes, listRes] = await Promise.all([
                     serviceService.getServiceById(id),
-                    serviceService.getAllServices({ limit: 6, page: 1, status: 'AVAILABLE' }),
+                    serviceService.getAllServices({ limit: 20, page: 1, filter: 'AVAILABLE' }),
                 ]);
                 setService(detailRes?.data || null);
-                // Lọc bỏ chính dịch vụ này ra khỏi related
+                // Lọc bỏ chính dịch vụ này ra khỏi related và đảm bảo chỉ lấy AVAILABLE
                 const all = listRes?.data || [];
-                setRelatedServices(all.filter((s) => s._id !== id).slice(0, 6));
+                const activeOnes = all.filter((s) => s.status === 'AVAILABLE' && s._id !== id);
+                setRelatedServices(activeOnes.slice(0, 6));
             } catch (err) {
                 setError('Không tìm thấy dịch vụ.');
                 console.error(err);

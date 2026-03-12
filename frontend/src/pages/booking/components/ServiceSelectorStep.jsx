@@ -14,10 +14,15 @@ const ServiceSelectorStep = ({ onSelect }) => {
         const fetchServices = async () => {
             try {
                 setLoading(true);
-                const response = await serviceService.getAllServices({ status: 'AVAILABLE' });
+                const response = await serviceService.getAllServices({ 
+                    filter: 'AVAILABLE',
+                    limit: 100
+                });
                 if (!isMounted) return;
-
-                const activeServices = response?.data?.data || response?.data || [];
+ 
+                // handle apiClient unwrap
+                const data = response?.data || [];
+                const activeServices = data.filter(s => s.status === 'AVAILABLE');
                 setServices(activeServices);
                 setFilteredServices(activeServices);
             } catch (err) {
