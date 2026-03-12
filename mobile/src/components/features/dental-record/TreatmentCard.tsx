@@ -44,7 +44,7 @@ function TreatmentRow({ item, isLast }: { item: Treatment; isLast: boolean }) {
             const d = typeof raw === 'string' ? parseISO(raw) : new Date(raw);
             dateDisplay = format(d, 'dd/MM/yyyy', { locale: vi });
         }
-    } catch (_e) { }
+    } catch (e) { console.log(e); }
 
     return (
         <View style={[styles.row, isLast && styles.rowLast]}>

@@ -9,6 +9,7 @@ import { EmptyDentalRecord } from '@/src/components/features/dental-record/Empty
 import { format, parseISO } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useState } from 'react';
+import { Image } from 'expo-image';
 
 const RECORD_STATUS: Record<string, { label: string; color: string; bg: string }> = {
     IN_PROGRESS: { label: 'Đang điều trị', color: '#D97706', bg: '#FFFBEB' },
@@ -55,7 +56,14 @@ function DentalRecordItem({ record }: { record: any }) {
                     <View style={[itemStyles.statusBadge, { backgroundColor: status.bg }]}>
                         <ThemedText style={[itemStyles.statusText, { color: status.color }]}>{status.label}</ThemedText>
                     </View>
-                    <ThemedText style={itemStyles.chevron}>{expanded ? '@' : '▼'}</ThemedText>
+                    <Image
+                        source={require('@/assets/images/down.png')}
+                        style={[
+                            itemStyles.chevronIcon,
+                            { transform: [{ rotate: expanded ? '180deg' : '0deg' }] }
+                        ]}
+                        contentFit="contain"
+                    />
                 </View>
             </TouchableOpacity>
 
@@ -196,7 +204,12 @@ const itemStyles = StyleSheet.create({
         borderRadius: 8,
     },
     statusText: { fontSize: 12, fontWeight: '700' },
-    chevron: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
+    chevronIcon: {
+        width: 14,
+        height: 14,
+        marginTop: 6,
+        tintColor: '#9CA3AF',
+    },
     collapsedStats: {
         paddingHorizontal: 18,
         paddingBottom: 14,

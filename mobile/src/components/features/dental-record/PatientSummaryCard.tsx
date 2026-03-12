@@ -20,7 +20,7 @@ export function PatientSummaryCard({ profile, totalVisits, lastVisitDate }: Prop
             const d = typeof lastVisitDate === 'string' ? parseISO(lastVisitDate) : new Date(lastVisitDate);
             lastVisitDisplay = format(d, 'dd/MM/yyyy', { locale: vi });
         }
-    } catch (_e) { }
+    } catch (e) { console.log(e); }
 
     return (
         <View style={styles.card}>
