@@ -49,36 +49,6 @@ const serviceSchema = new Schema(
                     trim: true
                 }
             }
-        ],
-
-        // dịch vụ con
-        sub_services: [
-            {
-                sub_service_name: {
-                    type: String,
-                    trim: true
-                },
-                description: {
-                    type: String,
-                    trim: true
-                },
-                price: {
-                    type: Number,
-                    min: [0, "Price must be a positive number"]
-                },
-                duration: {
-                    type: Number, // Thường tính bằng phút
-                    min: [0, "Duration must be a positive number"]
-                },
-                icon: {
-                    type: String, 
-                    default: ""
-                },
-                note: {
-                    type: String,
-                    trim: true
-                }
-            }
         ]
     },
     { 
