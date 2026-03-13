@@ -92,17 +92,17 @@ const ServiceCard = ({
                     <button
                         onClick={() => onEdit(service)}
                         className="inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-green-50 text-green-600 font-medium rounded-xl hover:bg-green-100 transition-all duration-200"
-                        title="Sửa dịch vụ cha"
+                        title="Sửa dịch vụ"
                     >
                         <Edit2 size={16} />
                     </button>
                     <button
                         onClick={() => onManageSubServices(service)}
                         className="flex-1 inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-50 text-indigo-700 font-medium rounded-xl hover:bg-indigo-100 transition-all duration-200 text-sm"
-                        title="Quản lý dịch vụ con"
+                        title="Quản lý gói dịch vụ"
                     >
                         <LayoutList size={15} />
-                        <span>Dịch vụ con</span>
+                        <span>Gói dịch vụ</span>
                     </button>
                 </div>
             </div>

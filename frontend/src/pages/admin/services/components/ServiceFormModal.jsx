@@ -102,7 +102,7 @@ const ServiceFormModal = ({
                                     min="0"
                                 />
                                 <p className="text-[10px] text-gray-500 mt-1 italic">
-                                    *Giá hiển thị thực tế sẽ tự động tính từ các dịch vụ con (nếu có).
+                                    *Giá hiển thị thực tế sẽ tự động tính từ các gói dịch vụ (nếu có).
                                 </p>
                             </div>
 

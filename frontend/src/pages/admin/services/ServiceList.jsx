@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Toast from '../../../components/ui/Toast';
 import { Plus, ClipboardList } from 'lucide-react';
 import serviceService from '../../../services/serviceService';
-import SubServiceManagerModal from './components/SubServiceManagerModal';
+
 
 // Components
 import ServiceStatistics from './components/ServiceStatistics';
@@ -27,6 +28,8 @@ import ServiceDetailModal from './components/ServiceDetailModal';
  * @component
  */
 const ServiceList = () => {
+    const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     // ========== STATE MANAGEMENT ==========
     const [services, setServices] = useState([]);
     const [pagination, setPagination] = useState({
@@ -48,9 +51,6 @@ const ServiceList = () => {
     const [selectedDetailService, setSelectedDetailService] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // Sub-service manager modal
-    const [showSubServiceModal, setShowSubServiceModal] = useState(false);
-    const [selectedParentService, setSelectedParentService] = useState(null);
 
     // Form data
     const [serviceForm, setServiceForm] = useState({
@@ -81,6 +81,29 @@ const ServiceList = () => {
 
         return () => clearTimeout(delayDebounceFn);
     }, [searchTerm]);
+
+    // Auto open form if ?add=true from sidebar
+    useEffect(() => {
+        if (searchParams.get('add') === 'true') {
+            setIsEditMode(false);
+            setServiceForm({
+                service_name: '',
+                description: '',
+                price: '',
+                duration: '',
+                icon: '',
+                images: [],
+                equipment_service: [],
+                status: 'AVAILABLE'
+            });
+            setShowServiceModal(true);
+            
+            // Clean up param
+            const newParams = new URLSearchParams(searchParams);
+            newParams.delete('add');
+            setSearchParams(newParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
 
     // ========== API CALLS ==========
     const fetchServices = async (page = 1) => {
@@ -137,11 +160,10 @@ const ServiceList = () => {
     // ========== HANDLERS ==========
 
     /**
-     * Handler: Mở modal quản lý dịch vụ con
+     * Handler: Mở trang quản lý gói dịch vụ
      */
     const handleManageSubServices = (service) => {
-        setSelectedParentService(service);
-        setShowSubServiceModal(true);
+        navigate(`/admin/services/${service._id}/sub-services`);
     };
 
     /**
@@ -447,15 +469,7 @@ const ServiceList = () => {
                 onClose={() => setShowPriceModal(false)}
             />
 
-            {/* Sub-Service Manager Modal */}
-            <SubServiceManagerModal
-                show={showSubServiceModal}
-                parentService={selectedParentService}
-                onClose={() => {
-                    setShowSubServiceModal(false);
-                    setSelectedParentService(null);
-                }}
-            />
+
 
             {/* Toast Notification */}
             <Toast

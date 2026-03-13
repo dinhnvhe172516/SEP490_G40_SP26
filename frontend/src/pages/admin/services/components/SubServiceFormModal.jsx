@@ -25,10 +25,10 @@ const SubServiceFormModal = ({ show, isEditMode, formData, setFormData, onSave, 
                     <div className="bg-gradient-to-r from-indigo-600 to-purple-700 text-white rounded-t-2xl p-5 flex justify-between items-center">
                         <div>
                             <h3 className="text-xl font-bold">
-                                {isEditMode ? 'Sửa dịch vụ con' : 'Thêm dịch vụ con'}
+                                {isEditMode ? 'Sửa gói dịch vụ' : 'Thêm gói dịch vụ'}
                             </h3>
                             <p className="text-indigo-200 text-sm mt-0.5">
-                                {isEditMode ? 'Cập nhật thông tin dịch vụ con' : 'Tạo mới dịch vụ con'}
+                                {isEditMode ? 'Cập nhật thông tin gói dịch vụ' : 'Tạo mới gói dịch vụ'}
                             </p>
                         </div>
                         <button onClick={onClose} className="text-white/80 hover:text-white">
@@ -38,10 +38,10 @@ const SubServiceFormModal = ({ show, isEditMode, formData, setFormData, onSave, 
 
                     {/* Body */}
                     <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                        {/* Tên dịch vụ con */}
+                        {/* Tên gói dịch vụ */}
                         <div>
                             <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Tên dịch vụ con <span className="text-red-500">*</span>
+                                Tên gói dịch vụ <span className="text-red-500">*</span>
                             </label>
                             <input
                                 type="text"
@@ -73,7 +73,7 @@ const SubServiceFormModal = ({ show, isEditMode, formData, setFormData, onSave, 
                                 icon: newImages.length > 0 ? newImages[0] : (formData.icon || '')
                             })}
                             maxImages={5}
-                            label="Hình ảnh dịch vụ con"
+                            label="Hình ảnh gói dịch vụ"
                         />
 
                         {/* Giá Min-Max */}
