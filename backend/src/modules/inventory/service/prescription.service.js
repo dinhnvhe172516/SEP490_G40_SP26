@@ -20,8 +20,14 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10 }) => {
     const limitNum = parseInt(limit);
 
     let treatmentQuery = Treatment.find(query)
-        .populate("patient_id", "full_name phone")
-        .populate("doctor_id", "name")
+        .populate({
+            path: "patient_id",
+            populate: { path: "profile_id", select: "full_name phone" }
+        })
+        .populate({
+            path: "doctor_id",
+            populate: { path: "profile_id", select: "full_name" }
+        })
         .populate("medicine_usage.medicine_id", "medicine_name unit dosage")
         .select("patient_id doctor_id medicine_usage createdAt")
         .sort({ createdAt: -1 })
@@ -36,11 +42,14 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10 }) => {
     // Format kết quả
     const prescriptions = treatments.map((t) => {
         const allDispensed = t.medicine_usage.every((m) => m.dispensed);
+        const patientProfile = t.patient_id?.profile_id;
+        const doctorProfile = t.doctor_id?.profile_id;
+
         return {
             _id: t._id,
-            patient_name: t.patient_id?.full_name || "N/A",
-            patient_phone: t.patient_id?.phone || "",
-            doctor_name: t.doctor_id?.name || "N/A",
+            patient_name: patientProfile?.full_name || "N/A",
+            patient_phone: patientProfile?.phone || "",
+            doctor_name: doctorProfile?.full_name || "N/A",
             created_at: t.createdAt,
             dispense_status: allDispensed ? "Đã xuất" : "Chờ xuất",
             medicines: t.medicine_usage.map((m) => ({

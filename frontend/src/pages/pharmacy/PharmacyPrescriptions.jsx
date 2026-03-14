@@ -22,6 +22,7 @@ const PharmacyPrescriptions = () => {
                 ...(filterStatus !== 'all' && { status: filterStatus }),
             };
             const res = await inventoryService.getPrescriptions(params);
+            console.log("res", res);
             if (res?.success) setPrescriptions(res.data || []);
         } catch {
             setError('Không thể tải đơn thuốc. Vui lòng thử lại.');
@@ -58,6 +59,8 @@ const PharmacyPrescriptions = () => {
 
     const formatDate = (d) => d ? new Date(d).toLocaleDateString('vi-VN') : '—';
 
+    console.log("prescriptions", prescriptions);
+
     return (
         <div>
             {/* Header */}
@@ -69,8 +72,8 @@ const PharmacyPrescriptions = () => {
             {/* Thông báo xuất thuốc */}
             {dispenseMsg && (
                 <div className={`mb-4 p-4 rounded-lg border flex items-start gap-2 ${dispenseMsg.type === 'success'
-                        ? 'bg-green-50 border-green-200 text-green-800'
-                        : 'bg-red-50 border-red-200 text-red-800'
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : 'bg-red-50 border-red-200 text-red-800'
                     }`}>
                     <AlertTriangle size={16} className="mt-0.5 shrink-0" />
                     <span className="text-sm flex-1">{dispenseMsg.text}</span>
