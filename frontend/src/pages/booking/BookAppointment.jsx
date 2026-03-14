@@ -11,15 +11,6 @@ import ServiceDateTimeStep from './components/ServiceDateTimeStep';
 import BookingFormStep from './components/BookingFormStep';
 import BookingConfirmation from './components/BookingConfirmation';
 
-/**
- * BookAppointment - Main booking flow page
- * 
- * Multi-step form:
- * 1. Select Service
- * 2. Select Date & Time
- * 3. Enter Reason & Confirm
- * 4. Success Screen
- */
 const BookAppointment = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -40,6 +31,14 @@ const BookAppointment = () => {
 
     // Effect: Kiểm tra nếu có service truyền qua từ trang ServiceDetail
     useEffect(() => {
+        // 1. Phục hồi dữ liệu sau khi đăng nhập thành công
+        if (location.state?.recoveredBookingData && currentStep === 1) {
+            setBookingData(location.state.recoveredBookingData);
+            setCurrentStep(2); // Nhảy thẳng sang bước xác nhận vì đã chọn xong ở bước 1 trước đó
+            return;
+        }
+
+        // 2. Nhận dữ liệu từ trang Chi tiết dịch vụ
         if (location.state?.service && currentStep === 1) {
             const { service, subService } = location.state;
             setBookingData(prev => ({
@@ -63,16 +62,36 @@ const BookAppointment = () => {
 
     // Handle combined service + date/time selection
     const handleCombinedSelect = (service, subService, date, time) => {
-        setBookingData({
+        const newBookingData = {
             ...bookingData,
             service_id: service._id,
             service_name: service.service_name,
             sub_service_id: subService._id,
             sub_service_name: subService.sub_service_name,
-            service_price: subService.min_price, // Ưu tiên giá tối thiểu của gói
+            service_price: subService.min_price,
             date,
             time
-        });
+        };
+
+        setBookingData(newBookingData);
+
+        if (!user) {
+            setToast({
+                show: true,
+                type: 'error',
+                message: 'Vui lòng đăng nhập để tiếp tục đặt lịch.'
+            });
+            setTimeout(() => {
+                navigate('/login', {
+                    state: {
+                        from: location.pathname,
+                        bookingData: newBookingData
+                    }
+                });
+            }, 1000);
+            return;
+        }
+
         setCurrentStep(2); // Sang bước Xác nhận
     };
 
