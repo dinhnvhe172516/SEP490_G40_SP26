@@ -98,7 +98,7 @@ const getListService = async (query) => {
                             $project: {
                                 __v: 0,
                                 equipment_service: 0,
-                                sub_services_data: 0 // Ẩn data thô đi cho nhẹ response
+                                // sub_services_data: 0 // Ẩn data thô đi cho nhẹ response
                             }
                         }
                     ],
