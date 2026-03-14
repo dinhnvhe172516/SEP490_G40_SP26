@@ -23,8 +23,12 @@ const serviceSchema = new Schema(
             default: 0
         },
         icon: {
-            type: String, // Lưu URL hoặc tên class icon
+            type: String, // Lưu URL hoặc tên class icon (ảnh đại diện chính)
             default: ""
+        },
+        images: {
+            type: [String], // Mảng URL ảnh bổ sung
+            default: []
         },
         status: {
             type: String,
@@ -43,36 +47,6 @@ const serviceSchema = new Schema(
                     type: Number,
                     default: 1,
                     min: [1, "Minimum quantity is 1"]
-                },
-                note: {
-                    type: String,
-                    trim: true
-                }
-            }
-        ],
-
-        // dịch vụ con
-        sub_services: [
-            {
-                sub_service_name: {
-                    type: String,
-                    trim: true
-                },
-                description: {
-                    type: String,
-                    trim: true
-                },
-                price: {
-                    type: Number,
-                    min: [0, "Price must be a positive number"]
-                },
-                duration: {
-                    type: Number, // Thường tính bằng phút
-                    min: [0, "Duration must be a positive number"]
-                },
-                icon: {
-                    type: String, 
-                    default: ""
                 },
                 note: {
                     type: String,

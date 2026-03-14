@@ -133,6 +133,14 @@ const getListService = async (query, doctor_id) => {
                             }
                         },
                         {
+                            $lookup: {
+                                from: "sub_services",
+                                localField: "book_service.sub_service_id",
+                                foreignField: "_id",
+                                as: "sub_services_data"
+                            }
+                        },
+                        {
                             $addFields: {
                                 book_service: {
                                     $map: {
@@ -159,6 +167,24 @@ const getListService = async (query, doctor_id) => {
                                                             },
                                                             in: "$$matchedService.service_name"
                                                         }
+                                                    },
+                                                    sub_service_name: {
+                                                        $let: {
+                                                            vars: {
+                                                                matchedSub: {
+                                                                    $arrayElemAt: [
+                                                                        {
+                                                                            $filter: {
+                                                                                input: "$sub_services_data",
+                                                                                cond: { $eq: ["$$this._id", "$$bs.sub_service_id"] }
+                                                                            }
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                }
+                                                            },
+                                                            in: "$$matchedSub.sub_service_name"
+                                                        }
                                                     }
                                                 }
                                             ]
@@ -175,7 +201,8 @@ const getListService = async (query, doctor_id) => {
                                 "doctor_info.__v": 0,
                                 "doctor_info.password": 0, // Che password nếu có
                                 "doctor_info.profile.__v": 0,
-                                services_data: 0
+                                services_data: 0,
+                                sub_services_data: 0
                             }
                         }
                     ],
@@ -287,8 +314,8 @@ const getListOfPatientService = async (query, account_id) => {
         const aggregatePipeline = [
             { $match: matchCondition },
 
-            // Sắp xếp theo ngày hẹn (appointment_date)
-            { $sort: { appointment_date: sortOrder } },
+            // Sắp xếp theo thời gian tạo (createdAt) giảm dần để hiện cái mới nhất lên đầu
+            { $sort: { createdAt: sortOrder } },
 
             // Phân trang
             {
@@ -296,9 +323,124 @@ const getListOfPatientService = async (query, account_id) => {
                     data: [
                         { $skip: skip },
                         { $limit: limit },
+
+                        // Lookup thông tin bác sĩ
+                        {
+                            $lookup: {
+                                from: "staffs",
+                                localField: "doctor_id",
+                                foreignField: "_id",
+                                as: "doctor_info"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                doctor_info: { $arrayElemAt: ["$doctor_info", 0] }
+                            }
+                        },
+
+                        // Lookup Profile của bác sĩ
+                        {
+                            $lookup: {
+                                from: "profiles",
+                                localField: "doctor_info.profile_id",
+                                foreignField: "_id",
+                                as: "doctor_profile"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                "doctor_info.profile_id": { $arrayElemAt: ["$doctor_profile", 0] },
+                                doctor_name: { 
+                                    $arrayElemAt: ["$doctor_profile.full_name", 0]
+                                }
+                            }
+                        },
+                        // Overwrite doctor_id với object thông tin bác sĩ (giống populate)
+                        {
+                            $addFields: {
+                                doctor_id: "$doctor_info"
+                            }
+                        },
+
+                        // Lookup thông tin các dịch vụ
+                        {
+                            $lookup: {
+                                from: "services",
+                                localField: "book_service.service_id",
+                                foreignField: "_id",
+                                as: "services_data"
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "sub_services",
+                                localField: "book_service.sub_service_id",
+                                foreignField: "_id",
+                                as: "sub_services_data"
+                            }
+                        },
+                        {
+                            $addFields: {
+                                book_service: {
+                                    $map: {
+                                        input: "$book_service",
+                                        as: "bs",
+                                        in: {
+                                            $mergeObjects: [
+                                                "$$bs",
+                                                {
+                                                    service_name: {
+                                                        $let: {
+                                                            vars: {
+                                                                matchedService: {
+                                                                    $arrayElemAt: [
+                                                                        {
+                                                                            $filter: {
+                                                                                input: "$services_data",
+                                                                                cond: { $eq: ["$$this._id", "$$bs.service_id"] }
+                                                                            }
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                }
+                                                            },
+                                                            in: "$$matchedService.service_name"
+                                                        }
+                                                    },
+                                                    sub_service_name: {
+                                                        $let: {
+                                                            vars: {
+                                                                matchedSub: {
+                                                                    $arrayElemAt: [
+                                                                        {
+                                                                            $filter: {
+                                                                                input: "$sub_services_data",
+                                                                                cond: { $eq: ["$$this._id", "$$bs.sub_service_id"] }
+                                                                            }
+                                                                        },
+                                                                        0
+                                                                    ]
+                                                                }
+                                                            },
+                                                            in: "$$matchedSub.sub_service_name"
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        },
+
                         {
                             $project: {
-                                __v: 0 // Loại bỏ trường __v dư thừa
+                                __v: 0,
+                                services_data: 0,
+                                sub_services_data: 0,
+                                doctor_info: 0,
+                                doctor_profile: 0
                             }
                         }
                     ],
@@ -356,6 +498,7 @@ const getByIdService = async (id) => {
         const appointment = await AppointmentModel.findById(id)
             .populate("patient_id")
             .populate("book_service.service_id")
+            .populate("book_service.sub_service_id")
             // 💡 POPULATE LỒNG NHAU (Lấy Bác sĩ -> Lấy tiếp Profile của Bác sĩ)
             .populate({
                 path: "doctor_id", // Lấy thông tin Staff
@@ -432,7 +575,10 @@ const createService = async (dataCreate, account_id) => {
         // check id service
         if (dataCreate.book_service && Array.isArray(dataCreate.book_service)) {
             for (const service of dataCreate.book_service) {
-                const serviceExist = await ServiceModel.findById(service.service_id);
+                const [serviceExist, subServiceExist] = await Promise.all([
+                    ServiceModel.findById(service.service_id),
+                    service.sub_service_id ? mongoose.model("SubService").findById(service.sub_service_id) : Promise.resolve(true)
+                ]);
 
                 if (!serviceExist) {
                     logger.warn(`ID service not found: ${service.service_id}`, {
@@ -441,6 +587,14 @@ const createService = async (dataCreate, account_id) => {
                         service_id: service.service_id
                     });
                     throw new errorRes.NotFoundError(`Service not found! ID: ${service.service_id}`);
+                }
+                
+                if (!subServiceExist) {
+                    logger.warn(`ID sub-service not found: ${service.sub_service_id}`, {
+                        context: "AppointmentService.createService",
+                        sub_service_id: service.sub_service_id
+                    });
+                    throw new errorRes.NotFoundError(`Sub-service not found! ID: ${service.sub_service_id}`);
                 }
             }
         }
@@ -489,15 +643,25 @@ const staffCreateService = async (dataCreate) => {
         // 2. Check valid services
         if (dataCreate.book_service && Array.isArray(dataCreate.book_service)) {
             for (const service of dataCreate.book_service) {
-                const serviceExist = await ServiceModel.findById(service.service_id);
+                const [serviceExist, subServiceExist] = await Promise.all([
+                    ServiceModel.findById(service.service_id),
+                    service.sub_service_id ? mongoose.model("SubService").findById(service.sub_service_id) : Promise.resolve(true)
+                ]);
 
                 if (!serviceExist) {
                     logger.warn(`ID service not found: ${service.service_id}`, {
                         context: "AppointmentService.staffCreateService",
                         service_id: service.service_id
-                        // ĐÃ SỬA BUG CỦA BẠN: Xóa biến account_id gây crash app ở đây
                     });
                     throw new errorRes.NotFoundError(`Service not found! ID: ${service.service_id}`);
+                }
+
+                if (!subServiceExist) {
+                    logger.warn(`ID sub-service not found: ${service.sub_service_id}`, {
+                        context: "AppointmentService.staffCreateService",
+                        sub_service_id: service.sub_service_id
+                    });
+                    throw new errorRes.NotFoundError(`Sub-service not found! ID: ${service.sub_service_id}`);
                 }
             }
         }

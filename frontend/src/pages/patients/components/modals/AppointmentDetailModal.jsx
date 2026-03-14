@@ -63,15 +63,12 @@ const AppointmentDetailModal = ({
                     <span className={`px-4 py-2 rounded-full text-sm font-medium border ${getStatusColor(appointment.status)}`}>
                         {getStatusText(appointment.status)}
                     </span>
-                    <span className="text-sm text-gray-500">
-                        Mã: {appointment.code}
-                    </span>
                 </div>
 
                 {/* Main Info */}
                 <div className="bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg p-6">
                     <h3 className="text-xl font-bold text-gray-900 mb-4">
-                        {appointment.reason}
+                        {appointment.book_service?.[0]?.service_name || appointment.reason}
                     </h3>
 
                     <div className="grid md:grid-cols-2 gap-4">
@@ -81,8 +78,8 @@ const AppointmentDetailModal = ({
                                 <User size={20} className="text-primary-600" />
                             </div>
                             <div>
-                                <div className="text-xs text-gray-500">Bác sĩ</div>
-                                <div className="font-semibold">{appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</div>
+                                <div className="text-xs text-gray-500">Bác sĩ phụ trách</div>
+                                <div className="font-semibold">{appointment.doctor_id?.profile_id?.full_name || appointment.doctor_name || appointment.doctorName || 'Đang chờ phân công'}</div>
                             </div>
                         </div>
 
@@ -151,6 +148,15 @@ const AppointmentDetailModal = ({
                         </div>
                     )}
 
+                    {/* Reason */}
+                    <div className="border-l-4 border-orange-500 pl-4">
+                        <div className="text-sm text-gray-500 mb-1 flex items-center gap-1">
+                            <FileText size={14} />
+                            Lý do khám
+                        </div>
+                        <div className="text-gray-900">{appointment.reason}</div>
+                    </div>
+
                     {/* Notes */}
                     {(appointment.note || appointment.notes) && (
                         <div className="border-l-4 border-blue-500 pl-4">
@@ -170,7 +176,7 @@ const AppointmentDetailModal = ({
                                 {appointment.book_service.map((serviceItem, idx) => (
                                     <div key={idx} className="flex justify-between items-center bg-gray-50 p-2 rounded">
                                         <span className="font-medium text-gray-800">
-                                            {serviceItem.service_id?.service_name || 'Dịch vụ'}
+                                            {serviceItem.service_name || serviceItem.service_id?.service_name || 'Dịch vụ'}
                                         </span>
                                         <span className="text-primary-600 font-semibold">
                                             {serviceItem.unit_price?.toLocaleString('vi-VN')} VNĐ

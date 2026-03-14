@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye, Loader2, RefreshCw, Phone, UserPlus } from 'lucide-react';
+import { Calendar, Clock, Search, Filter, CheckCircle, XCircle, Wrench, Eye, Loader2, RefreshCw, Phone, UserPlus, Package } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Toast from '../../components/ui/Toast';
 import ViewAppointmentModal from './modals/ViewAppointmentModal';
 import AssignDoctorModal from './modals/AssignDoctorModal';
 import ReportEquipmentModal from './modals/ReportEquipmentModal';
+import PrepareAppointmentModal from './modals/PrepareAppointmentModal';
 import appointmentService from '../../services/appointmentService';
 import staffService from '../../services/staffService';
 import equipmentService from '../../services/equipmentService';
@@ -28,6 +29,7 @@ const AssistantAppointments = () => {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showReportModal, setShowReportModal] = useState(false);
+    const [showPrepareModal, setShowPrepareModal] = useState(false);
 
     // --- FETCH DATA ---
     const fetchData = async () => {
@@ -131,10 +133,16 @@ const AssistantAppointments = () => {
         setShowReportModal(true);
     };
 
+    const handlePrepareClick = (appointment) => {
+        setSelectedAppointment(appointment);
+        setShowPrepareModal(true);
+    };
+
     const closeModals = () => {
         setShowAssignModal(false);
         setShowViewModal(false);
         setShowReportModal(false);
+        setShowPrepareModal(false);
         setSelectedAppointment(null);
     };
 
@@ -154,6 +162,25 @@ const AssistantAppointments = () => {
         // Here we update the status to IN_CONSULTATION and assign the doctor
         console.log('Doctor assigned:', appointmentId, data);
         await handleUpdateStatus(appointmentId, 'IN_CONSULTATION', data.doctorId);
+    };
+
+    const handlePrepareComplete = async (appointmentId, data) => {
+        try {
+            console.log('Preparation completed:', appointmentId, data);
+            
+            // If there are errors reported
+            if (data.hasError && data.equipment) {
+                // Additional error handling logic here if needed
+                console.warn('Some equipments were reported with errors during preparation.');
+            }
+
+            // Update status to IN_CONSULTATION and assign doctor based on preparation data
+            await handleUpdateStatus(appointmentId, 'IN_CONSULTATION', data.doctorId);
+            setToast({ show: true, message: 'Chuẩn bị ca khám thành công!', type: 'success' });
+        } catch (error) {
+            console.error('Error in preparation:', error);
+            setToast({ show: true, message: 'Lỗi khi xử lý chuẩn bị!', type: 'error' });
+        }
     };
 
     const handleReportSubmit = async (appointmentId, data) => {
@@ -324,12 +351,12 @@ const AssistantAppointments = () => {
 
                                         {apt.status === 'CHECKED_IN' && (
                                             <button
-                                                onClick={() => handleAssignClick(apt)}
+                                                onClick={() => handlePrepareClick(apt)}
                                                 className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors flex items-center gap-1 font-medium"
-                                                title="Gán bác sĩ & Bắt đầu khám"
+                                                title="Chuẩn bị phòng khám, Vật tư & Bắt đầu khám"
                                             >
-                                                <UserPlus size={18} />
-                                                <span className="text-sm">Bắt đầu khám</span>
+                                                <Package size={18} />
+                                                <span className="text-sm">Chuẩn bị & Khám</span>
                                             </button>
                                         )}
 
@@ -377,6 +404,13 @@ const AssistantAppointments = () => {
                 isOpen={showAssignModal}
                 onClose={closeModals}
                 onComplete={handleAssignComplete}
+                doctors={doctors}
+            />
+            <PrepareAppointmentModal
+                appointment={selectedAppointment}
+                isOpen={showPrepareModal}
+                onClose={closeModals}
+                onComplete={handlePrepareComplete}
                 doctors={doctors}
             />
             <ReportEquipmentModal

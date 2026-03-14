@@ -64,6 +64,11 @@ const appointmentSchema = new Schema(
                     ref: "Service",
                     required: true
                 },
+                sub_service_id: {
+                    type: Schema.Types.ObjectId,
+                    ref: "SubService",
+                    default: null
+                },
                 unit_price: {
                     type: Number,
                     required: true,

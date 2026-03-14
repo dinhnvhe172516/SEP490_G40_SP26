@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { FileText, Search, Eye, Edit, Clock, CheckCircle, Filter } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
+import SharedPagination from '../../components/ui/SharedPagination';
 import ViewRecordModal from './modals/ViewRecordModal';
 import UpdateRecordModal from './modals/UpdateRecordModal';
 import { getAllDentalRecords, updateDentalRecord } from '../../services/dentalRecordService';
@@ -21,6 +22,7 @@ const AssistantMedicalRecords = () => {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(false);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
 
     const fetchRecords = async () => {
@@ -28,17 +30,17 @@ const AssistantMedicalRecords = () => {
             setLoading(true);
             const params = {
                 page: currentPage,
-                limit: 10,
+                limit: 5,
                 search: searchTerm || undefined,
                 filter_dental_record: filterStatus !== 'all' ? filterStatus : undefined,
             };
 
             const response = await getAllDentalRecords(params);
-            console.log("Results: ", response);
             if (response && response.data) {
                 setRecords(response.data);
                 if (response.pagination) {
                     setTotalPages(response.pagination.totalPages || 1);
+                    setTotalItems(response.pagination.totalItems || 0);
                 }
             }
         } catch (error) {
@@ -75,8 +77,6 @@ const AssistantMedicalRecords = () => {
             (record.doctor_info && record.doctor_info.profile && record.doctor_info.profile.full_name === filterDoctor);
         return matchesSearch && matchesDoctor;
     });
-
-    console.log("Filtered Records: ", filteredRecords);
 
     const getStatusInfo = (status) => {
         switch (status) {
@@ -302,26 +302,14 @@ const AssistantMedicalRecords = () => {
                 )}
             </div>
 
-            {totalPages > 1 && (
-                <div className="mt-6 flex justify-center gap-2">
-                    <button
-                        className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled={currentPage === 1}
-                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    >
-                        Trước
-                    </button>
-                    <span className="px-4 py-2">
-                        Trang {currentPage} / {totalPages}
-                    </span>
-                    <button
-                        className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50"
-                        disabled={currentPage === totalPages}
-                        onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    >
-                        Sau
-                    </button>
-                </div>
+            {!loading && (
+                <SharedPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalItems}
+                    onPageChange={setCurrentPage}
+                    itemLabel="hồ sơ"
+                />
             )}
 
             {/* Modals */}
