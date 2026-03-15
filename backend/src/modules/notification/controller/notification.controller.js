@@ -60,4 +60,24 @@ const sendToUserController = async (req, res, next) => {
     }
 };
 
-module.exports = { createController, sendToRoleController, sendToUserController };
+/**
+ * POST /api/notification/send-to-group
+ * Gửi thông báo đến danh sách user ID cụ thể.
+ */
+const sendToGroupController = async (req, res, next) => {
+    try {
+        const { recipient_ids, ...data } = req.body;
+
+        const notification = await notificationService.sendToGroup(recipient_ids, data);
+
+        res.status(201).json({
+            status: 'success',
+            data: notification,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { createController, sendToRoleController, sendToUserController, sendToGroupController };
+

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createController, sendToRoleController, sendToUserController } = require('../controller/notification.controller');
+const { createController, sendToRoleController, sendToUserController, sendToGroupController } = require('../controller/notification.controller');
 
 /**
  * @swagger
@@ -173,4 +173,57 @@ router.post('/send-to-role', sendToRoleController);
  */
 router.post('/send-to-user', sendToUserController);
 
+/**
+ * @swagger
+ * /api/notification/send-to-group:
+ *   post:
+ *     summary: Gửi thông báo đến danh sách user ID cụ thể
+ *     tags: [Notification]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - recipient_ids
+ *               - type
+ *               - title
+ *               - message
+ *             properties:
+ *               recipient_ids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Mảng ObjectId các user nhận
+ *                 example: ["661a2b3c4d5e6f7a8b9c0d1e", "661a2b3c4d5e6f7a8b9c0d2f"]
+ *               type:
+ *                 type: string
+ *                 enum: [NEW_APPOINTMENT, APPOINTMENT_CANCELLED, INVOICE_READY, PATIENT_CHECKED_IN, NEW_PRESCRIPTION, LOW_STOCK, EXPIRING_MEDICINE, SYSTEM_ALERT]
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               action_url:
+ *                 type: string
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   entity_id:
+ *                     type: string
+ *                   entity_type:
+ *                     type: string
+ *                   extra_data:
+ *                     type: object
+ *     responses:
+ *       201:
+ *         description: Gửi thành công
+ *       400:
+ *         description: recipient_ids rỗng hoặc thiếu field bắt buộc
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/send-to-group', sendToGroupController);
+
 module.exports = router;
+

@@ -3,8 +3,6 @@ const { emitToUser, emitToRole, getIO } = require('../../../socket');
 const logger = require('../../../common/utils/logger');
 const errorRes = require('../../../common/errors');
 
-
-
 const _dispatchInApp = async (notification) => {
     const payload = {
         _id: notification._id,
@@ -164,8 +162,40 @@ const sendToRole = async (roles, data) => {
     }
 };
 
+/**
+ * Gửi thông báo đến một danh sách user ID cụ thể (scope GROUP theo IDs).
+ * @param {string[]} recipientIds - Mảng ObjectId user nhận
+ * @param {object}   data         - { type, title, message, action_url?, metadata?, channels? }
+ */
+const sendToGroup = async (recipientIds, data) => {
+    try {
+        if (!recipientIds || recipientIds.length === 0) {
+            throw new errorRes.BadRequestError('recipientIds is required and must not be empty');
+        }
+
+        return createNotification({
+            scope: 'GROUP',
+            recipient_ids: recipientIds,
+            type: data.type,
+            title: data.title,
+            message: data.message,
+            action_url: data.action_url || null,
+            metadata: data.metadata || {},
+            channels: data.channels || { in_app: { enabled: true } },
+        });
+    } catch (error) {
+        if (['BadRequestError'].includes(error.name)) throw error;
+        logger.error('Error in sendToGroup', {
+            context: 'NotificationService.sendToGroup',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
 module.exports = {
     createNotification,
     sendToUser,
     sendToRole,
+    sendToGroup,
 };
