@@ -151,13 +151,31 @@ const markAsReadController = async (req, res, next) => {
     }
 };
 
-module.exports = { 
-    createController, 
-    sendToRoleController, 
-    sendToUserController, 
-    sendToGroupController, 
-    sendGlobalController, 
-    getListController, 
+/**
+ * PUT /api/notification/read-all
+ * Đánh dấu toàn bộ thông báo là đã đọc.
+ */
+const markAllAsReadController = async (req, res, next) => {
+    try {
+        const userId = req.user?.account_id;
+        const userRole = req.user?.role?.name;
+
+        const result = await notificationService.markAllAsRead(userId, userRole);
+
+        res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = {
+    createController,
+    sendToRoleController,
+    sendToUserController,
+    sendToGroupController,
+    sendGlobalController,
+    getListController,
     getUnreadCountController,
-    markAsReadController
+    markAsReadController,
+    markAllAsReadController
 };

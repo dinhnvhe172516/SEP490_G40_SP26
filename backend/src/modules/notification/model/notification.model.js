@@ -152,6 +152,20 @@ const notificationSchema = new Schema(
             }
         ],
 
+        // Lưu vết ai đã bấm nút "Xóa thông báo" (Ẩn thông báo đi đối với họ)
+        deleted_by: [
+            {
+                user_id: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Account'
+                },
+                deleted_at: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+
         // ── QUẢN LÝ THỜI GIAN ──
         // Thời điểm tự động xóa thông báo (TTL Index) - tránh nặng DB
         expires_at: {

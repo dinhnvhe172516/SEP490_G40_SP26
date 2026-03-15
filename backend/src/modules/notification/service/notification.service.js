@@ -223,12 +223,15 @@ const sendGlobal = async (data) => {
  */
 const getNotifications = async ({ userId, userRole, page = 1, limit = 20 }) => {
     try {
-        const pageNum  = Math.max(1, parseInt(page));
+        const pageNum = Math.max(1, parseInt(page));
         const limitNum = Math.max(1, parseInt(limit));
-        const skip     = (pageNum - 1) * limitNum;
+        const skip = (pageNum - 1) * limitNum;
 
         // Lấy thông báo thuộc về user cụ thể, hoặc gửi theo role của họ, hoặc GLOBAL
+        // Đồng thời BỎ QUA những thông báo user đã xoá (nằm trong deleted_by)
         const filter = {
+            'deleted_by.user_id': { $ne: userId },
+            'deleted_by._id': { $ne: userId }, // Fallback
             $or: [
                 { recipient_id: userId },
                 { target_roles: userRole },
@@ -289,11 +292,13 @@ const getNotifications = async ({ userId, userRole, page = 1, limit = 20 }) => {
  */
 const getUnreadCount = async ({ userId, userRole }) => {
     try {
-        // Chỉ đếm các thông báo UNREAD VÀ (userId không nằm trong read_by.user_id VÀ read_by._id)
+        // Chỉ đếm các thông báo UNREAD VÀ (userId không nằm trong read_by) VÀ (userId không nằm trong deleted_by)
         const count = await Notification.countDocuments({
             status: 'UNREAD',
             'read_by.user_id': { $ne: userId },
-            'read_by._id': { $ne: userId }, // Fallback thêm cho những data lỡ tạo sai lúc nãy
+            'read_by._id': { $ne: userId },
+            'deleted_by.user_id': { $ne: userId },
+            'deleted_by._id': { $ne: userId },
             $or: [
                 { recipient_id: userId },
                 { target_roles: userRole },
@@ -337,7 +342,7 @@ const markAsRead = async (notificationId, userId) => {
                 const checkedId = entry.user_id || entry._id;
                 return checkedId && checkedId.toString() === userId.toString();
             });
-            
+
             if (!existingRead) {
                 notification.read_by.push({ user_id: userId });
             }
@@ -355,6 +360,48 @@ const markAsRead = async (notificationId, userId) => {
     }
 };
 
+/**
+ * Đánh dấu toàn bộ thông báo chưa đọc của user thành đã đọc.
+ * @param {string} userId
+ * @param {string} userRole
+ */
+const markAllAsRead = async (userId, userRole) => {
+    try {
+        // 1. Cập nhật thông báo cá nhân (INDIVIDUAL) - đổi status thành READ
+        const updateIndividual = Notification.updateMany(
+            { recipient_id: userId, status: 'UNREAD', scope: 'INDIVIDUAL' },
+            { $set: { status: 'READ' } }
+        );
+
+        // 2. Cập nhật thông báo chung (GROUP/GLOBAL) - push userId vào read_by
+        const updateGroupGlobal = Notification.updateMany(
+            {
+                status: 'UNREAD',
+                scope: { $in: ['GROUP', 'GLOBAL'] },
+                'read_by.user_id': { $ne: userId },
+                'read_by._id': { $ne: userId }, // Fallback thêm
+                $or: [
+                    { target_roles: userRole },
+                    { scope: 'GLOBAL' }
+                ]
+            },
+            {
+                $push: { read_by: { user_id: userId } }
+            }
+        );
+
+        await Promise.all([updateIndividual, updateGroupGlobal]);
+
+        return { message: 'All notifications marked as read' };
+    } catch (error) {
+        logger.error('Error in markAllAsRead', {
+            context: 'NotificationService.markAllAsRead',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
 module.exports = {
     createNotification,
     sendToUser,
@@ -364,4 +411,5 @@ module.exports = {
     getNotifications,
     getUnreadCount,
     markAsRead,
+    markAllAsRead,
 };
