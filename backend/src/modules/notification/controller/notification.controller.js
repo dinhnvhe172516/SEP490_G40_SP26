@@ -1,0 +1,25 @@
+const notificationService = require('../service/notification.service');
+
+/**
+ * POST /api/notification
+ * Tạo thông báo mới và đẩy real-time qua Socket.IO.
+ */
+const createController = async (req, res, next) => {
+    try {
+        const sender_id = req.user?.id || req.user?._id;
+
+        const notification = await notificationService.createNotification({
+            ...req.body,
+            sender_id,
+        });
+
+        res.status(201).json({
+            status: 'success',
+            data: notification,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { createController };

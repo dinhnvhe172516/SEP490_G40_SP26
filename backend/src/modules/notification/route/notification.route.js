@@ -1,0 +1,69 @@
+const express = require('express');
+const router = express.Router();
+const { createController } = require('../controller/notification.controller');
+
+/**
+ * @swagger
+ * tags:
+ *   name: Notification
+ *   description: Quản lý thông báo trong hệ thống
+ */
+
+/**
+ * @swagger
+ * /api/notification:
+ *   post:
+ *     summary: Tạo thông báo mới và đẩy real-time qua Socket.IO
+ *     tags: [Notification]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - title
+ *               - message
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [NEW_APPOINTMENT, APPOINTMENT_CANCELLED, INVOICE_READY, PATIENT_CHECKED_IN, NEW_PRESCRIPTION, LOW_STOCK, EXPIRING_MEDICINE, SYSTEM_ALERT]
+ *               scope:
+ *                 type: string
+ *                 enum: [INDIVIDUAL, GROUP, GLOBAL]
+ *                 default: INDIVIDUAL
+ *               recipient_id:
+ *                 type: string
+ *                 description: ObjectId user nhận (khi scope = INDIVIDUAL)
+ *               target_roles:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Mảng role nhận (khi scope = GROUP)
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               action_url:
+ *                 type: string
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   entity_id:
+ *                     type: string
+ *                   entity_type:
+ *                     type: string
+ *                   extra_data:
+ *                     type: object
+ *     responses:
+ *       201:
+ *         description: Tạo thông báo thành công
+ *       400:
+ *         description: Thiếu field bắt buộc
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/', createController);
+
+module.exports = router;

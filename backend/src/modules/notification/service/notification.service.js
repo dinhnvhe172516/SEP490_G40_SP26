@@ -2,7 +2,6 @@ const Notification = require('../model/notification.model');
 const { emitToUser, emitToRole } = require('../../../socket');
 const { getIO } = require('../../../socket');
 
-
 const _dispatchInApp = async (notification) => {
     const payload = {
         _id: notification._id,
@@ -40,7 +39,6 @@ const _dispatchInApp = async (notification) => {
     notification.channels.in_app.status = 'SENT';
     notification.channels.in_app.sent_at = new Date();
 };
-
 
 /**
  * Tạo một thông báo mới, lưu DB và đẩy ra các kênh được bật.
@@ -140,6 +138,7 @@ const createNotification = async (payload) => {
 
     return notification;
 };
+
 
 module.exports = {
     createNotification,
