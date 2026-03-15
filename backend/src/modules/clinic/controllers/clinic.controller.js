@@ -5,12 +5,20 @@ const Pagination = require('../../../common/responses/Pagination');
 const { cleanObjectData } = require('../../../common/utils/cleanObjectData');
 
 const clinicService = require('../services/clinic.service');
+const { uploadToCloudinary } = require('../../../utils/cloudinaryHelper');
 
 const updateClinic = async (req, res) => {
     try {
         logger.info('Attempting to update clinic');
         const clinicId = req.params.clinicId;
-        const updateData = req.body;
+        const updateData = { ...req.body };
+
+        // Handle logo upload if file is present
+        if (req.file) {
+            logger.info('Logo file detected, uploading to Cloudinary');
+            const logoUrl = await uploadToCloudinary(req.file, 'clinics/logos');
+            updateData.logo = logoUrl;
+        }
 
         // Sửa: Dùng Template Literals để nối chuỗi ID và dữ liệu đã clean
         logger.debug(`Clinic ID: ${clinicId}`);

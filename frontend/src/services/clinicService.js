@@ -23,7 +23,12 @@ const clinicService = {
      */
     updateClinic: async (clinicId, data) => {
         try {
-            const response = await apiClient.patch(`/api/clinic/${clinicId}`, data);
+            const isFormData = data instanceof FormData;
+            const response = await apiClient.patch(`/api/clinic/${clinicId}`, data, {
+                headers: {
+                    'Content-Type': isFormData ? 'multipart/form-data' : 'application/json'
+                }
+            });
             return response;
         } catch (error) {
             throw error.response || error;
