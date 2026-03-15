@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-const PaymentTest = () => {
-  const amount = 2000;
-  // Sử dụng VITE_ và gộp chuỗi cẩn thận để tránh lỗi logic
+const PaymentTest = ({amount = 2000, invoiceCode}) => {
+    
   const matchContent = import.meta.env.VITE_MATCH_CONTENT || "INV";
-  const invoiceCode = `${matchContent}8001`;
+  invoiceCode = `${matchContent}8002`;
 
+  // Thông tin tài khoản ngân hàng (Lấy từ .env) - không thay đổi 
   const bankId = import.meta.env.VITE_BANK_ID || "BIDV";
   const accountNo = import.meta.env.VITE_BANK_ACCOUNT || "96247TOANTTHE172722";
   const accountName = import.meta.env.VITE_ACCOUNT_NAME || "TRAN TRUNG TOAN";
