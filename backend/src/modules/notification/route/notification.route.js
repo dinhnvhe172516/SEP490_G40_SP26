@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { createController, sendToRoleController, sendToUserController, sendToGroupController, sendGlobalController, getListController } = require('../controller/notification.controller');
+const { createController, sendToRoleController, sendToUserController, sendToGroupController, sendGlobalController, getListController, getUnreadCountController } = require('../controller/notification.controller');
 const { authenticate } = require('../../../common/middlewares/auth.middleware');
 
-// Tất cả notification routes đều yêu cầu đăng nhập
 router.use(authenticate);
 
 
@@ -318,5 +317,35 @@ router.post('/send-global', sendGlobalController);
  *         $ref: '#/components/schemas/Error'
  */
 router.get('/', getListController);
+
+/**
+ * @swagger
+ * /api/notification/unread-count:
+ *   get:
+ *     summary: Lấy số lượng thông báo chưa đọc
+ *     tags: [Notification]
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     unread_count:
+ *                       type: integer
+ *                       example: 5
+ *       401:
+ *         $ref: '#/components/schemas/Error'
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.get('/unread-count', getUnreadCountController);
 
 module.exports = router;

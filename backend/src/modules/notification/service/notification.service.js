@@ -294,6 +294,46 @@ const getUnreadCount = async ({ userId, userRole }) => {
     }
 };
 
+/**
+ * Đánh dấu 1 thông báo là đã đọc.
+ * Khác với INDIVIDUAL (chỉ cập nhật status của doc),
+ * với GROUP/GLOBAL ta cần lưu id người đọc vào mảng `read_by` 
+ * để người khác đọc không bị báo đã đọc luôn.
+ * @param {string} notificationId 
+ * @param {string} userId
+ */
+const markAsRead = async (notificationId, userId) => {
+    try {
+        const notification = await Notification.findById(notificationId);
+        if (!notification) {
+            throw new errorRes.NotFoundError('Notification not found');
+        }
+
+        // Nếu thông báo gửi riêng (INDIVIDUAL), chỉ cần đổi status
+        if (notification.scope === 'INDIVIDUAL') {
+            if (notification.recipient_id.toString() !== userId.toString()) {
+                throw new errorRes.ForbiddenError('Not your notification');
+            }
+            notification.status = 'READ';
+        } else {
+            // Nếu thông báo GROUP/GLOBAL, push userId vào read_by
+            if (!notification.read_by.includes(userId)) {
+                notification.read_by.push(userId);
+            }
+        }
+
+        await notification.save();
+        return notification;
+    } catch (error) {
+        if (['NotFoundError', 'ForbiddenError'].includes(error.name)) throw error;
+        logger.error('Error in markAsRead', {
+            context: 'NotificationService.markAsRead',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
 module.exports = {
     createNotification,
     sendToUser,
@@ -302,4 +342,5 @@ module.exports = {
     sendGlobal,
     getNotifications,
     getUnreadCount,
+    markAsRead,
 };
