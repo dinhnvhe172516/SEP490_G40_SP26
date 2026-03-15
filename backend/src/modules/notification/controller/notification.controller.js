@@ -134,4 +134,30 @@ const getUnreadCountController = async (req, res, next) => {
     }
 };
 
-module.exports = { createController, sendToRoleController, sendToUserController, sendToGroupController, sendGlobalController, getListController, getUnreadCountController };
+/**
+ * PUT /api/notification/:id/read
+ * Đánh dấu 1 thông báo là đã đọc.
+ */
+const markAsReadController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.account_id;
+
+        const result = await notificationService.markAsRead(id, userId);
+
+        res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { 
+    createController, 
+    sendToRoleController, 
+    sendToUserController, 
+    sendToGroupController, 
+    sendGlobalController, 
+    getListController, 
+    getUnreadCountController,
+    markAsReadController
+};
