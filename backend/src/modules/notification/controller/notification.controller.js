@@ -168,6 +168,23 @@ const markAllAsReadController = async (req, res, next) => {
     }
 };
 
+/**
+ * PUT /api/notification/:id/seen
+ * Đánh dấu 1 thông báo là đã xem (hiển thị popup/toast).
+ */
+const markAsSeenController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.account_id;
+
+        const result = await notificationService.markAsSeen(id, userId);
+
+        res.status(200).json({ status: 'success', data: result });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     createController,
     sendToRoleController,
@@ -177,5 +194,6 @@ module.exports = {
     getListController,
     getUnreadCountController,
     markAsReadController,
-    markAllAsReadController
+    markAllAsReadController,
+    markAsSeenController
 };

@@ -248,24 +248,34 @@ const getNotifications = async ({ userId, userRole, page = 1, limit = 20 }) => {
             Notification.countDocuments(filter),
         ]);
 
-        // Tính toán field is_read thực tế cho từng thông báo trả về
+        // Tính toán field is_read và is_seen thực tế cho từng thông báo trả về
         const formattedData = notifications.map(notif => {
             let is_read = false;
+            let is_seen = false;
+
             // Xử lý cẩn thận do lúc trước code sinh nhầm `_id` mà không có `user_id`
             const hasRead = (notif.read_by || []).some(entry => {
                 const checkedId = entry.user_id || entry._id; // Fallback cho dữ liệu lỗi lúc nãy
                 return checkedId && checkedId.toString() === userId.toString();
             });
 
+            const hasSeen = (notif.seen_by || []).some(entry => {
+                const checkedId = entry.user_id || entry._id;
+                return checkedId && checkedId.toString() === userId.toString();
+            });
+
             if (notif.scope === 'INDIVIDUAL') {
                 is_read = notif.status === 'READ';
+                is_seen = notif.is_seen === true;
             } else {
-                // GROUP, GLOBAL: đã đọc nếu userId nằm trong mảng read_by (trường user_id hoặc fallback _id)
+                // GROUP, GLOBAL: đã đọc nếu userId nằm trong mảng read_by
                 is_read = hasRead;
+                is_seen = hasSeen;
             }
             return {
                 ...notif,
-                is_read // Field phụ để frontend dùng dễ hiểu hơn
+                is_read, // Field phụ để frontend dùng dễ hiểu hơn
+                is_seen  // Ghi đè lại is_seen gốc của document bằng is_seen thực tế
             };
         });
 
@@ -361,6 +371,49 @@ const markAsRead = async (notificationId, userId) => {
 };
 
 /**
+ * Đánh dấu 1 thông báo là ĐÃ HIỂN THỊ TRÊN MÀN HÌNH (Seen - dùng cho popup toast).
+ * Khác với "Read" (nằm trong hộp thư báo đỏ).
+ * @param {string} notificationId 
+ * @param {string} userId
+ */
+const markAsSeen = async (notificationId, userId) => {
+    try {
+        const notification = await Notification.findById(notificationId);
+        if (!notification) {
+            throw new errorRes.NotFoundError('Notification not found');
+        }
+
+        // Nếu thông báo gửi riêng (INDIVIDUAL), chỉ cần đổi field is_seen
+        if (notification.scope === 'INDIVIDUAL') {
+            if (notification.recipient_id.toString() !== userId.toString()) {
+                throw new errorRes.ForbiddenError('Not your notification');
+            }
+            notification.is_seen = true;
+        } else {
+            // Nếu thông báo GROUP/GLOBAL, push user_id vào mảng seen_by
+            const existingSeen = notification.seen_by.some(entry => {
+                const checkedId = entry.user_id || entry._id;
+                return checkedId && checkedId.toString() === userId.toString();
+            });
+            
+            if (!existingSeen) {
+                notification.seen_by.push({ user_id: userId });
+            }
+        }
+
+        await notification.save();
+        return notification;
+    } catch (error) {
+        if (['NotFoundError', 'ForbiddenError'].includes(error.name)) throw error;
+        logger.error('Error in markAsSeen', {
+            context: 'NotificationService.markAsSeen',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
+/**
  * Đánh dấu toàn bộ thông báo chưa đọc của user thành đã đọc.
  * @param {string} userId
  * @param {string} userRole
@@ -411,5 +464,6 @@ module.exports = {
     getNotifications,
     getUnreadCount,
     markAsRead,
+    markAsSeen,
     markAllAsRead,
 };

@@ -9,7 +9,8 @@ const {
     getListController,
     getUnreadCountController,
     markAsReadController,
-    markAllAsReadController
+    markAllAsReadController,
+    markAsSeenController
 } = require('../controller/notification.controller');
 const { authenticate } = require('../../../common/middlewares/auth.middleware');
 
@@ -397,6 +398,31 @@ router.put('/read-all', markAllAsReadController);
  *       500:
  *         $ref: '#/components/schemas/Error'
  */
+/**
+ * @swagger
+ * /api/notification/{id}/seen:
+ *   put:
+ *     summary: Đánh dấu một thông báo là đã xem (Popup/Toast)
+ *     tags: [Notification]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ObjectId của thông báo
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       403:
+ *         description: Không có quyền truy cập thông báo này
+ *       404:
+ *         description: Không tìm thấy thông báo
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.put('/:id/seen', markAsSeenController);
+
 router.put('/:id/read', markAsReadController);
 
 module.exports = router;

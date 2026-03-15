@@ -166,6 +166,20 @@ const notificationSchema = new Schema(
             }
         ],
 
+        // Lưu vết ai đã được hiển thị popup (toast) cho thông báo này
+        seen_by: [
+            {
+                user_id: {
+                    type: Schema.Types.ObjectId,
+                    ref: 'Account'
+                },
+                seen_at: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+
         // ── QUẢN LÝ THỜI GIAN ──
         // Thời điểm tự động xóa thông báo (TTL Index) - tránh nặng DB
         expires_at: {
