@@ -7,11 +7,12 @@ const {
     sendToGroupController,
     sendGlobalController,
     getListController,
-    getUnreadCountController,
     markAsReadController,
     markAllAsReadController,
     markAsSeenController,
-    deleteAllReadController
+    getUnreadCountController,
+    deleteAllReadController,
+    deleteNotificationController
 } = require('../controller/notification.controller');
 const { authenticate } = require('../../../common/middlewares/auth.middleware');
 
@@ -425,5 +426,46 @@ router.put('/read-all', markAllAsReadController);
 router.put('/:id/seen', markAsSeenController);
 
 router.put('/:id/read', markAsReadController);
+
+/**
+ * @swagger
+ * /api/notification/read-all:
+ *   delete:
+ *     summary: Xóa (hoặc ẩn) TẤT CẢ thông báo ĐÃ ĐỌC của user
+ *     tags: [Notification]
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       401:
+ *         description: Chưa đăng nhập
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.delete('/read-all', deleteAllReadController);
+
+/**
+ * @swagger
+ * /api/notification/{id}:
+ *   delete:
+ *     summary: Xóa (hoặc ẩn) một thông báo
+ *     tags: [Notification]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ObjectId của thông báo
+ *     responses:
+ *       200:
+ *         description: Thành công
+ *       403:
+ *         description: Không có quyền truy cập thông báo này
+ *       404:
+ *         description: Không tìm thấy thông báo
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.delete('/:id', deleteNotificationController);
 
 module.exports = router;

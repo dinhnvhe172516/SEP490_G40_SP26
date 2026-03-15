@@ -202,6 +202,23 @@ const deleteAllReadController = async (req, res, next) => {
     }
 };
 
+/**
+ * DELETE /api/notification/:id
+ * Xóa/ẩn 1 thông báo.
+ */
+const deleteNotificationController = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user?.account_id;
+
+        await notificationService.deleteNotification(id, userId);
+
+        res.status(200).json({ status: 'success', message: 'Notification deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     createController,
     sendToRoleController,
@@ -213,5 +230,6 @@ module.exports = {
     markAsReadController,
     markAllAsReadController,
     markAsSeenController,
-    deleteAllReadController
+    deleteAllReadController,
+    deleteNotificationController
 };
