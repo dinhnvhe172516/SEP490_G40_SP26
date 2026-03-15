@@ -268,6 +268,32 @@ const getNotifications = async ({ userId, userRole, page = 1, limit = 20 }) => {
     }
 };
 
+/**
+ * Đếm số thông báo chưa đọc của user — dùng cho badge số đỏ trên chuông.
+ * @param {object} params
+ * @param {string} params.userId
+ * @param {string} params.userRole
+ */
+const getUnreadCount = async ({ userId, userRole }) => {
+    try {
+        const count = await Notification.countDocuments({
+            status: 'UNREAD',
+            $or: [
+                { recipient_id: userId },
+                { target_roles: userRole },
+                { scope: 'GLOBAL' },
+            ]
+        });
+        return { unread_count: count };
+    } catch (error) {
+        logger.error('Error in getUnreadCount', {
+            context: 'NotificationService.getUnreadCount',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
 module.exports = {
     createNotification,
     sendToUser,
@@ -275,4 +301,5 @@ module.exports = {
     sendToGroup,
     sendGlobal,
     getNotifications,
+    getUnreadCount,
 };
