@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createController, sendToRoleController, sendToUserController, sendToGroupController } = require('../controller/notification.controller');
+const { createController, sendToRoleController, sendToUserController, sendToGroupController, sendGlobalController } = require('../controller/notification.controller');
 
 /**
  * @swagger
@@ -225,5 +225,45 @@ router.post('/send-to-user', sendToUserController);
  */
 router.post('/send-to-group', sendToGroupController);
 
-module.exports = router;
+/**
+ * @swagger
+ * /api/notification/send-global:
+ *   post:
+ *     summary: Broadcast thông báo đến toàn bộ hệ thống (GLOBAL)
+ *     tags: [Notification]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *               - title
+ *               - message
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [SYSTEM_ALERT, SYSTEM_MAINTENANCE]
+ *               title:
+ *                 type: string
+ *               message:
+ *                 type: string
+ *               action_url:
+ *                 type: string
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   extra_data:
+ *                     type: object
+ *     responses:
+ *       201:
+ *         description: Broadcast thành công
+ *       400:
+ *         description: Thiếu field bắt buộc
+ *       500:
+ *         $ref: '#/components/schemas/Error'
+ */
+router.post('/send-global', sendGlobalController);
 
+module.exports = router;

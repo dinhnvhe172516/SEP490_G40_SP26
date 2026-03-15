@@ -79,5 +79,22 @@ const sendToGroupController = async (req, res, next) => {
     }
 };
 
-module.exports = { createController, sendToRoleController, sendToUserController, sendToGroupController };
+/**
+ * POST /api/notification/send-global
+ * Broadcast thông báo đến toàn bộ hệ thống.
+ */
+const sendGlobalController = async (req, res, next) => {
+    try {
+        const notification = await notificationService.sendGlobal(req.body);
+
+        res.status(201).json({
+            status: 'success',
+            data: notification,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { createController, sendToRoleController, sendToUserController, sendToGroupController, sendGlobalController };
 

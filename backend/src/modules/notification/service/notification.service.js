@@ -193,9 +193,35 @@ const sendToGroup = async (recipientIds, data) => {
     }
 };
 
+/**
+ * Broadcast thông báo đến toàn bộ hệ thống (scope GLOBAL).
+ * @param {object} data - { type, title, message, action_url?, metadata?, channels? }
+ */
+const sendGlobal = async (data) => {
+    try {
+        return createNotification({
+            scope: 'GLOBAL',
+            type: data.type,
+            title: data.title,
+            message: data.message,
+            action_url: data.action_url || null,
+            metadata: data.metadata || {},
+            channels: data.channels || { in_app: { enabled: true } },
+        });
+    } catch (error) {
+        if (['BadRequestError'].includes(error.name)) throw error;
+        logger.error('Error in sendGlobal', {
+            context: 'NotificationService.sendGlobal',
+            message: error.message,
+        });
+        throw new errorRes.InternalServerError(error.message);
+    }
+};
+
 module.exports = {
     createNotification,
     sendToUser,
     sendToRole,
     sendToGroup,
+    sendGlobal,
 };
