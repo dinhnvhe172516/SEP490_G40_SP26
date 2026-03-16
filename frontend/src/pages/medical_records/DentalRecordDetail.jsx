@@ -23,7 +23,6 @@ const DentalRecordDetail = () => {
             setIsVisible(false);
             setError(null);
             try {
-                // GET /api/dentist/dental-record/:id
                 const res = await getDentalRecordById(id);
                 setRecord(res.data);
             } catch (err) {
