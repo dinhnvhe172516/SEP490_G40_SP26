@@ -264,7 +264,15 @@ exports.login = async (data, ip_address = 'unknown', user_agent = 'unknown') => 
             ok: false,
             reason: 'Invalid password'
         })
-        const remainingAttempts = 5 - (recentFailedAttempts + 1);
+        const totalFailed = recentFailedAttempts + 1;
+        if (totalFailed >= 5) {
+            throw new ForbiddenError(
+                'Too many failed attempts. Your account is locked for 3 minutes.',
+                'AUTH_TOO_MANY_ATTEMPTS'
+            );
+        }
+
+        const remainingAttempts = 5 - totalFailed;
         throw new UnauthorizedError(
             'Invalid password',
             'AUTH_INVALID_CREDENTIALS',
