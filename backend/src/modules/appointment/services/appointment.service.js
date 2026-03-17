@@ -601,8 +601,14 @@ const getListOfPatientServiceWithDate = async (query, account_id) => {
     if (query.filter_date) {
       dateToFilter = new Date(query.filter_date);
     }
+    dateToFilter.setUTCHours(0, 0, 0, 0);
+
+    logger.debug("filter date.", {
+        context: "getListOfPatientServiceWithDate",
+        data: dateToFilter
+    })
     // Giả sử trường lưu thời gian hẹn trong DB của bạn là appointment_date
-    matchCondition.appointment_date = { $gt: dateToFilter };
+    matchCondition.appointment_date = { $gte: dateToFilter };
 
     // Tìm kiếm (Search) theo tên, số điện thoại, email
     if (search) {

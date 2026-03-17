@@ -3,6 +3,7 @@ const errorRes = require("../../../common/errors");
 const mongoose = require("mongoose");
 
 const model = require("../models/index.model");
+const {} = require("./../../appointment/index");
 
 /**
  * get treatment by id populate medicine_usage.medicine_id
@@ -153,6 +154,11 @@ const updateStatusOnly = async (id, status) => {
         if (treatment.status === 'CANCELLED' || treatment.status === 'DONE') {
             throw new errorRes.BadRequestError(`Cannot change status from ${treatment.status}`);
         }
+
+        if (status === "DONE") {
+
+        }
+
         const newData = await model.Treatment.findByIdAndUpdate(
             id,
             { status: status },
