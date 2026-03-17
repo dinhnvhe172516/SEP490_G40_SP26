@@ -19,7 +19,7 @@ const RECORD_STATUS: Record<string, { label: string; color: string; bg: string }
 
 function DentalRecordItem({ record }: { record: any }) {
     const [expanded, setExpanded] = useState(false);
-    const status = RECORD_STATUS[record.status] || { label: record.status, color: '#6B7280', bg: '#F9FAFB' };
+    const status = RECORD_STATUS[record.status] || { label: record.status, color: '#3b82f6', bg: '#eff6ff' };
 
     let startDate = '';
     try {
@@ -116,7 +116,7 @@ export function DentalRecordScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 40 }]}
                 refreshControl={
-                    <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#1E3A5F" />
+                    <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#0284c7" />
                 }
             >
                 <View style={styles.inner}>
@@ -164,7 +164,7 @@ function MiniCard({ label, value, color, bg }: { label: string; value: number; c
 const miniStyles = StyleSheet.create({
     card: { flex: 1, borderRadius: 16, padding: 16, alignItems: 'center' },
     value: { fontSize: 28, fontWeight: '800', marginBottom: 4, paddingTop: 4 },
-    label: { fontSize: 12, color: '#6B7280', fontWeight: '500', textAlign: 'center' },
+    label: { fontSize: 12, color: '#3b82f6', fontWeight: '500', textAlign: 'center' },
 });
 
 const itemStyles = StyleSheet.create({
@@ -173,7 +173,7 @@ const itemStyles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -191,12 +191,12 @@ const itemStyles = StyleSheet.create({
     recordName: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 6,
     },
-    doctorText: { fontSize: 13, color: '#6B7280', marginBottom: 2 },
-    dateText: { fontSize: 12, color: '#9CA3AF', marginBottom: 4 },
-    diagnosisText: { fontSize: 13, color: '#374151', fontStyle: 'italic', lineHeight: 18 },
+    doctorText: { fontSize: 13, color: '#3b82f6', marginBottom: 2 },
+    dateText: { fontSize: 12, color: '#60a5fa', marginBottom: 4 },
+    diagnosisText: { fontSize: 13, color: '#1d4ed8', fontStyle: 'italic', lineHeight: 18 },
     statusBadge: {
         paddingHorizontal: 10,
         paddingVertical: 5,
@@ -207,22 +207,22 @@ const itemStyles = StyleSheet.create({
         width: 14,
         height: 14,
         marginTop: 6,
-        tintColor: '#9CA3AF',
+        tintColor: '#60a5fa',
     },
     collapsedStats: {
         paddingHorizontal: 18,
         paddingBottom: 14,
     },
-    collapsedText: { fontSize: 13, color: '#9CA3AF' },
+    collapsedText: { fontSize: 13, color: '#60a5fa' },
     expandedContent: {
         paddingHorizontal: 18,
         paddingBottom: 18,
     },
-    noTreatments: { fontSize: 13, color: '#9CA3AF', textAlign: 'center', marginTop: 12 },
+    noTreatments: { fontSize: 13, color: '#60a5fa', textAlign: 'center', marginTop: 12 },
 });
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F9FAFB' },
+    container: { flex: 1, backgroundColor: '#eff6ff' },
     inner: { paddingHorizontal: 20 },
     scrollContent: { paddingTop: 20 },
     gap20: { height: 20 },
@@ -235,18 +235,18 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 16,
     },
     skeletonCard: {
         height: 160,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         borderRadius: 24,
         marginBottom: 16,
     },
     skeletonList: {
         height: 300,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         borderRadius: 20,
     },
 });

@@ -73,7 +73,7 @@ export function BookingStep1_Services({ initialServiceId, bookingData, setBookin
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#111827" />
+                <ActivityIndicator size="large" color="#2563eb" />
             </View>
         );
     }
@@ -168,18 +168,18 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginBottom: 16,
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         borderRadius: 12,
         paddingHorizontal: 12,
         marginBottom: 24,
@@ -188,13 +188,13 @@ const styles = StyleSheet.create({
     searchIcon: {
         width: 18,
         height: 18,
-        tintColor: '#9CA3AF',
+        tintColor: '#60a5fa',
         marginRight: 8,
     },
     searchInput: {
         flex: 1,
         fontSize: 15,
-        color: '#111827',
+        color: '#1e3a8a',
         height: '100%',
     },
     listContainer: {
@@ -207,17 +207,17 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 16,
         borderWidth: 2,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
     },
     serviceCardSelected: {
-        borderColor: '#111827',
-        backgroundColor: '#F9FAFB',
+        borderColor: '#1e3a8a',
+        backgroundColor: '#eff6ff',
     },
     serviceImage: {
         width: 60,
         height: 60,
         borderRadius: 12,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         marginRight: 16,
     },
     serviceInfo: {
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     serviceName: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#374151',
+        color: '#1d4ed8',
         marginBottom: 4,
     },
     servicePrice: {
@@ -236,21 +236,21 @@ const styles = StyleSheet.create({
         color: '#059669',
     },
     textSelected: {
-        color: '#111827',
+        color: '#1e3a8a',
     },
     checkbox: {
         width: 24,
         height: 24,
         borderRadius: 12,
         borderWidth: 2,
-        borderColor: '#D1D5DB',
+        borderColor: '#93c5fd',
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 12,
     },
     checkboxSelected: {
-        backgroundColor: '#111827',
-        borderColor: '#111827',
+        backgroundColor: '#2563eb',
+        borderColor: '#1e3a8a',
     },
     checkIcon: {
         width: 12,

@@ -32,7 +32,7 @@ export function ServiceDetailScreen({ serviceId }: Props) {
     if (isLoading) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color="#111827" />
+                <ActivityIndicator size="large" color="#2563eb" />
             </View>
         );
     }
@@ -159,20 +159,20 @@ const styles = StyleSheet.create({
     },
     errorText: {
         fontSize: 16,
-        color: '#6B7280',
+        color: '#3b82f6',
         textAlign: 'center',
         marginBottom: 20,
     },
     backButtonInline: {
         paddingVertical: 12,
         paddingHorizontal: 24,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         borderRadius: 100,
     },
     backButtonInlineText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     imageContainer: {
         width: '100%',
@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
     heroImage: {
         width: '100%',
         height: '100%',
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
     },
     floatingBackButton: {
         position: 'absolute',
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
     backIcon: {
         width: 20,
         height: 20,
-        tintColor: '#111827',
+        tintColor: '#2563eb',
     },
     contentContainer: {
         paddingTop: 32,
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
         fontWeight: '800',
         lineHeight: 36,
         letterSpacing: -0.5,
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 12,
     },
     statusBadge: {
@@ -247,32 +247,32 @@ const styles = StyleSheet.create({
     tag: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
         paddingHorizontal: 14,
         paddingVertical: 10,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         gap: 8,
     },
     tagIcon: {
         width: 16,
         height: 16,
-        tintColor: '#6B7280',
+        tintColor: '#3b82f6',
     },
     tagTextPrice: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     tagText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#4B5563',
+        color: '#2563eb',
     },
     divider: {
         height: 1,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         marginBottom: 32,
     },
     section: {
@@ -281,13 +281,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 12,
     },
     descriptionText: {
         fontSize: 16,
         lineHeight: 26,
-        color: '#4B5563',
+        color: '#2563eb',
     },
     bottomBar: {
         position: 'absolute',
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
+        borderTopColor: '#dbeafe',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.05,
@@ -306,14 +306,14 @@ const styles = StyleSheet.create({
         elevation: 10,
     },
     primaryButton: {
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         height: 56,
         borderRadius: 100,
         justifyContent: 'center',
         alignItems: 'center',
     },
     primaryButtonDisabled: {
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
     },
     primaryButtonText: {
         color: '#FFFFFF',

@@ -78,10 +78,10 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: '800',
         letterSpacing: -0.5,
-        color: '#111827',
+        color: '#1e3a8a',
     },
     seeAllText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         fontSize: 15,
         fontWeight: '500',
     },
@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         // Subtle premium shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     cardImage: {
         width: '100%',
         height: 140,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
     },
     cardContent: {
         padding: 16,
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         lineHeight: 22,
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 8,
     },
     priceTagContainer: {
@@ -135,13 +135,13 @@ const styles = StyleSheet.create({
     skeletonCard: {
         width: 170,
         height: 244,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
     },
     emptyText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         paddingVertical: 40,
         fontStyle: 'italic',
     }

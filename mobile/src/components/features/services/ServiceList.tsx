@@ -44,7 +44,7 @@ export function ServiceList({ data, isLoading, isError, onEndReached, isFetching
     if (isLoading) {
         return (
             <View style={styles.centerContent}>
-                <ActivityIndicator size="large" color="#111827" />
+                <ActivityIndicator size="large" color="#2563eb" />
             </View>
         );
     }
@@ -71,7 +71,7 @@ export function ServiceList({ data, isLoading, isError, onEndReached, isFetching
             ListFooterComponent={
                 isFetchingNextPage ? (
                     <View style={styles.footerLoader}>
-                        <ActivityIndicator size="small" color="#111827" />
+                        <ActivityIndicator size="small" color="#2563eb" />
                     </View>
                 ) : <View style={{ height: 20 }} />
             }
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         maxWidth: '48%', // For evenly spacing 2 columns with gaps
 
         shadowColor: '#000',
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     cardImage: {
         width: '100%',
         height: 120,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
     },
     cardContent: {
         padding: 12,
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         lineHeight: 20,
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 6,
     },
     priceTagContainer: {
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     emptyText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         fontSize: 15,
         fontStyle: 'italic',
     },

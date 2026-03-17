@@ -140,12 +140,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginBottom: 24,
     },
     card: {
@@ -153,13 +153,13 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         marginBottom: 16,
     },
     cardTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 16,
     },
     row: {
@@ -170,17 +170,17 @@ const styles = StyleSheet.create({
     },
     rowBorderTop: {
         borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
+        borderTopColor: '#dbeafe',
         paddingTop: 12,
     },
     label: {
         fontSize: 14,
-        color: '#6B7280',
+        color: '#3b82f6',
     },
     value: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     valueHighlight: {
         fontSize: 15,
@@ -193,14 +193,14 @@ const styles = StyleSheet.create({
     },
     divider: {
         height: 1,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         marginVertical: 12,
         borderStyle: 'dashed',
     },
     totalLabel: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     totalValue: {
         fontSize: 18,
@@ -213,13 +213,13 @@ const styles = StyleSheet.create({
     },
     noticeText: {
         fontSize: 13,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         textAlign: 'center',
         marginBottom: 16,
         fontStyle: 'italic',
     },
     confirmButton: {
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         height: 56,
         borderRadius: 100,
         justifyContent: 'center',

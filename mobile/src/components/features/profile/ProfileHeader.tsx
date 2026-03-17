@@ -28,24 +28,24 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: '#dbeafe',
     },
     backButton: {
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         justifyContent: 'center',
         alignItems: 'center',
     },
     backIcon: {
         width: 18,
         height: 18,
-        tintColor: '#111827',
+        tintColor: '#2563eb',
     },
     headerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
 });

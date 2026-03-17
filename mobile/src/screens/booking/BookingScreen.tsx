@@ -152,14 +152,14 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         justifyContent: 'center',
         alignItems: 'center',
     },
     backIcon: {
         width: 18,
         height: 18,
-        tintColor: '#111827',
+        tintColor: '#2563eb',
     },
     headerTitleContainer: {
         alignItems: 'center',
@@ -167,11 +167,11 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     stepIndicator: {
         fontSize: 13,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginTop: 4,
     },
     stepperContainer: {
@@ -180,13 +180,13 @@ const styles = StyleSheet.create({
     },
     stepperTrack: {
         height: 6,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         borderRadius: 3,
         overflow: 'hidden',
     },
     stepperFill: {
         height: '100%',
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         borderRadius: 3,
     },
     contentArea: {
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24,
         paddingTop: 16,
         borderTopWidth: 1,
-        borderTopColor: '#F3F4F6',
+        borderTopColor: '#dbeafe',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.05,
@@ -213,14 +213,14 @@ const styles = StyleSheet.create({
         elevation: 10,
     },
     primaryButton: {
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         height: 56,
         borderRadius: 100,
         justifyContent: 'center',
         alignItems: 'center',
     },
     primaryButtonDisabled: {
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
     },
     primaryButtonText: {
         color: '#FFFFFF',

@@ -64,8 +64,8 @@ export function useAppointmentsData() {
     return useQuery({
         queryKey: ['appointments', 'patient'],
         queryFn: async () => {
-            const { data } = await apiClient.get('/api/appointment/patient', {
-                params: { limit: 1, sort: 'asc' },
+            const { data } = await apiClient.get('/api/appointment/date/patient', {
+                params: {},
             });
             return data;
         },

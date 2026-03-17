@@ -114,7 +114,7 @@ export function ProfileScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
     },
     scrollContent: {
         paddingHorizontal: 20,
@@ -122,12 +122,12 @@ const styles = StyleSheet.create({
     },
     skeletonHeader: {
         height: 72,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
     },
     skeletonBody: {
         flex: 1,
         margin: 20,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         borderRadius: 20,
     },
     menuCard: {
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         overflow: 'hidden',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -153,16 +153,16 @@ const styles = StyleSheet.create({
     menuLabel: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     menuChevron: {
         fontSize: 22,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         lineHeight: 26,
     },
     menuDivider: {
         height: 1,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         marginHorizontal: 20,
     },
 });

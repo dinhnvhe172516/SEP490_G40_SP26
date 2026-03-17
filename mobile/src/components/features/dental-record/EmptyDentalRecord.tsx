@@ -34,19 +34,19 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 10,
         textAlign: 'center',
     },
     subtitle: {
         fontSize: 14,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         textAlign: 'center',
         lineHeight: 22,
         marginBottom: 32,
     },
     button: {
-        backgroundColor: '#1E3A5F',
+        backgroundColor: '#2563eb',
         borderRadius: 100,
         paddingHorizontal: 32,
         paddingVertical: 16,
