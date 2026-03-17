@@ -2,55 +2,66 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, CheckCheck, Bell, MessageSquare, AlertTriangle, Info, CheckCircle2 } from 'lucide-react';
 import NotificationItem from './NotificationItem';
+import notificationService from '../../../services/notificationService';
+import { formatDistanceToNow } from 'date-fns';
+import { vi } from 'date-fns/locale';
 
-const NotificationDropdown = ({ onClose }) => {
+const NotificationDropdown = ({ onClose, onRefreshCount }) => {
     const navigate = useNavigate();
     const dropdownRef = useRef(null);
     const [activeTab, setActiveTab] = useState('all');
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Mock data (sync with page for now)
-    useEffect(() => {
-        const mockData = [
-            {
-                id: 1,
-                type: 'work',
-                title: 'Duyệt đơn thuốc',
-                content: 'Bác sĩ **Nguyễn Văn A** vừa gửi một đơn thuốc mới cần bạn xác nhận.',
-                time: '2 phút trước',
-                isRead: false,
-                icon: MessageSquare,
-                iconClass: 'bg-blue-100 text-blue-600'
-            },
-            {
-                id: 2,
-                type: 'system',
-                title: 'Bảo trì hệ thống',
-                content: 'Hệ thống sẽ được bảo trì vào lúc 23:00 tối nay. Vui lòng lưu lại công việc.',
-                time: '1 giờ trước',
-                isRead: false,
-                icon: AlertTriangle,
-                iconClass: 'bg-amber-100 text-amber-600'
-            },
-            {
-                id: 3,
-                type: 'work',
-                title: 'Lịch hẹn mới',
-                content: 'Bệnh nhân **Lê Thị B** đã đặt lịch hẹn khám răng vào ngày mai.',
-                time: '3 giờ trước',
-                isRead: true,
-                icon: Info,
-                iconClass: 'bg-indigo-100 text-indigo-600'
-            }
-        ];
-        
-        const timer = setTimeout(() => {
-            setNotifications(mockData);
-            setLoading(false);
-        }, 500);
+    // Mapper for icon and iconClass based on notification type
+    const getNotificationStyle = (type) => {
+        switch (type) {
+            case 'NEW_APPOINTMENT':
+            case 'PATIENT_CHECKED_IN':
+                return { icon: Info, iconClass: 'bg-indigo-100 text-indigo-600' };
+            case 'APPOINTMENT_CANCELLED':
+            case 'SYSTEM_ALERT':
+                return { icon: AlertTriangle, iconClass: 'bg-amber-100 text-amber-600' };
+            case 'INVOICE_READY':
+            case 'NEW_PRESCRIPTION':
+                return { icon: MessageSquare, iconClass: 'bg-blue-100 text-blue-600' };
+            case 'LOW_STOCK':
+            case 'EXPIRING_MEDICINE':
+                return { icon: AlertTriangle, iconClass: 'bg-red-100 text-red-600' };
+            default:
+                return { icon: Bell, iconClass: 'bg-gray-100 text-gray-600' };
+        }
+    };
 
-        return () => clearTimeout(timer);
+    const fetchNotifications = async () => {
+        setLoading(true);
+        try {
+            const response = await notificationService.getNotifications(1, 10);
+            if (response.status === 'success') {
+                const mappedData = response.data.map(notif => {
+                    const style = getNotificationStyle(notif.type);
+                    return {
+                        id: notif._id,
+                        title: notif.title,
+                        content: notif.message,
+                        time: formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: vi }),
+                        isRead: notif.is_read,
+                        icon: style.icon,
+                        iconClass: style.iconClass,
+                        _raw: notif // Keep raw data if needed
+                    };
+                });
+                setNotifications(mappedData);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
     }, []);
 
     // Close on click outside
@@ -74,6 +85,30 @@ const NotificationDropdown = ({ onClose }) => {
         onClose();
     };
 
+    const handleMarkAllAsRead = async () => {
+        try {
+            const response = await notificationService.markAllAsRead();
+            if (response.status === 'success') {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                if (onRefreshCount) onRefreshCount();
+            }
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+        }
+    };
+
+    const handleMarkAsRead = async (id) => {
+        try {
+            const response = await notificationService.markAsRead(id);
+            if (response.status === 'success') {
+                setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+                if (onRefreshCount) onRefreshCount();
+            }
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
     return (
         <div 
             ref={dropdownRef}
@@ -86,7 +121,11 @@ const NotificationDropdown = ({ onClose }) => {
                     <button className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 transition-colors" title="Cài đặt">
                         <Settings size={18} />
                     </button>
-                    <button className="p-2 hover:bg-gray-100 rounded-xl text-primary-600 transition-colors" title="Đánh dấu tất cả đã đọc">
+                    <button 
+                        onClick={handleMarkAllAsRead}
+                        className="p-2 hover:bg-gray-100 rounded-xl text-primary-600 transition-colors" 
+                        title="Đánh dấu tất cả đã đọc"
+                    >
                         <CheckCheck size={18} />
                     </button>
                 </div>
@@ -121,19 +160,20 @@ const NotificationDropdown = ({ onClose }) => {
 
             {/* Content */}
             <div className="max-h-[min(400px,70vh)] overflow-y-auto overscroll-contain divide-y divide-gray-50 custom-scrollbar">
-                {loading ? (
+                {loading && notifications.length === 0 ? (
                     <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
                     </div>
                 ) : filtered.length > 0 ? (
                     filtered.map(notification => (
-                        <NotificationItem 
-                            key={notification.id}
-                            notification={notification}
-                            isCompact={true}
-                            onToggleRead={() => {}} 
-                            onDelete={() => {}}
-                        />
+                        <div key={notification.id} onClick={() => !notification.isRead && handleMarkAsRead(notification.id)}>
+                            <NotificationItem 
+                                notification={notification}
+                                isCompact={true}
+                                onToggleRead={() => handleMarkAsRead(notification.id)} 
+                                onDelete={() => {}}
+                            />
+                        </div>
                     ))
                 ) : (
                     <div className="p-12 text-center">
