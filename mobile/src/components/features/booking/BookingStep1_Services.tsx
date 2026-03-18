@@ -4,7 +4,6 @@ import { Image } from 'expo-image';
 import { ThemedText } from '@/src/components/ui/themed-text';
 import { BookingState } from '@/src/screens/booking/BookingScreen';
 import { useInfiniteServicesData } from '@/src/hooks/useHomeData';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Props = {
     initialServiceId?: string;
