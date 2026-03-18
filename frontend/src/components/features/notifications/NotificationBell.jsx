@@ -14,7 +14,6 @@ const NotificationBell = () => {
     const fetchUnreadCount = async () => {
         try {
             const response = await notificationService.getUnreadCount();
-            console.log(response);
             if (response.status === 'success') {
                 setUnreadCount(response.data.unread_count);
             }
@@ -58,8 +57,8 @@ const NotificationBell = () => {
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={`p-2.5 rounded-2xl transition-all duration-300 relative group ${isOpen
-                        ? 'bg-primary-50 text-primary-600 shadow-inner'
-                        : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    ? 'bg-primary-50 text-primary-600 shadow-inner'
+                    : 'bg-gray-50 text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                     }`}
             >
                 <Bell
