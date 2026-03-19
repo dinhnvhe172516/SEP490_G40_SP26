@@ -95,61 +95,94 @@ const getEquipmentById = async (req, res) => {
     }
 };
 
-// create equipment don't have purchase_date, maintence_history and equiments_logs
+/**
+ * create equipment (Model mới: Gom nhóm theo equipment_type chứa mảng equipment)
+ * - Không cho phép tự truyền purchase_date, maintenance_history, equipments_log
+ * * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
 const createEquipment = async (req, res) => {
+    const context = 'EquipmentController.createEquipment';
     try {
-        const equipmentData = req.body || {};
-        // Validate and clean data
-        const cleanedData = cleanObjectData(equipmentData, Equipment.createFields);
-        logger.debug('Equipment created successfully', {
-            context: 'EquipmentController.createEquipment',
-            data: cleanedData
-        });
-        // Remove purchase_date, maintenance_history and equipments_log from the data to be created
-        const { purchase_date, maintenance_history, equipments_log, ...dataCreate } = cleanedData;
-        // check required fields
-        const requiredFields = ['equipment_name', 'equipment_type', 'equipment_serial_number', 'supplier', 'warranty'];
-        for (const field of requiredFields) {
-            if (!(dataCreate[field].trim())) {
-                logger.warn(`Missing required field`, {
-                    context: 'EquipmentController.createEquipment',
-                    field: field
-                });
-                throw new errorRes.BadRequestError(`Missing required field: ${field}`);
+        const payload = req.body || {};
+        
+        // 1. Kiểm tra Dữ liệu cha (equipment_type)
+        if (!payload.equipment_type || !payload.equipment_type.trim()) {
+            throw new errorRes.BadRequestError("Missing required field: equipment_type");
+        }
+
+        // 2. Kiểm tra Dữ liệu con (Mảng thiết bị)
+        if (!payload.equipment || !Array.isArray(payload.equipment) || payload.equipment.length === 0) {
+            throw new errorRes.BadRequestError("The 'equipment' array is required and must contain at least one item");
+        }
+
+        const cleanEquipmentArray = [];
+        const serialNumbersInRequest = new Set(); // Dùng để check trùng lặp ngay trong nội bộ request gửi lên
+
+        // 3. Quét và Validate từng thiết bị trong mảng
+        for (let i = 0; i < payload.equipment.length; i++) {
+            let item = payload.equipment[i];
+
+            // Loại bỏ các field không được phép khởi tạo
+            const { purchase_date, maintenance_history, equipments_log, ...dataCreate } = item;
+
+            // Các field bắt buộc theo logic cũ của bạn
+            const requiredFields = ['equipment_name', 'equipment_serial_number', 'supplier', 'warranty'];
+            for (const field of requiredFields) {
+                if (!dataCreate[field] || !String(dataCreate[field]).trim()) {
+                    logger.warn(`Missing required field in array`, {
+                        context: context,
+                        index: i,
+                        field: field
+                    });
+                    throw new errorRes.BadRequestError(`Missing required field '${field}' at item index ${i}`);
+                }
             }
+
+            const serialNumber = dataCreate.equipment_serial_number.trim();
+
+            // Check độ dài Serial Number
+            if (serialNumber.length < 6 || serialNumber.length > 20) {
+                logger.warn('Serial number length is invalid', { context, serial_number: serialNumber });
+                throw new errorRes.BadRequestError(`Serial number length must be between 6 and 20 characters at item index ${i}`);
+            }
+
+            // Check trùng lặp Serial Number ngay trong chính payload gửi lên (ngăn chặn user gửi 2 cái giống hệt nhau)
+            if (serialNumbersInRequest.has(serialNumber)) {
+                throw new errorRes.BadRequestError(`Duplicate serial number '${serialNumber}' found in the request payload`);
+            }
+            serialNumbersInRequest.add(serialNumber);
+
+            // Check trùng lặp Serial Number dưới Database (Phải viết lại hàm check bên Service)
+            const existingEquipment = await EquipmentService.checkExitSerialNumber(serialNumber);
+            if (existingEquipment) {
+                logger.warn('Serial number already exists in DB', { context, serial_number: serialNumber });
+                throw new errorRes.ConflictError(`Serial number '${serialNumber}' already exists in the system`);
+            }
+
+            cleanEquipmentArray.push(dataCreate);
         }
-        // check unique serial_number
-        const existingEquipment = await EquipmentService.checkExitSerialNumber(dataCreate.equipment_serial_number);
-        if (existingEquipment) {
-            logger.warn('Serial number already exists', {
-                context: 'EquipmentController.createEquipment',
-                serial_number: dataCreate.equipment_serial_number
-            });
-            throw new errorRes.ConflictError('Serial number already exists');
-        }
-        // check lengh of serial_number from 6 to 20
-        if (dataCreate.equipment_serial_number.length < 6 || dataCreate.equipment_serial_number.length > 20) {
-            logger.warn('Serial number length is invalid', {
-                context: 'EquipmentController.createEquipment',
-                serial_number: dataCreate.equipment_serial_number
-            });
-            throw new errorRes.BadRequestError('Serial number length must be between 6 and 20 characters');
-        }
-        // crate data
-        const equipment = await EquipmentService.createEquipment(dataCreate);
-        logger.info('Equipment created successfully', {
-            context: 'EquipmentController.createEquipment',
-            equipmentId: equipment.id
+
+        // 4. Chuẩn bị Data sạch để gọi Service
+        const finalDataCreate = {
+            equipment_type: payload.equipment_type.trim(),
+            equipment: cleanEquipmentArray
+        };
+
+        // 5. Gọi Service tạo/cập nhật dữ liệu
+        const equipmentResult = await EquipmentService.createEquipment(finalDataCreate);
+
+        logger.info('Equipment processed successfully', {
+            context: context,
+            equipmentTypeId: equipmentResult._id
         });
-        logger.debug('Created equipment details', {
-            context: 'EquipmentController.createEquipment',
-            equipment: equipment
-        });
-        // return new success response
-        return new successRes.CreateSuccess(equipment, 'Equipment created successfully').send(res);
+
+        return new successRes.CreateSuccess(equipmentResult, 'Equipment created successfully').send(res);
+
     } catch (error) {
         logger.error('Error create equipment', {
-            context: 'EquipmentController.createEquipment',
+            context: context,
             message: error.message,
             stack: error.stack
         });

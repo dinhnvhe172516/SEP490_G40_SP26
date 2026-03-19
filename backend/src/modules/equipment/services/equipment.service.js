@@ -315,35 +315,56 @@ const checkExitSerialNumber = async (serialNumber) => {
 };
 
 /**
- * Create a new equipment
- * @param {Object} equipmentData equipment data to create
- * @returns created equipment object
+ * Create a new equipment (With Upsert logic based on equipment_type)
+ * @param {Object} dataCreate { equipment_type: "...", equipment: [...] }
+ * @returns saved equipment document
  */
-const createEquipment = async (equipmentData) => {
+const createEquipment = async (dataCreate) => {
+    const context = "EquipmentService.createEquipment";
     try {
-        logger.debug("Creating new equipment", {
-            context: "EquipmentService.createEquipment",
-            equipmentData: equipmentData,
+        logger.debug("Processing new equipment data", {
+            context: context,
+            equipment_type: dataCreate.equipment_type,
+            newItemsCount: dataCreate.equipment.length
         });
-        const newEquipment = new EquipmentModel(equipmentData);
-        const savedEquipment = await newEquipment.save();
-        logger.debug("Equipment created successfully", {
-            context: "EquipmentService.createEquipment",
-            savedEquipment: savedEquipment,
+
+        // TÌM KIẾM xem loại thiết bị này đã tồn tại chưa
+        let category = await EquipmentModel.findOne({ 
+            equipment_type: dataCreate.equipment_type 
         });
+
+        let savedEquipment;
+
+        if (category) {
+            // KỊCH BẢN 1: Loại thiết bị ĐÃ TỒN TẠI -> Push thêm vào mảng
+            logger.debug("Equipment type exists, appending to array", { context });
+            
+            category.equipment.push(...dataCreate.equipment);
+            savedEquipment = await category.save();
+        } else {
+            // KỊCH BẢN 2: Loại thiết bị CHƯA TỒN TẠI -> Tạo document mới hoàn toàn
+            logger.debug("Equipment type does not exist, creating new document", { context });
+            
+            const newCategory = new EquipmentModel(dataCreate);
+            savedEquipment = await newCategory.save();
+        }
+
+        logger.debug("Equipment created/updated successfully", { context });
+        
         return savedEquipment;
+
     } catch (error) {
         logger.error("Error creating equipment", {
-            context: "EquipmentService.createEquipment",
+            context: context,
             message: error.message,
             stack: error.stack,
         });
+        if (error.statusCode) throw error;
         throw new errorRes.InternalServerError(
             `An error occurred while creating equipment: ${error.message}`
         );
     }
 };
-
 /**
  * Check if equipment serial number exists excluding a specific equipment id
  * 
