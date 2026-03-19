@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Calendar, Clock, Search, Plus, CheckCircle, XCircle, Phone, Loader2, RefreshCw, Eye } from 'lucide-react';
+import { Calendar, Clock, Search, Plus, CheckCircle, XCircle, Phone, Loader2, RefreshCw, Eye, ClipboardList, X } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';
 import Toast from '../../components/ui/Toast';
@@ -21,6 +21,10 @@ const ReceptionistAppointments = () => {
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ show: false, type: '', message: '' });
 
+    // Danh sách lịch hẹn chờ xác nhận (mọi ngày)
+    const [pendingAppointments, setPendingAppointments] = useState([]);
+    const [showPendingBanner, setShowPendingBanner] = useState(true);
+
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -34,13 +38,18 @@ const ReceptionistAppointments = () => {
     const fetchAppointments = async () => {
         setLoading(true);
         try {
-            // Lấy danh sách (trang 1, limit lớn xíu để lấy nhiều cho front-end filter date)
             const response = await appointmentService.getStaffAppointments({
                 page: 1,
-                limit: 1000 // Tạm thời dùng limit lớn để lọc frontend cho tiện
+                limit: 1000
             });
             const data = response?.data?.data || response?.data || [];
-            setAppointments(Array.isArray(data) ? data : data.data || []);
+            const list = Array.isArray(data) ? data : data.data || [];
+            setAppointments(list);
+
+            // Lọc ra các lịch đang chờ xác nhận thuộc MỌI NGÀY
+            const pending = list.filter(a => a.status === 'PENDING_CONFIRMATION');
+            setPendingAppointments(pending);
+            if (pending.length > 0) setShowPendingBanner(true);
         } catch (error) {
             console.error('Error fetching appointments:', error);
             setToast({ show: true, type: 'error', message: '❌ Lỗi khi tải danh sách lịch hẹn!' });
@@ -70,6 +79,7 @@ const ReceptionistAppointments = () => {
             case 'CHECKED_IN': return 'success';
             case 'IN_CONSULTATION': return 'success';
             case 'SCHEDULED': return 'warning';
+            case 'PENDING_CONFIRMATION': return 'warning';
             case 'CANCELLED': return 'danger';
             case 'NO_SHOW': return 'danger';
             default: return 'default';
@@ -79,6 +89,7 @@ const ReceptionistAppointments = () => {
     const getStatusLabel = (status) => {
         switch (status) {
             case 'SCHEDULED': return 'Chờ khám';
+            case 'PENDING_CONFIRMATION': return 'Chờ xác nhận lại';
             case 'CHECKED_IN': return 'Đã đến';
             case 'IN_CONSULTATION': return 'Đang khám';
             case 'COMPLETED': return 'Hoàn thành';
@@ -138,16 +149,28 @@ const ReceptionistAppointments = () => {
         }
     };
 
-    const handleConfirmAppointment = async (appointmentId) => {
+    const handleConfirmAppointment = async (appointmentId, status = 'CHECKED_IN') => {
         try {
-            // Xác nhận (Check-in)
-            await appointmentService.updateAppointmentStatus(appointmentId, 'CHECKED_IN');
-            setToast({ show: true, type: 'success', message: '✅ Đã xác nhận bệnh nhân đến!' });
+            await appointmentService.updateAppointmentStatus(appointmentId, status);
+            const successMsg = status === 'CHECKED_IN' ? '✅ Đã xác nhận bệnh nhân đến!' : '✅ Đã xác nhận lịch hẹn mới!';
+            setToast({ show: true, type: 'success', message: successMsg });
             closeModals();
             fetchAppointments();
         } catch (error) {
             console.error('Error confirming appointment:', error);
             setToast({ show: true, type: 'error', message: '❌ Lỗi xác nhận!' });
+        }
+    };
+
+    // Từ chối yêu cầu đổi lịch (ban đầu đổi có PENDING_CONFIRMATION) → hủy lịch, nhắn bệnh nhân
+    const handleRejectPendingUpdate = async (appointmentId) => {
+        try {
+            await appointmentService.cancelAppointment(appointmentId);
+            setToast({ show: true, type: 'success', message: '❌ Đã từ chối yêu cầu đổi lịch. Bệnh nhân đã được thông báo!' });
+            fetchAppointments();
+        } catch (error) {
+            console.error('Error rejecting appointment:', error);
+            setToast({ show: true, type: 'error', message: '❌ Lỗi khi từ chối!' });
         }
     };
 
@@ -178,7 +201,7 @@ const ReceptionistAppointments = () => {
     return (
         <div>
             {/* Header */}
-            <div className="mb-8 flex justify-between items-center">
+            <div className="mb-6 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold text-gray-900">Quản Lý Lịch Hẹn</h1>
                     <p className="text-gray-600 mt-1">Đặt lịch và theo dõi cuộc hẹn</p>
@@ -191,6 +214,63 @@ const ReceptionistAppointments = () => {
                     Tải lại
                 </button>
             </div>
+
+            {/* ── BANNER: Lịch hẹn chờ xác nhận (mọi ngày) ─────────────────── */}
+            {showPendingBanner && pendingAppointments.length > 0 && (
+                <div className="mb-6 bg-orange-50 border border-orange-200 rounded-2xl p-4 shadow-sm">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2 text-orange-700 font-semibold">
+                            <ClipboardList size={20} />
+                            <span>🔔 Có {pendingAppointments.length} lịch hẹn đang chờ bạn xác nhận</span>
+                        </div>
+                        <button
+                            onClick={() => setShowPendingBanner(false)}
+                            className="text-orange-400 hover:text-orange-600 transition-colors"
+                            title="Ẩn banner"
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div className="space-y-2">
+                        {pendingAppointments.map(apt => (
+                            <div
+                                key={apt._id}
+                                className="flex items-center justify-between bg-white border border-orange-100 rounded-xl px-4 py-3"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-orange-100 text-orange-700 rounded-lg px-3 py-1.5 text-sm font-bold">
+                                        {apt.appointment_time}
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-gray-900">{apt.full_name}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {apt.phone} &nbsp;·&nbsp;
+                                            {apt.appointment_date ? new Date(apt.appointment_date).toLocaleDateString('vi-VN') : ''}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => handleConfirmAppointment(apt._id, 'SCHEDULED')}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        <CheckCircle size={16} />
+                                        Xác nhận
+                                    </button>
+                                    <button
+                                        onClick={() => handleRejectPendingUpdate(apt._id)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors"
+                                    >
+                                        <XCircle size={16} />
+                                        Từ chối
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {/* ──────────────────────────────────────────────────────────────── */}
 
             {/* Filters */}
             <Card className="mb-6">
@@ -220,6 +300,7 @@ const ReceptionistAppointments = () => {
                         >
                             <option value="all">Tất cả</option>
                             <option value="SCHEDULED">Chờ khám</option>
+                            <option value="PENDING_CONFIRMATION">Chờ xác nhận lại</option>
                             <option value="CHECKED_IN">Đã đến</option>
                             <option value="IN_CONSULTATION">Đang khám</option>
                             <option value="COMPLETED">Hoàn thành</option>
@@ -299,6 +380,16 @@ const ReceptionistAppointments = () => {
                                                 <XCircle size={20} />
                                             </button>
                                         </>
+                                    )}
+
+                                    {apt.status === 'PENDING_CONFIRMATION' && (
+                                        <button
+                                            onClick={() => handleConfirmAppointment(apt._id, 'SCHEDULED')}
+                                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Xác nhận lịch hẹn mới"
+                                        >
+                                            <CheckCircle size={20} />
+                                        </button>
                                     )}
                                     <button
                                         onClick={() => handleContactClick(apt)}

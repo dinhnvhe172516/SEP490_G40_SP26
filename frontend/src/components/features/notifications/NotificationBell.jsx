@@ -5,6 +5,8 @@ import notificationService from '../../../services/notificationService';
 import { useSocket } from '../../../contexts/SocketContext';
 import { useAuth } from '../../../contexts/AuthContext';
 
+import { toast } from 'react-hot-toast';
+
 const NotificationBell = () => {
     const { isAuthenticated } = useAuth();
     const { socket } = useSocket();
@@ -43,7 +45,11 @@ const NotificationBell = () => {
         if (socket) {
             socket.on('new_notification', (notification) => {
                 setUnreadCount(prev => prev + 1);
-                // Bạn có thể thêm xử lý toast ở đây nếu muốn
+                // Hiển thị toast thông báo tức thời
+                toast.success(`${notification.title}: ${notification.message}`, {
+                    duration: 5000,
+                    icon: '🔔',
+                });
             });
 
             return () => {

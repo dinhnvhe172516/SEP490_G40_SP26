@@ -49,6 +49,7 @@ const appointmentSchema = new Schema(
             type: String,
             enum: [
                 "SCHEDULED",
+                "PENDING_CONFIRMATION",
                 "CHECKED_IN",
                 "IN_CONSULTATION",
                 "COMPLETED",

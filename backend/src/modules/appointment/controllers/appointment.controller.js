@@ -389,13 +389,12 @@ const updateController = async (req, res) => {
       throw new errorRes.BadRequestError("No data provided for update");
     }
 
+    // 2. Gọi Service thực hiện cập nhật
     const updateData = {
-      appointment_date,
-      appointment_time,
-      reason
+      ...dataUpdate,
+      userRole: req.user.role?.name // role là object Role, phải lấy .name
     };
 
-    // 2. Gọi Service thực hiện cập nhật
     const updated = await ServiceProcess.updateService(id, updateData);
 
     // Gửi response thành công
