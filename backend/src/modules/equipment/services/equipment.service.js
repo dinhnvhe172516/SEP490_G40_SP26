@@ -365,6 +365,48 @@ const createEquipment = async (dataCreate) => {
         );
     }
 };
+
+/**
+ * Thêm một mảng các thiết bị con vào một danh mục thiết bị đã tồn tại
+ * @param {ObjectId} categoryId ID của document cha
+ * @param {Array} newItems Mảng chứa các object thiết bị mới đã được làm sạch
+ * @returns document sau khi đã được thêm
+ */
+const addEquipmentItems = async (categoryId, newItems) => {
+    const context = "EquipmentService.addEquipmentItems";
+    try {
+        // Sử dụng $push kết hợp $each để thêm nhiều phần tử vào mảng cùng lúc
+        const updatedCategory = await EquipmentModel.findByIdAndUpdate(
+            categoryId,
+            { 
+                $push: { 
+                    equipment: { $each: newItems } 
+                } 
+            },
+            { new: true, runValidators: true }
+        );
+
+        // Nếu trả về null nghĩa là cái categoryId truyền vào bị sai hoặc đã bị xóa
+        if (!updatedCategory) {
+            throw new errorRes.NotFoundError("Equipment category not found");
+        }
+
+        return updatedCategory;
+
+    } catch (error) {
+        logger.error("Error adding equipment items", {
+            context: context,
+            categoryId: categoryId,
+            message: error.message,
+            stack: error.stack
+        });
+        if (error.statusCode) throw error;
+        throw new errorRes.InternalServerError(
+            `An error occurred while adding equipment items: ${error.message}`
+        );
+    }
+};
+
 /**
  * Check if equipment serial number exists excluding a specific equipment id
  * 
@@ -582,5 +624,6 @@ module.exports = {
     checkExitSerialNumberNotId,
     updateEquipmentItem,
     updateCategory,
-    reportIncident
+    reportIncident,
+    addEquipmentItems
 };
