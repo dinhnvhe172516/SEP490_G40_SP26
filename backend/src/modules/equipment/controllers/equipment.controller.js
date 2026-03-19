@@ -4,19 +4,19 @@ const successRes = require('../../../common/success');
 const Pagination = require('../../../common/responses/Pagination');
 const { cleanObjectData } = require('../../../common/utils/cleanObjectData');
 
-const Equipment = require('../models/equipment.model');
 const EquipmentService = require('../services/equipment.service');
 
-/*
-    get list equipments with pagination and filter 
-    (
-        search: search by equipment_name, equipment_serial_number, supplier; 
-        filter: filter by equipment_type, status; 
-        sort: sort by equipment_name
-        page 
-        limit
-    )
-*/
+/**
+ * Get list of equipments with pagination and filter (Optimized for Nested Array, No $unwind)
+ *
+ * Query Params:
+ * - search: Tìm kiếm theo tên máy, số serial, nhà cung cấp (Cấp độ thiết bị con)
+ * - category_status: Lọc theo trạng thái danh mục - ACTIVE, INACTIVE (Cấp độ danh mục cha)
+ * - status: Lọc theo trạng thái máy - READY, IN_USE, MAINTENANCE... (Cấp độ thiết bị con)
+ * - sort: Sắp xếp (asc/desc) theo tên danh mục (equipment_type)
+ * - page: Số trang hiện tại
+ * - limit: Số lượng danh mục trên 1 trang
+ */
 const getEquipments = async (req, res) => {
     try {
         const queryParams = req.query;

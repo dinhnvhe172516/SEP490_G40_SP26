@@ -5,24 +5,32 @@ const EquipmentModel = require("../models/equipment.model");
 const Pagination = require("../../../common/responses/Pagination");
 const mongoose = require("mongoose");
 
-/*
-    get list equipments with pagination and filter 
-    (
-        search by equipment_name, equipment_serial_number, supplier; 
-        filter by equipment_type, status; 
-        sort by equipment_name
-        page 
-        limit
-    )
-*/
+/**
+ * Get list of equipments with pagination and filter (Optimized for Nested Array, No $unwind)
+ *
+ * Query Params:
+ * - search: Tìm kiếm theo tên máy, số serial, nhà cung cấp (Cấp độ thiết bị con)
+ * - category_status: Lọc theo trạng thái danh mục - ACTIVE, INACTIVE (Cấp độ danh mục cha)
+ * - status: Lọc theo trạng thái máy - READY, IN_USE, MAINTENANCE... (Cấp độ thiết bị con)
+ * - sort: Sắp xếp (asc/desc) theo tên danh mục (equipment_type)
+ * - page: Số trang hiện tại
+ * - limit: Số lượng danh mục trên 1 trang
+ */
 const getEquipments = async (query) => {
     try {
+        // --- 1. CHUẨN HÓA THAM SỐ TỪ QUERY ---
         const search = query.search?.trim();
-        const statusFilter = query.status ? query.status.toUpperCase() : null;
-        const equipmentTypeFilter = query.equipment_type;
+        
+        // Trạng thái của thiết bị con (Ví dụ: READY, IN_USE...)
+        const itemStatusFilter = query.status ? query.status.toUpperCase() : null;
+        
+        // Trạng thái của danh mục cha (Ví dụ: ACTIVE, INACTIVE)
+        const categoryStatusFilter = query.category_status ? query.category_status.toUpperCase() : null;
 
-        // Model mới: Sort theo Tên danh mục (equipment_type) sẽ chuẩn hơn là theo tên máy con
+        // Sắp xếp theo tên danh mục (equipment_type)
         const sortOrder = query.sort === "desc" ? -1 : 1;
+        
+        // Phân trang
         const page = parseInt(query.page || 1);
         const limit = parseInt(query.limit || 5);
         const skip = (page - 1) * limit;
@@ -32,15 +40,25 @@ const getEquipments = async (query) => {
             query: query,
         });
 
-        // --- BƯỚC 1: XÂY DỰNG ĐIỀU KIỆN LỌC NHANH (SỬ DỤNG INDEX) ---
+        // --- 2. XÂY DỰNG ĐIỀU KIỆN LỌC (AGGREGATION PIPELINE) ---
+
+        // BƯỚC 2.1: Điều kiện lọc thô (Match ở cấp độ Document Cha)
         const initialMatch = {};
 
-        if (equipmentTypeFilter) {
-            initialMatch.equipment_type = equipmentTypeFilter;
+        // Lọc theo trạng thái danh mục (Nằm ở cấp độ gốc của Document)
+        if (categoryStatusFilter) {
+            initialMatch.status = categoryStatusFilter; 
         }
 
+        // Điều kiện lọc dành cho mảng thiết bị con (Dùng cho toán tử $elemMatch)
         const childElemMatch = {};
-        if (statusFilter) childElemMatch.status = statusFilter;
+        
+        // Lọc theo trạng thái thiết bị con
+        if (itemStatusFilter) {
+            childElemMatch.status = itemStatusFilter;
+        }
+
+        // Lọc theo từ khóa tìm kiếm (Tên máy, Serial, Nhà cung cấp)
         if (search) {
             childElemMatch.$or = [
                 { equipment_name: { $regex: search, $options: "i" } },
@@ -49,20 +67,22 @@ const getEquipments = async (query) => {
             ];
         }
 
-        // Nếu có điều kiện tìm kiếm ở thiết bị con, yêu cầu mảng phải có ít nhất 1 cái khớp
+        // Nếu có điều kiện lọc thiết bị con, DB chỉ lấy những Danh mục có chứa ít nhất 1 máy con thỏa mãn
         if (Object.keys(childElemMatch).length > 0) {
             initialMatch.equipment = { $elemMatch: childElemMatch };
         }
 
-        // --- BƯỚC 2: XÂY DỰNG ĐIỀU KIỆN "GỌT MẢNG" TRONG RAM ($filter) ---
+        // BƯỚC 2.2: Điều kiện "Gọt mảng" (Lọc phần tử con trong RAM bằng $filter)
         const arrayFilterConditions = [];
-        if (statusFilter) {
-            arrayFilterConditions.push({ $eq: ["$$item.status", statusFilter] });
+        
+        if (itemStatusFilter) {
+            arrayFilterConditions.push({ $eq: ["$$item.status", itemStatusFilter] });
         }
+        
         if (search) {
             arrayFilterConditions.push({
                 $or: [
-                    // Dùng $ifNull để tránh lỗi khi field bị thiếu/null
+                    // Dùng $ifNull để tránh sập query nếu data cũ bị thiếu field
                     { $regexMatch: { input: { $ifNull: ["$$item.equipment_name", ""] }, regex: search, options: "i" } },
                     { $regexMatch: { input: { $ifNull: ["$$item.equipment_serial_number", ""] }, regex: search, options: "i" } },
                     { $regexMatch: { input: { $ifNull: ["$$item.supplier", ""] }, regex: search, options: "i" } }
@@ -70,35 +90,37 @@ const getEquipments = async (query) => {
             });
         }
 
+        // --- 3. THỰC THI AGGREGATION PIPELINE ---
         const aggregatePipeline = [
-            // 1. Sàng lọc thô (Lọc ra các nhóm cha thỏa mãn)
+            // Stage 1: Sàng lọc thô (Chỉ lấy các danh mục phù hợp)
             { $match: initialMatch },
 
-            // 2. Tinh chế mảng (Chỉ giữ lại những thằng con thỏa mãn)
+            // Stage 2: Gọt mảng (Loại bỏ các máy con không khớp điều kiện khỏi mảng equipment)
             ...(arrayFilterConditions.length > 0 ? [
                 {
                     $addFields: {
                         equipment: {
                             $filter: {
-                                input: "$equipment",
+                                input: { $ifNull: ["$equipment", []] }, // Đảm bảo an toàn nếu mảng equipment bị null
                                 as: "item",
-                                cond: { $and: arrayFilterConditions } // Áp dụng điều kiện gọt mảng
+                                cond: { $and: arrayFilterConditions }
                             }
                         }
                     }
                 }
             ] : []),
 
-            // 3. Sắp xếp các nhóm theo Tên Loại Thiết Bị
+            // Stage 3: Sắp xếp kết quả theo tên danh mục
             { $sort: { equipment_type: sortOrder } },
 
-            // 4. Phân trang
+            // Stage 4: Phân trang (Tách làm 2 luồng: Lấy data và Đếm tổng số)
             {
                 $facet: {
                     data: [
                         { $skip: skip },
                         { $limit: limit },
                         {
+                            // Ẩn đi các trường không cần thiết để giảm tải JSON trả về
                             $project: {
                                 __v: 0,
                                 createdAt: 0,
@@ -115,6 +137,7 @@ const getEquipments = async (query) => {
 
         const result = await EquipmentModel.aggregate(aggregatePipeline);
 
+        // --- 4. XỬ LÝ KẾT QUẢ VÀ TRẢ VỀ ---
         const data = result[0]?.data || [];
         const totalItemsCount = result[0]?.totalItems[0]?.count || 0;
 
