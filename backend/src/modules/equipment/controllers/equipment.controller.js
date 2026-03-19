@@ -106,7 +106,7 @@ const createEquipment = async (req, res) => {
     const context = 'EquipmentController.createEquipment';
     try {
         const payload = req.body || {};
-        
+
         // 1. Kiểm tra Dữ liệu cha (equipment_type)
         if (!payload.equipment_type || !payload.equipment_type.trim()) {
             throw new errorRes.BadRequestError("Missing required field: equipment_type");
@@ -199,9 +199,9 @@ const createEquipment = async (req, res) => {
 const updateCategoryController = async (req, res) => {
     const context = 'EquipmentController.updateCategory';
     try {
-        const { categoryId } = req.params; 
+        const { categoryId } = req.params;
         const payload = req.body || {};
-        
+
         // Whitelist các trường được phép update ở cấp độ cha
         const safeData = {};
         if (payload.equipment_type) safeData.equipment_type = payload.equipment_type.trim();
@@ -212,7 +212,7 @@ const updateCategoryController = async (req, res) => {
         }
 
         const updatedCategory = await EquipmentService.updateCategory(categoryId, safeData);
-        
+
         return new successRes.UpdateSuccess(updatedCategory, 'Equipment category updated successfully').send(res);
     } catch (error) {
         logger.error('Error updating equipment category', { context, message: error.message });
@@ -235,7 +235,7 @@ const updateEquipmentItemController = async (req, res) => {
         // 1. Dùng Whitelist để tự động loại bỏ purchase_date, maintenance_history...
         const allowedFields = ['equipment_name', 'equipment_serial_number', 'supplier', 'warranty', 'status'];
         const safeData = {};
-        
+
         for (const field of allowedFields) {
             if (dataUpdate[field] !== undefined) {
                 safeData[field] = dataUpdate[field];
@@ -251,7 +251,7 @@ const updateEquipmentItemController = async (req, res) => {
         // 2. Kiểm tra Serial Number (Nếu có thay đổi)
         if (cleanedData.equipment_serial_number) {
             const serial = cleanedData.equipment_serial_number;
-            
+
             if (serial.length < 6 || serial.length > 20) {
                 throw new errorRes.BadRequestError('Serial number length must be between 6 and 20 characters');
             }
@@ -275,45 +275,51 @@ const updateEquipmentItemController = async (req, res) => {
 
 // update equipment status only
 const updateEquipmentStatus = async (req, res) => {
+    const context = 'EquipmentController.updateEquipmentStatus';
     try {
         const { equipmentId } = req.params;
         const { status } = req.body || {};
+
         logger.debug('Update equipment status request received', {
-            context: 'EquipmentController.updateEquipmentStatus',
+            context: context,
             equipmentId: equipmentId,
             status: status
         });
+
         // validate status
         const validStatuses = ["READY", "IN_USE", "MAINTENANCE", "REPAIRING", "FAULTY", "STERILIZING"];
+
         if (!status || !validStatuses.includes(status)) {
             logger.warn('Invalid or missing status value', {
-                context: 'EquipmentController.updateEquipmentStatus',
+                context: context,
                 status: status
             });
             throw new errorRes.BadRequestError('Invalid or missing status value');
         }
-        // update status
-        const updatedEquipment = await EquipmentService.updateEquipment(equipmentId, { status });
-        logger.debug('Updated equipment status', {
-            context: 'EquipmentController.updateEquipmentStatus',
-            equipment: updatedEquipment
-        });
+
+        // Gọi đúng tên hàm Service là updateEquipmentItem
+        const updatedEquipment = await EquipmentService.updateEquipmentItem(equipmentId, { status });
+
         logger.info('Equipment status updated successfully', {
-            context: 'EquipmentController.updateEquipmentStatus',
-            equipmentId: updatedEquipment.id
+            context: context,
+            equipmentId: equipmentId // Sử dụng ID truyền vào thay vì updatedEquipment.id (tránh lỗi null)
         });
+
         // return response update success
-        return new successRes.UpdateSuccess(updatedEquipment, 'Equipment status updated successfully').send(res);
+        return new successRes.UpdateSuccess(
+            updatedEquipment,
+            'Equipment status updated successfully'
+        ).send(res);
+
     } catch (error) {
         logger.error('Error update equipment status', {
-            context: 'EquipmentController.updateEquipmentStatus',
+            context: context,
             message: error.message,
             stack: error.stack
         });
         throw error;
     }
 };
-
 
 // report equipment incident
 const reportIncident = async (req, res) => {
