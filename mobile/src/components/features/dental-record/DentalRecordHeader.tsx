@@ -21,14 +21,14 @@ const styles = StyleSheet.create({
     },
     label: {
         fontSize: 13,
-        color: '#6B7280',
+        color: '#3b82f6',
         letterSpacing: 0.5,
         marginBottom: 4,
     },
     title: {
         fontSize: 26,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         letterSpacing: -0.5,
         paddingTop: 10,
     },

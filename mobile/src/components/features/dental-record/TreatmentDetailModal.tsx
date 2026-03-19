@@ -178,11 +178,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
 
     infoBlock: {
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
         borderRadius: 14,
         padding: 14,
         marginBottom: 16,
@@ -196,13 +196,13 @@ const styles = StyleSheet.create({
 
     infoLabel: {
         fontSize: 13,
-        color: '#6B7280',
+        color: '#3b82f6',
     },
 
     infoValue: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     },
 
     section: {
@@ -212,13 +212,13 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 14,
         fontWeight: '700',
-        color: '#374151',
+        color: '#1d4ed8',
         marginBottom: 6,
     },
 
     sectionText: {
         fontSize: 13,
-        color: '#4B5563',
+        color: '#2563eb',
         lineHeight: 20,
     },
 
@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
     },
 
     closeBtn: {
-        backgroundColor: '#1E3A5F',
+        backgroundColor: '#2563eb',
         borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',

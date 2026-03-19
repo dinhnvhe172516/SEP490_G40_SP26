@@ -58,17 +58,17 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
         letterSpacing: 1,
-        color: '#4B5563',
+        color: '#2563eb',
     },
     input: {
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         borderRadius: 16,
         paddingHorizontal: 20,
         paddingVertical: 16,
         fontSize: 16,
-        color: '#111827',
+        color: '#1e3a8a',
     },
     forgotPassword: {
         alignSelf: 'flex-end',
@@ -76,6 +76,6 @@ const styles = StyleSheet.create({
     forgotPasswordText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     },
 });

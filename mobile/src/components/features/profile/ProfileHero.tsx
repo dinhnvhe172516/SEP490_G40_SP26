@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         borderRadius: 50,
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
@@ -70,11 +70,11 @@ const styles = StyleSheet.create({
     heroName: {
         fontSize: 24,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 4,
     },
     heroEmail: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
     },
 });

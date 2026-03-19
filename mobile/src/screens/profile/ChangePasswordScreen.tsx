@@ -160,7 +160,7 @@ export function ChangePasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#F9FAFB' },
+    container: { flex: 1, backgroundColor: '#eff6ff' },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -169,15 +169,15 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: '#dbeafe',
     },
     backButton: {
         width: 40, height: 40, borderRadius: 20,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         justifyContent: 'center', alignItems: 'center',
     },
-    backIcon: { width: 18, height: 18, tintColor: '#111827' },
-    headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
+    backIcon: { width: 18, height: 18, tintColor: '#2563eb' },
+    headerTitle: { fontSize: 18, fontWeight: '700', color: '#1e3a8a' },
     scrollContent: { paddingHorizontal: 20, paddingTop: 24 },
     hintCard: {
         backgroundColor: '#EFF6FF',
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     fieldLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6B7280',
+        color: '#3b82f6',
         marginBottom: 8,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
@@ -203,20 +203,20 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
     },
     input: {
         flex: 1,
         paddingHorizontal: 16,
         paddingVertical: 14,
         fontSize: 15,
-        color: '#111827',
+        color: '#1e3a8a',
     },
     eyeButton: { paddingHorizontal: 14 },
     eyeIcon: {
         width: 20,
         height: 20,
-        tintColor: '#9CA3AF',
+        tintColor: '#60a5fa',
     },
     errorHint: {
         fontSize: 13,
@@ -225,13 +225,13 @@ const styles = StyleSheet.create({
         marginLeft: 4,
     },
     submitButton: {
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         borderRadius: 100,
         height: 56,
         justifyContent: 'center',
         alignItems: 'center',
         marginTop: 8,
     },
-    submitButtonDisabled: { backgroundColor: '#D1D5DB' },
+    submitButtonDisabled: { backgroundColor: '#93c5fd' },
     submitButtonText: { fontSize: 16, fontWeight: '700', color: '#FFFFFF' },
 });
