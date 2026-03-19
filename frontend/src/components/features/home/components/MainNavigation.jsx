@@ -16,13 +16,17 @@ const MainNavigation = () => {
     const navigate = useNavigate();
     const [avatarUrl, setAvatarUrl] = useState('');
 
-    // Fetch avatar khi user đã đăng nhập
+    // Fetch avatar when user is authenticated
     useEffect(() => {
         if (isAuthenticated) {
             getProfile()
                 .then((res) => {
                     setAvatarUrl(res.data?.avatar_url || '');
                 })
+                .catch((err) => {
+                    console.error('Navbar profile fetch error:', err);
+                    setAvatarUrl('');
+                });
         }
     }, [isAuthenticated]);
 
