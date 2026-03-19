@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     },
     greeting: {
         fontSize: 16,
-        color: '#6B7280',
+        color: '#3b82f6',
         letterSpacing: 0.5,
         marginBottom: 4,
     },
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
     },
     notificationBadge: {
         position: 'absolute',
@@ -106,18 +106,18 @@ const styles = StyleSheet.create({
     },
     loginHint: {
         fontSize: 13,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         marginTop: 2,
     },
     defaultAvatarBadge: {
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
     },
     defaultAvatarInitial: {
         color: '#FFFFFF',
@@ -125,13 +125,13 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     skeletonText: {
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         borderRadius: 8,
     },
     skeletonAvatar: {
         width: 52,
         height: 52,
         borderRadius: 26,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
     },
 });

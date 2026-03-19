@@ -59,10 +59,10 @@ export function PatientSummaryCard({ profile, totalVisits, lastVisitDate }: Prop
 
 const styles = StyleSheet.create({
     card: {
-        backgroundColor: '#1E3A5F',
+        backgroundColor: '#2563eb',
         borderRadius: 24,
         padding: 24,
-        shadowColor: '#1E3A5F',
+        shadowColor: '#2563eb',
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.3,
         shadowRadius: 16,

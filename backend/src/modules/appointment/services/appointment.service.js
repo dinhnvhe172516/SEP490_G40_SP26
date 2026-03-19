@@ -601,8 +601,14 @@ const getListOfPatientServiceWithDate = async (query, account_id) => {
         if (query.filter_date) {
             dateToFilter = new Date(query.filter_date);
         }
+        dateToFilter.setUTCHours(0, 0, 0, 0);
+
+        logger.debug("filter date.", {
+            context: "getListOfPatientServiceWithDate",
+            data: dateToFilter
+        })
         // Giả sử trường lưu thời gian hẹn trong DB của bạn là appointment_date
-        matchCondition.appointment_date = { $gt: dateToFilter };
+        matchCondition.appointment_date = { $gte: dateToFilter };
 
         // Tìm kiếm (Search) theo tên, số điện thoại, email
         if (search) {
@@ -1106,7 +1112,7 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                 const account = patient?.account_id
                     ? await AuthModel.Account.findById(patient.account_id).select('email').lean()
                     : null;
-                
+
                 const patientEmail = account?.email || newData.email || patient?.email;
                 const formattedDate = new Date(newData.appointment_date).toLocaleDateString('vi-VN');
 
@@ -1114,7 +1120,7 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                     // 1. Gửi Email xác nhận
                     emailService.sendAppointmentUpdateApprovedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
                         .catch(err => logger.error('Lỗi gửi email xác nhận lịch:', err.message));
-                    
+
                     // 2. Gửi thông báo in-app (WebSocket)
                     if (patient?.account_id) {
                         notificationService.sendToUser(patient.account_id.toString(), {
@@ -1129,10 +1135,10 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                     // Gửi Email từ chối/hủy
                     emailService.sendAppointmentUpdateRejectedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
                         .catch(err => logger.error('Lỗi gửi email hủy/từ chối lịch:', err.message));
-                    
+
                     if (patient?.account_id) {
                         const notifyTitle = isRejected ? 'Yêu cầu đổi lịch không được chấp nhận' : 'Lịch hẹn đã bị hủy';
-                        const notifyMsg = isRejected 
+                        const notifyMsg = isRejected
                             ? `Yêu cầu đổi lịch sang ${newData.appointment_time} ngày ${formattedDate} chưa phù hợp. Vui lòng đặt lịch khác.`
                             : `Lịch hẹn khám của bạn vào khung giờ ${newData.appointment_time} ngày ${formattedDate} đã bị hủy.`;
 
@@ -1259,8 +1265,25 @@ const findById = async (id) => {
         });
         return null;
     }
-
 }
+
+const findByTreatmentId = async (treatmentId) => {
+    try {
+        logger.debug("Finding appointment by id", {
+            context: "AppointmentService.findById",
+            treatmentId: treatmentId,
+        });
+        if (!treatmentId) return null;
+        return await AppointmentModel.findOne({ treatmentId: treatmentId }).lean();
+    } catch (error) {
+        logger.error("Error get appointment by id", {
+            context: "AppointmentService.findById",
+            error: error
+        });
+        return null;
+    }
+}
+
 module.exports = {
     getListService,
     getByIdService,
@@ -1271,5 +1294,6 @@ module.exports = {
     staffCreateService,
     checkinService,
     findById,
+    findByTreatmentId,
     getListOfPatientServiceWithDate
 };

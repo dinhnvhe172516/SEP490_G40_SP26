@@ -32,7 +32,7 @@ const getStatusInfo = (status: string) => {
         case 'CANCELLED':
             return { label: 'Đã hủy', color: '#EF4444', bg: '#FEF2F2' };
         default:
-            return { label: status || 'Không rõ', color: '#6B7280', bg: '#F9FAFB' };
+            return { label: status || 'Không rõ', color: '#3b82f6', bg: '#eff6ff' };
     }
 };
 
@@ -150,14 +150,14 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: '800',
         letterSpacing: -0.5,
-        color: '#111827',
+        color: '#1e3a8a',
     },
     card: {
         backgroundColor: '#FFFFFF',
         borderRadius: 24,
         padding: 24,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
@@ -166,26 +166,26 @@ const styles = StyleSheet.create({
     },
     skeletonCard: {
         height: 190,
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
     },
     emptyCard: {
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
         borderRadius: 24,
         padding: 32,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         borderStyle: 'dashed',
     },
     emptyTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 6,
     },
     emptySubtitle: {
         fontSize: 14,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         textAlign: 'center',
     },
     topRow: {
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     nameLabel: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#9CA3AF',
+        color: '#60a5fa',
         letterSpacing: 1,
         textTransform: 'uppercase',
         marginBottom: 4,
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     nameValue: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     statusBadge: {
         paddingHorizontal: 10,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     },
     serviceLabel: {
         fontSize: 14,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginRight: 6,
         paddingTop: 1,
     },
@@ -235,15 +235,15 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 14,
         fontWeight: '600',
-        color: '#374151',
+        color: '#1d4ed8',
     },
     pendingText: {
-        color: '#9CA3AF',
+        color: '#60a5fa',
         fontStyle: 'italic',
     },
     divider: {
         height: 1,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         marginBottom: 20,
     },
     timeSection: {
@@ -256,14 +256,14 @@ const styles = StyleSheet.create({
     timeLabel: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#9CA3AF',
+        color: '#60a5fa',
         letterSpacing: 1,
         marginBottom: 6,
     },
     timeValue: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     dateValue: {
         fontSize: 14,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     verticalDivider: {
         width: 1,
         height: 36,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
         marginHorizontal: 16,
     },
 });

@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
         gap: 24,
     },
     loginButton: {
-        backgroundColor: '#111827',
+        backgroundColor: '#2563eb',
         borderRadius: 100,
         paddingVertical: 18,
         alignItems: 'center',
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
         minHeight: 56,
     },
     loginButtonDisabled: {
-        backgroundColor: '#4B5563',
+        backgroundColor: '#2563eb',
         opacity: 0.8,
     },
     loginButtonText: {
@@ -60,11 +60,11 @@ const styles = StyleSheet.create({
     },
     registerPrompt: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
     },
     registerLink: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     }
 });

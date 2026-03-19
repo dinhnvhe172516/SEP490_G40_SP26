@@ -22,13 +22,13 @@ type Props = {
 };
 
 const TREATMENT_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-    PLANNED: { label: 'Kế hoạch', color: '#6B7280', bg: '#F9FAFB' },
+    PLANNED: { label: 'Kế hoạch', color: '#3b82f6', bg: '#eff6ff' },
     WAITING_APPROVAL: { label: 'Chờ duyệt', color: '#D97706', bg: '#FFFBEB' },
     APPROVED: { label: 'Đã duyệt', color: '#2563EB', bg: '#EFF6FF' },
     REJECTED: { label: 'Từ chối', color: '#DC2626', bg: '#FEF2F2' },
     IN_PROGRESS: { label: 'Đang thực hiện', color: '#7C3AED', bg: '#F5F3FF' },
     DONE: { label: 'Hoàn thành', color: '#059669', bg: '#ECFDF5' },
-    CANCELLED: { label: 'Đã huỷ', color: '#9CA3AF', bg: '#F3F4F6' },
+    CANCELLED: { label: 'Đã huỷ', color: '#60a5fa', bg: '#dbeafe' },
 };
 
 const PHASE_LABEL: Record<string, string> = {
@@ -37,7 +37,7 @@ const PHASE_LABEL: Record<string, string> = {
 };
 
 function TreatmentRow({ item, onPress }: { item: Treatment; onPress: () => void }) {
-    const status = TREATMENT_STATUS[item.status] || { label: item.status, color: '#6B7280', bg: '#F9FAFB' };
+    const status = TREATMENT_STATUS[item.status] || { label: item.status, color: '#3b82f6', bg: '#eff6ff' };
 
     let dateDisplay = '';
     try {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#374151',
+        color: '#1d4ed8',
         marginBottom: 10,
     },
     card: {
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
     },
     row: {
         flexDirection: 'row',
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 14,
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6'
+        borderBottomColor: '#dbeafe'
     },
     rowLast: { borderBottomWidth: 0 },
     phaseTag: {
@@ -141,11 +141,11 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827'
+        color: '#1e3a8a'
     },
     meta: {
         fontSize: 12,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginTop: 2
     },
 });
