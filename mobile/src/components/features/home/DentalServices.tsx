@@ -3,6 +3,19 @@ import { ThemedText } from '@/src/components/ui/themed-text';
 import { Image } from 'expo-image';
 import { Link } from 'expo-router';
 
+function getPriceText(service: any): string {
+    if (service.sub_service_count > 0) {
+        const min = service.calculated_min_price;
+        const max = service.calculated_max_price;
+        if (min && max && min !== max) {
+            return `Từ ${min.toLocaleString('vi-VN')}đ`;
+        }
+        if (min) return `Từ ${min.toLocaleString('vi-VN')}đ`;
+    }
+    if (service.price) return `${service.price.toLocaleString('vi-VN')}đ`;
+    return 'Liên hệ';
+}
+
 export function DentalServices({ services, isLoading }: { services: any[], isLoading: boolean }) {
     return (
         <View style={styles.container}>
@@ -17,27 +30,19 @@ export function DentalServices({ services, isLoading }: { services: any[], isLoa
 
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 {isLoading ? (
-                    // Skeleton loading state
                     [1, 2, 3].map((key) => (
                         <View key={key} style={styles.skeletonCard} />
                     ))
                 ) : services?.length > 0 ? (
                     services.map((service, index) => {
-                        // Backend might not have real images yet, use fallback gracefully
-                        let imageUrl = service.icon;
-
-                        const priceText = service.price
-                            ? `${service.price.toLocaleString('vi-VN')} đ`
-                            : 'Liên hệ';
+                        const priceText = getPriceText(service);
+                        const hasSubServices = service.sub_service_count > 0;
 
                         return (
                             <Link href={`/services/${service.service_id || service._id}` as any} asChild key={service.service_id || service._id || index}>
-                                <TouchableOpacity
-                                    style={styles.serviceCard}
-                                    activeOpacity={0.8}
-                                >
+                                <TouchableOpacity style={styles.serviceCard} activeOpacity={0.8}>
                                     <Image
-                                        source={{ uri: imageUrl }}
+                                        source={{ uri: service.icon }}
                                         style={styles.cardImage}
                                         contentFit="cover"
                                         transition={200}
@@ -47,6 +52,11 @@ export function DentalServices({ services, isLoading }: { services: any[], isLoa
                                             <ThemedText style={styles.serviceName} numberOfLines={2}>
                                                 {service.service_name}
                                             </ThemedText>
+                                            {hasSubServices && (
+                                                <ThemedText style={styles.subServiceCount}>
+                                                    {service.sub_service_count} gói dịch vụ
+                                                </ThemedText>
+                                            )}
                                         </View>
                                         <View style={styles.priceTagContainer}>
                                             <ThemedText style={styles.servicePrice}>{priceText}</ThemedText>
@@ -78,10 +88,10 @@ const styles = StyleSheet.create({
         fontSize: 22,
         fontWeight: '800',
         letterSpacing: -0.5,
-        color: '#111827',
+        color: '#1e3a8a',
     },
     seeAllText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         fontSize: 15,
         fontWeight: '500',
     },
@@ -95,7 +105,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         // Subtle premium shadow
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
@@ -106,7 +116,7 @@ const styles = StyleSheet.create({
     cardImage: {
         width: '100%',
         height: 140,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
     },
     cardContent: {
         padding: 16,
@@ -117,8 +127,14 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '700',
         lineHeight: 22,
-        color: '#111827',
-        marginBottom: 8,
+        color: '#1e3a8a',
+        marginBottom: 4,
+    },
+    subServiceCount: {
+        fontSize: 12,
+        color: '#3b82f6',
+        fontWeight: '500',
+        marginBottom: 6,
     },
     priceTagContainer: {
         alignSelf: 'flex-start',
@@ -135,13 +151,13 @@ const styles = StyleSheet.create({
     skeletonCard: {
         width: 170,
         height: 244,
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
     },
     emptyText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         paddingVertical: 40,
         fontStyle: 'italic',
     }

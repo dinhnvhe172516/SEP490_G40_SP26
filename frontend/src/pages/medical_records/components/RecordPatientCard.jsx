@@ -16,13 +16,12 @@ const InfoRow = ({ label, value }) => (
  * Props: record
  */
 const RecordPatientCard = ({ record }) => {
-    const patient = record.patient_id && typeof record.patient_id === 'object'
-        ? record.patient_id
-        : null;
+    const patient = record;
 
+    //true false
     const genderLabel =
-        patient?.gender === 'MALE' ? 'Nam' :
-            patient?.gender === 'FEMALE' ? 'Nữ' :
+        patient?.gender === true ? 'Nam' :
+            patient?.gender === false ? 'Nữ' :
                 patient?.gender ? patient.gender : null;
 
     return (

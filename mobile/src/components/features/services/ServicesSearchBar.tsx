@@ -41,9 +41,9 @@ const styles = StyleSheet.create({
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#F9FAFB',
+        backgroundColor: '#eff6ff',
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         borderRadius: 16,
         paddingHorizontal: 16,
         height: 52,
@@ -51,18 +51,18 @@ const styles = StyleSheet.create({
     searchIcon: {
         width: 20,
         height: 20,
-        tintColor: '#9CA3AF',
+        tintColor: '#60a5fa',
         marginRight: 12,
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#111827',
+        color: '#1e3a8a',
         height: '100%',
     },
     clearSearchIcon: {
         fontSize: 16,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         fontWeight: '600',
         paddingLeft: 12,
     },

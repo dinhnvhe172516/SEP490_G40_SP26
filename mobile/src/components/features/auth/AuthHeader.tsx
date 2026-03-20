@@ -44,19 +44,19 @@ const styles = StyleSheet.create({
     backButtonText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     title: {
         fontSize: 36,
         fontWeight: '800',
         letterSpacing: -1,
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 12,
         paddingTop: 10,
     },
     subtitle: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
         lineHeight: 22,
     },
     errorText: {

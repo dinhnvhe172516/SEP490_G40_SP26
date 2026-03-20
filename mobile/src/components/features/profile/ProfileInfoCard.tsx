@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
         padding: 20,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     cardTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 16,
     },
     infoRow: {
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
         alignItems: 'flex-start',
         paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#F3F4F6',
+        borderBottomColor: '#dbeafe',
     },
     infoRowLast: {
         borderBottomWidth: 0,
@@ -67,13 +67,13 @@ const styles = StyleSheet.create({
     },
     infoLabel: {
         fontSize: 14,
-        color: '#9CA3AF',
+        color: '#60a5fa',
         flex: 1,
     },
     infoValue: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
         flex: 2,
         textAlign: 'right',
     },

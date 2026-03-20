@@ -130,6 +130,9 @@ app.use('/api/receptionist', receptionistRoute);
 const { notificationRoute } = require('./modules/notification');
 app.use('/api/notification', notificationRoute);
 
+const { route: routePayment} = require('./modules/payment/index');
+app.use('/api/payment', routePayment);
+
 
 // 404 Handler - Must be after all routes
 app.use((req, res, next) => {
@@ -145,10 +148,15 @@ app.use((err, req, res, next) => {
 
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal Server Error';
+    const errorCode = err.errorCode || 'INTERNAL_SERVER_ERROR';
+
+    logger.debug('Sending error response:', { statusCode, errorCode, message, errors: err.errors });
 
     res.status(statusCode).json({
         status: 'error',
+        errorCode: errorCode,
         message: message,
+        errors: err.errors || null,
         ...(process.env.NODE_ENV !== 'production' && { stack: err.stack })
     });
 });

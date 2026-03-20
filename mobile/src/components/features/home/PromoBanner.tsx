@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
         borderRadius: 24,
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#E5E7EB',
+        backgroundColor: '#bfdbfe',
     },
     imageBackground: {
         ...StyleSheet.absoluteFillObject,
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     buttonText: {
-        color: '#111827',
+        color: '#1e3a8a',
         fontWeight: '600',
         fontSize: 14,
     },

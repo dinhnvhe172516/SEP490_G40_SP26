@@ -141,12 +141,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: '800',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 15,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginBottom: 24,
     },
     section: {
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 16,
     },
     dateScrollContent: {
@@ -167,25 +167,25 @@ const styles = StyleSheet.create({
         height: 80,
         borderRadius: 16,
         borderWidth: 2,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
     },
     dateCardSelected: {
-        borderColor: '#111827',
-        backgroundColor: '#111827',
+        borderColor: '#1e3a8a',
+        backgroundColor: '#2563eb',
     },
     dayOfWeek: {
         fontSize: 13,
-        color: '#6B7280',
+        color: '#3b82f6',
         marginBottom: 4,
         textTransform: 'capitalize',
     },
     dayOfMonth: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#1e3a8a',
     },
     textSelected: {
         color: '#FFFFFF',
@@ -200,17 +200,17 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#E5E7EB',
+        borderColor: '#bfdbfe',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
     },
     timeCardSelected: {
-        backgroundColor: '#111827',
-        borderColor: '#111827',
+        backgroundColor: '#2563eb',
+        borderColor: '#1e3a8a',
     },
     timeText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#111827',
+        color: '#1e3a8a',
     }
 });

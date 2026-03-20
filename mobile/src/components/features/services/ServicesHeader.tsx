@@ -42,6 +42,6 @@ const styles = StyleSheet.create({
         fontSize: 20,
         fontWeight: '800',
         letterSpacing: -0.5,
-        color: '#111827',
+        color: '#1e3a8a',
     },
 });

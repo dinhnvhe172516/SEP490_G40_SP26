@@ -13,21 +13,31 @@ type Props = {
 
 export function ServiceList({ data, isLoading, isError, onEndReached, isFetchingNextPage }: Props) {
     const renderServiceCard = ({ item }: { item: any }) => {
-        let imageUrl = item.icon;
+        const hasSubServices = item.sub_service_count > 0;
+        let priceText: string;
 
-        const priceText = item.price
-            ? `${item.price.toLocaleString('vi-VN')} đ`
-            : 'Liên hệ';
+        if (hasSubServices && item.calculated_min_price) {
+            priceText = `Từ ${item.calculated_min_price.toLocaleString('vi-VN')}đ`;
+        } else if (item.price) {
+            priceText = `${item.price.toLocaleString('vi-VN')}đ`;
+        } else {
+            priceText = 'Liên hệ';
+        }
 
         return (
             <Link href={`/services/${item._id}` as any} asChild>
                 <TouchableOpacity style={styles.card} activeOpacity={0.8}>
                     <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: item.icon }}
                         style={styles.cardImage}
                         contentFit="cover"
                         transition={200}
                     />
+                    {hasSubServices && (
+                        <View style={styles.subServiceBadge}>
+                            <ThemedText style={styles.subServiceBadgeText}>{item.sub_service_count} gói</ThemedText>
+                        </View>
+                    )}
                     <View style={styles.cardContent}>
                         <ThemedText style={styles.serviceName} numberOfLines={2}>
                             {item.service_name}
@@ -44,7 +54,7 @@ export function ServiceList({ data, isLoading, isError, onEndReached, isFetching
     if (isLoading) {
         return (
             <View style={styles.centerContent}>
-                <ActivityIndicator size="large" color="#111827" />
+                <ActivityIndicator size="large" color="#2563eb" />
             </View>
         );
     }
@@ -71,7 +81,7 @@ export function ServiceList({ data, isLoading, isError, onEndReached, isFetching
             ListFooterComponent={
                 isFetchingNextPage ? (
                     <View style={styles.footerLoader}>
-                        <ActivityIndicator size="small" color="#111827" />
+                        <ActivityIndicator size="small" color="#2563eb" />
                     </View>
                 ) : <View style={{ height: 20 }} />
             }
@@ -98,8 +108,9 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
         borderRadius: 20,
         overflow: 'hidden',
+        position: 'relative',
         borderWidth: 1,
-        borderColor: '#F3F4F6',
+        borderColor: '#dbeafe',
         maxWidth: '48%', // For evenly spacing 2 columns with gaps
 
         shadowColor: '#000',
@@ -111,7 +122,21 @@ const styles = StyleSheet.create({
     cardImage: {
         width: '100%',
         height: 120,
-        backgroundColor: '#F3F4F6',
+        backgroundColor: '#dbeafe',
+    },
+    subServiceBadge: {
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: '#2563eb',
+        borderRadius: 6,
+        paddingHorizontal: 6,
+        paddingVertical: 3,
+    },
+    subServiceBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 11,
+        fontWeight: '700',
     },
     cardContent: {
         padding: 12,
@@ -122,7 +147,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '700',
         lineHeight: 20,
-        color: '#111827',
+        color: '#1e3a8a',
         marginBottom: 6,
     },
     priceTagContainer: {
@@ -151,7 +176,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     emptyText: {
-        color: '#6B7280',
+        color: '#3b82f6',
         fontSize: 15,
         fontStyle: 'italic',
     },

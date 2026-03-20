@@ -15,11 +15,6 @@ const formatDate = (iso) => {
     return new Date(iso).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
 };
 
-const formatPrice = (num) => {
-    if (!num && num !== 0) return '—';
-    return num.toLocaleString('vi-VN') + 'đ';
-};
-
 /**
  * TreatmentTable
  * Bảng danh sách phiếu điều trị của 1 hồ sơ nha khoa
@@ -76,8 +71,6 @@ const TreatmentTable = ({ treatments = [] }) => {
                             <th className="px-5 py-3 text-left font-medium">Vị trí răng</th>
                             <th className="px-5 py-3 text-left font-medium">Giai đoạn</th>
                             <th className="px-5 py-3 text-left font-medium">Ngày kế hoạch</th>
-                            <th className="px-5 py-3 text-left font-medium">Ngày thực hiện</th>
-                            <th className="px-5 py-3 text-right font-medium">Giá dự kiến</th>
                             <th className="px-5 py-3 text-center font-medium">Trạng thái</th>
                             <th className="px-5 py-3 text-left font-medium">Kết quả / Ghi chú</th>
                         </tr>
@@ -101,12 +94,6 @@ const TreatmentTable = ({ treatments = [] }) => {
                                     </td>
                                     <td className="px-5 py-3.5 text-gray-600 tabular-nums">
                                         {formatDate(t.planned_date)}
-                                    </td>
-                                    <td className="px-5 py-3.5 text-gray-600 tabular-nums">
-                                        {formatDate(t.performed_date)}
-                                    </td>
-                                    <td className="px-5 py-3.5 text-right text-gray-800 font-medium tabular-nums">
-                                        {formatPrice(t.planned_price)}
                                     </td>
                                     <td className="px-5 py-3.5 text-center">
                                         <span className={`text-xs font-medium px-2.5 py-0.5 rounded-full border ${statusInfo.style}`}>
