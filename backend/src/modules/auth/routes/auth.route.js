@@ -422,7 +422,8 @@ router.post('/logout', authenticate, authController.logout);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post('/refresh-token', authenticate, authController.refreshToken);
+// Không dùng authenticate ở đây vì access_token đã hết hạn khi gọi route này
+router.post('/refresh-token', authController.refreshToken);
 
 /**
  * @swagger

@@ -394,7 +394,7 @@ exports.refreshToken = async (refreshToken) => {
         throw new ForbiddenError('Account is not active');
     }
 
-    const user = await Profile.findById(session.user_id);
+    const user = await Profile.findOne({ account_id: account._id });
     if (!user) {
         throw new NotFoundError('User not found');
     }
