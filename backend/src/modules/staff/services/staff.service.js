@@ -733,18 +733,155 @@ const getStaffRoles = async () => {
     }
 };
 
-// Admin: Lấy tất cả leave requests (view toàn bộ nhân viên)
-const getAllLeaveRequestsService = async () => {
-    const data = await leaveRequestModel.find({ status: { $ne: 'CANCELLED' } })
-        .populate({
-            path: 'staff_id',
-            populate: [
-                { path: 'account_id', select: 'username email phone_number role_id', populate: { path: 'role_id', select: 'name' } },
-                { path: 'profile_id', select: 'full_name' }
-            ]
-        })
-        .sort({ createdAt: -1 });
-    return data;
+// Admin: Lấy tất cả leave requests (view toàn bộ nhân viên) với bộ lọc
+const getAllLeaveRequestsService = async (query = {}) => {
+    const { status, search, page = 1, limit = 100 } = query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const pipeline = [
+        // 1. Join với bảng Staff
+        {
+            $lookup: {
+                from: "staffs",
+                localField: "staff_id",
+                foreignField: "_id",
+                as: "staff"
+            }
+        },
+        { $unwind: "$staff" },
+
+        // 2. Join với bảng Profile (để lấy name)
+        {
+            $lookup: {
+                from: "profiles",
+                localField: "staff.profile_id",
+                foreignField: "_id",
+                as: "profile"
+            }
+        },
+        { $unwind: "$profile" },
+
+        // 3. Join với bảng Account (để lấy username/email/role)
+        {
+            $lookup: {
+                from: "accounts",
+                localField: "staff.account_id",
+                foreignField: "_id",
+                as: "account"
+            }
+        },
+        { $unwind: "$account" },
+
+        // 4. Join với bảng Role (để lấy role name)
+        {
+            $lookup: {
+                from: "roles",
+                localField: "account.role_id",
+                foreignField: "_id",
+                as: "role"
+            }
+        },
+        { $unwind: "$role" }
+    ];
+
+    // 5. Thống kê tổng quan (Chỉ loại bỏ CANCELLED, không theo search/status)
+    const statsPipeline = [
+        { $match: { status: { $ne: 'CANCELLED' } } },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                pending: { $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, 1, 0] } },
+                approved: { $sum: { $cond: [{ $eq: ["$status", "APPROVED"] }, 1, 0] } },
+                rejected: { $sum: { $cond: [{ $eq: ["$status", "REJECTED"] }, 1, 0] } }
+            }
+        }
+    ];
+
+    // 6. Dữ liệu bảng (Có áp dụng search/status)
+    const matchCondition = {};
+    if (status && status !== 'All') {
+        matchCondition.status = status;
+    } else if (!status || status === 'All') {
+        matchCondition.status = { $ne: 'CANCELLED' };
+    }
+
+    if (search) {
+        const searchRegex = new RegExp(search, 'i');
+        matchCondition.$or = [
+            { "profile.full_name": searchRegex }
+        ];
+    }
+
+    const dataPipeline = [
+        { $match: matchCondition },
+        { $sort: { createdAt: -1 } },
+        { $skip: skip },
+        { $limit: parseInt(limit) },
+        {
+            $project: {
+                _id: 1,
+                type: 1,
+                reason: 1,
+                startedDate: 1,
+                endDate: 1,
+                status: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                staff_id: {
+                    _id: "$staff._id",
+                    account_id: {
+                        _id: "$account._id",
+                        username: "$account.username",
+                        email: "$account.email",
+                        phone_number: "$account.phone_number",
+                        role_id: {
+                            _id: "$role._id",
+                            name: "$role.name"
+                        }
+                    },
+                    profile_id: {
+                        _id: "$profile._id",
+                        full_name: "$profile.full_name"
+                    }
+                }
+            }
+        }
+    ];
+
+    const result = await leaveRequestModel.aggregate([
+        ...pipeline, // Đầu tiên là các bước Join (Lookup)
+        {
+            $facet: {
+                data: dataPipeline,
+                totalCount: [
+                    { $match: matchCondition },
+                    { $count: "count" }
+                ],
+                overallStats: statsPipeline
+            }
+        }
+    ]);
+
+    const finalData = result[0]?.data || [];
+    const totalItems = result[0]?.totalCount[0]?.count || 0;
+    const stats = result[0]?.overallStats[0] || { total: 0, pending: 0, approved: 0, rejected: 0 };
+
+    return {
+        data: finalData,
+        pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            totalItems: totalItems,
+            totalPages: Math.ceil(totalItems / parseInt(limit))
+        },
+        statistics: {
+            total: stats.total,
+            pending: stats.pending,
+            approved: stats.approved,
+            rejected: stats.rejected
+        }
+    };
 };
 
 // Admin: Phê duyệt hoặc từ chối leave request
