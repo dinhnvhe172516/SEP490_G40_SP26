@@ -11,6 +11,7 @@ const { model: ServiceModel } = require("../../service/index")
 
 const bcrypt = require('bcrypt');
 const emailService = require("../../../common/service/email.service");
+const notificationService = require("../../notification/service/notification.service");
 
 /*
     get list appointment with pagination and filter
@@ -610,6 +611,20 @@ const createService = async (dataCreate, account_id) => {
                 newAppointment.appointment_time
             ).catch(err => logger.error("Lỗi gửi email đặt lịch:", { message: err.message }));
         }
+
+        // Gửi thông báo In-App cho Lễ tân
+        try {
+            const formattedDate = new Date(newAppointment.appointment_date).toLocaleDateString('vi-VN');
+            await notificationService.sendToRole(['RECEPTIONIST'], {
+                type: 'NEW_APPOINTMENT',
+                title: 'Lịch hẹn trực tuyến mới',
+                message: `Bệnh nhân ${newAppointment.full_name} vừa đặt lịch hẹn vào lúc ${newAppointment.appointment_time} ngày ${formattedDate}.`,
+                action_url: `/appointments/${newAppointment._id}`
+            });
+        } catch (err) {
+            logger.error("Lỗi gửi thông báo cho Lễ tân khi có lịch mới:", { message: err.message });
+        }
+
         return newAppointment;
     } catch (error) {
         logger.error("Error at create new appointment.", {
@@ -776,6 +791,21 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                 updateData,
                 { new: true }
             );
+
+            // Gửi thông báo In-App nếu Lịch hẹn bị Khách hàng hủy Online
+            if (status === "CANCELLED" && newData) {
+                try {
+                    const formattedDate = new Date(newData.appointment_date).toLocaleDateString('vi-VN');
+                    await notificationService.sendToRole(['RECEPTIONIST'], {
+                        type: 'APPOINTMENT_CANCELLED',
+                        title: 'Lịch hẹn đã bị hủy',
+                        message: `Bệnh nhân ${newData.full_name} đã hủy lịch hẹn lúc ${newData.appointment_time} ngày ${formattedDate}.`,
+                        action_url: `/appointments/${newData._id}`
+                    });
+                } catch (err) {
+                    logger.error("Lỗi gửi thông báo hủy lịch cho Lễ tân:", { message: err.message });
+                }
+            }
         }
 
         // --- KIỂM TRA LẠI KẾT QUẢ ---
