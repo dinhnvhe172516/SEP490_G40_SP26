@@ -54,6 +54,16 @@ exports.getCategories = async () => {
 };
 
 /**
+ * Lấy danh sách dạng bào chế thuốc
+ */
+exports.getDosageForms = () => {
+    return [
+        "Viên", "Viên nén", "Viên nang", "Dung dịch", "Siro", 
+        "Kem", "Bột", "Gói", "Tuýp", "Chai", "Ống", "Hỗn dịch"
+    ];
+};
+
+/**
  * Thêm thuốc mới
  */
 exports.createMedicine = async (data) => {

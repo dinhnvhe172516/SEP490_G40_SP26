@@ -64,6 +64,15 @@ const inventoryService = {
     },
 
     /**
+     * Lấy danh sách dạng bào chế thuốc
+     * GET /api/inventory/medicines/dosage-forms
+     */
+    getDosageForms: async () => {
+        const response = await apiClient.get('/api/inventory/medicines/dosage-forms');
+        return response;
+    },
+
+    /**
      * Lấy chi tiết thuốc theo ID
      * GET /api/inventory/medicines/:id
      */

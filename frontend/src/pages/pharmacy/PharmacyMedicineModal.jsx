@@ -18,7 +18,7 @@ const INITIAL_FORM = {
     batchNumber: ''
 };
 
-const DOSAGE_FORMS = ['Viên', 'Viên nén', 'Viên nang', 'Dung dịch', 'Siro', 'Kem', 'Bột', 'Gói', 'Tuýp', 'Chai', 'Ống', 'Hỗn dịch'];
+const DEFAULT_DOSAGE_FORMS = ['Viên', 'Viên nén', 'Viên nang', 'Dung dịch', 'Siro', 'Kem', 'Bột', 'Gói', 'Tuýp', 'Chai', 'Ống', 'Hỗn dịch'];
 const UNITS = ['Viên', 'Chai', 'Lọ', 'Tuýp', 'Hộp', 'Bộ', 'Gói', 'ml', 'mg'];
 
 const PharmacyMedicineModal = ({ isOpen, onClose, onSubmit, editData = null, submitting = false }) => {
@@ -26,8 +26,9 @@ const PharmacyMedicineModal = ({ isOpen, onClose, onSubmit, editData = null, sub
     const [formData, setFormData] = useState(INITIAL_FORM);
     const [errors, setErrors] = useState({});
     const [categories, setCategories] = useState([]);
+    const [dosageForms, setDosageForms] = useState([]);
 
-    // Lấy danh mục từ API
+    // Lấy danh mục và dạng bào chế từ API
     useEffect(() => {
         inventoryService.getCategories()
             .then(res => {
@@ -46,6 +47,14 @@ const PharmacyMedicineModal = ({ isOpen, onClose, onSubmit, editData = null, sub
                     'Vật liệu nha khoa',
                     'Khác'
                 ]);
+            });
+
+        inventoryService.getDosageForms()
+            .then(res => {
+                if (res?.success) setDosageForms(res.data || []);
+            })
+            .catch(() => {
+                setDosageForms(DEFAULT_DOSAGE_FORMS);
             });
     }, []);
 
@@ -209,7 +218,7 @@ const PharmacyMedicineModal = ({ isOpen, onClose, onSubmit, editData = null, sub
                             className={inputClass('dosage_form')}
                         >
                             <option value="">-- Chọn dạng bào chế --</option>
-                            {DOSAGE_FORMS.map(f => (
+                            {dosageForms.map(f => (
                                 <option key={f} value={f}>{f}</option>
                             ))}
                         </select>
