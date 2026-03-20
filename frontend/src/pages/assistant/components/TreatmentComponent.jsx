@@ -1,7 +1,13 @@
+import React from 'react'; 
+import {
+  Clock,
+} from "lucide-react";
+import Badge from '../../../components/ui/Badge';
+
 const TreatmentComponent = ({ treatment, index }) => {
+  console.log("Đang render treatment:", treatment.tooth_position);
   return (
     <div
-      key={treatment._id}
       className={`relative p-4 rounded-2xl border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
         treatment.status === "DONE"
           ? "bg-green-50/40 border-green-200"
