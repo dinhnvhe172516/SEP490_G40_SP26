@@ -19,6 +19,7 @@ import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import SharedPagination from "../../components/ui/SharedPagination";
 import { getAllDentalRecords } from "../../services/dentalRecordService";
+import TreatmentComponent from "./components/TreatmentComponent";
 
 const AssistantMedicalRecords = () => {
   // --- 1. STATE BỘ LỌC TẠM THỜI (Giao diện UI) ---
@@ -39,10 +40,8 @@ const AssistantMedicalRecords = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  // --- 4. STATE QUẢN LÝ ĐÓNG/MỞ (Mặc định null = đóng hết) ---
   const [expandedId, setExpandedId] = useState(null);
 
-  // --- API FETCHING ---
   const fetchRecords = useCallback(async () => {
     try {
       setLoading(true);
@@ -331,51 +330,7 @@ const AssistantMedicalRecords = () => {
                       {record.treatments && record.treatments.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {record.treatments.map((treat, idx) => (
-                            <div
-                              key={treat._id}
-                              className={`relative p-4 rounded-2xl border transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
-                                treat.status === "DONE"
-                                  ? "bg-green-50/40 border-green-200"
-                                  : "bg-blue-50/30 border-blue-100"
-                              }`}
-                            >
-                              {/* Step Number */}
-                              <div className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-white border border-gray-200 text-[10px] flex items-center justify-center font-bold shadow-sm">
-                                {idx + 1}
-                              </div>
-
-                              {/* Header */}
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="text-sm font-bold text-gray-800">
-                                  {treat.tooth_position}
-                                </p>
-                                <Badge
-                                  variant={
-                                    treat.status === "DONE"
-                                      ? "success"
-                                      : "primary"
-                                  }
-                                  className="text-[9px] px-2 py-0"
-                                >
-                                  {treat.status === "DONE"
-                                    ? "Hoàn thành"
-                                    : "Kế hoạch"}
-                                </Badge>
-                              </div>
-
-                              {/* Note */}
-                              <p className="text-xs text-gray-500 mb-2 font-medium line-clamp-2">
-                                {treat.note || "Không có ghi chú"}
-                              </p>
-
-                              {/* Date */}
-                              <div className="flex items-center gap-1 text-[10px] text-gray-400 font-bold uppercase">
-                                <Clock size={12} />
-                                {new Date(
-                                  treat.planned_date,
-                                ).toLocaleDateString("vi-VN")}
-                              </div>
-                            </div>
+                            <TreatmentComponent treatment={treat} index={idx}/>
                           ))}
                         </div>
                       ) : (
