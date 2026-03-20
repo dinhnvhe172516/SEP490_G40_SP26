@@ -4,8 +4,9 @@ const MedicineCategory = require("../model/medicine-category.model");
 /**
  * Lấy danh sách thuốc có phân trang, tìm kiếm và lọc theo danh mục
  */
-exports.getMedicines = async ({ page = 1, limit = 10, search, category }) => {
+exports.getMedicines = async ({ page = 1, limit = 10, search, category, statusFilter }) => {
     const query = {};
+    const now = new Date();
 
     // Tìm kiếm theo tên thuốc hoặc nhà sản xuất
     if (search && search.trim()) {
@@ -18,6 +19,46 @@ exports.getMedicines = async ({ page = 1, limit = 10, search, category }) => {
 
     if (category && category.trim()) {
         query.category = category.trim();
+    }
+
+    // Lọc theo trạng thái (Business Logic)
+    if (statusFilter && statusFilter !== 'all') {
+        switch (statusFilter) {
+            case 'EXPIRED':
+                query.$or = [
+                    { status: 'EXPIRED' },
+                    { expiry_date: { $lt: now } }
+                ];
+                break;
+            case 'EXPIRING_SOON':
+                const startOfToday = new Date(now.setHours(0, 0, 0, 0));
+                const sixtyDaysLater = new Date(startOfToday);
+                sixtyDaysLater.setDate(startOfToday.getDate() + 60);
+                query.expiry_date = { $gte: startOfToday, $lte: sixtyDaysLater };
+                break;
+            case 'LOW_STOCK':
+                // Đảm bảo min_quantity tồn tại, nếu không có thì mặc định là 10 hoặc dùng $exists
+                query.$and = [
+                    { quantity: { $gt: 0 } },
+                    { 
+                        $expr: { 
+                            $lte: ["$quantity", { $ifNull: ["$min_quantity", 10] }] 
+                        } 
+                    }
+                ];
+                break;
+            case 'OUT_OF_STOCK':
+                query.quantity = { $lte: 0 };
+                break;
+            case 'AVAILABLE':
+                query.status = 'AVAILABLE';
+                query.quantity = { $gt: 0 };
+                query.expiry_date = { $gt: now };
+                break;
+            default:
+                // Nếu là các status enum khác
+                query.status = statusFilter;
+        }
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
