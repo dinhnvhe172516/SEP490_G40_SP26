@@ -101,12 +101,13 @@ exports.createRestockRequest = async (req, res) => {
 
 exports.getRestockRequests = async (req, res) => {
     try {
-        const { status, page, limit } = req.query;
-        const result = await medicineService.getRestockRequests({ status, page, limit });
+        const { status, priority, search, page, limit } = req.query;
+        const result = await medicineService.getRestockRequests({ status, priority, search, page, limit });
         return res.status(200).json({
             success: true,
             data: result.requests,
-            pagination: result.pagination
+            pagination: result.pagination,
+            statistics: result.statistics
         });
     } catch (error) {
         return res.status(500).json({

@@ -298,80 +298,137 @@ exports.createRestockRequest = async (medicineId, data) => {
 };
 
 /**
- * Lấy danh sách tất cả yêu cầu bổ sung thuốc (across all medicines)
+ * Lấy danh sách tất cả yêu cầu bổ sung thuốc (Across all medicines)
+ * Hỗ trợ tìm kiếm, lọc theo trạng thái, mức độ ưu tiên và phân trang
  */
-exports.getRestockRequests = async ({ status, page = 1, limit = 10 }) => {
-    const pipeline = [
+exports.getRestockRequests = async ({ status, priority, search, page = 1, limit = 10 }) => {
+    // 1. Phân nhánh Thống kê (Global - không bị ảnh hưởng bởi search/filter)
+    const statsPipeline = [
         { $unwind: "$medicine_restock_requests" },
+        {
+            $group: {
+                _id: null,
+                total: { $sum: 1 },
+                pending: { $sum: { $cond: [{ $eq: ["$medicine_restock_requests.status", "pending"] }, 1, 0] } },
+                highPriority: { 
+                    $sum: { 
+                        $cond: [
+                            { $and: [
+                                { $eq: ["$medicine_restock_requests.priority", "high"] },
+                                { $eq: ["$medicine_restock_requests.status", "pending"] }
+                            ]}, 
+                            1, 0
+                        ] 
+                    } 
+                },
+                completed: { $sum: { $cond: [{ $in: ["$medicine_restock_requests.status", ["completed", "accept"]] }, 1, 0] } }
+            }
+        }
     ];
 
-    // Filter theo status
-    if (status && status.trim()) {
-        pipeline.push({
-            $match: { "medicine_restock_requests.status": status.trim() }
-        });
+    // 2. Phân nhánh Dữ liệu (Có lọc search/status/priority)
+    const matchCondition = {};
+    if (status && status !== 'all') {
+        matchCondition["medicine_restock_requests.status"] = status;
+    }
+    if (priority && priority !== 'all') {
+        matchCondition["medicine_restock_requests.priority"] = priority;
     }
 
-    // Sort theo ngày tạo mới nhất
-    pipeline.push({ $sort: { "medicine_restock_requests.created_at": -1 } });
+    const basePipeline = [
+        { $unwind: "$medicine_restock_requests" }
+    ];
 
-    // Đếm tổng
-    const countPipeline = [...pipeline, { $count: "total" }];
-    const countResult = await Medicine.aggregate(countPipeline);
-    const totalCount = countResult[0]?.total || 0;
+    // Bước này cần lookup trước khi lọc search nếu muốn search theo tên nhân viên
+    const dataPipeline = [
+        { $match: matchCondition },
+        // Lookup thông tin nhân viên
+        {
+            $lookup: {
+                from: "staffs",
+                localField: "medicine_restock_requests.request_by",
+                foreignField: "_id",
+                as: "staff_info"
+            }
+        },
+        {
+            $lookup: {
+                from: "profiles",
+                localField: "staff_info.profile_id",
+                foreignField: "_id",
+                as: "profile_info"
+            }
+        }
+    ];
+
+    // Search theo tên thuốc hoặc tên nhân viên
+    if (search && search.trim()) {
+        const searchRegex = new RegExp(search.trim(), "i");
+        dataPipeline.push({
+            $match: {
+                $or: [
+                    { "medicine_name": searchRegex },
+                    { "profile_info.full_name": searchRegex }
+                ]
+            }
+        });
+    }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
     const limitNum = parseInt(limit);
 
-    pipeline.push({ $skip: skip });
-    pipeline.push({ $limit: limitNum });
-
-    // Lookup staff info
-    pipeline.push({
-        $lookup: {
-            from: "staffs",
-            localField: "medicine_restock_requests.request_by",
-            foreignField: "_id",
-            as: "staff_info"
+    // Final result facets
+    const result = await Medicine.aggregate([
+        ...basePipeline,
+        {
+            $facet: {
+                data: [
+                    ...dataPipeline,
+                    { $sort: { "medicine_restock_requests.created_at": -1 } },
+                    { $skip: skip },
+                    { $limit: limitNum },
+                    {
+                        $project: {
+                            _id: "$medicine_restock_requests._id",
+                            medicine_id: "$_id",
+                            medicine_name: 1,
+                            current_quantity: "$quantity",
+                            quantity_requested: "$medicine_restock_requests.quantity_requested",
+                            priority: "$medicine_restock_requests.priority",
+                            status: "$medicine_restock_requests.status",
+                            reason: "$medicine_restock_requests.reason",
+                            note: "$medicine_restock_requests.note",
+                            created_at: "$medicine_restock_requests.created_at",
+                            request_by_name: { $arrayElemAt: ["$profile_info.full_name", 0] }
+                        }
+                    }
+                ],
+                totalCount: [
+                    ...dataPipeline,
+                    { $count: "total" }
+                ],
+                overallStats: statsPipeline
+            }
         }
-    });
+    ]);
 
-    // Lookup profile info
-    pipeline.push({
-        $lookup: {
-            from: "profiles",
-            localField: "staff_info.profile_id",
-            foreignField: "_id",
-            as: "profile_info"
-        }
-    });
-
-    // Project kết quả
-    pipeline.push({
-        $project: {
-            _id: "$medicine_restock_requests._id",
-            medicine_id: "$_id",
-            medicine_name: 1,
-            current_quantity: "$quantity",
-            quantity_requested: "$medicine_restock_requests.quantity_requested",
-            priority: "$medicine_restock_requests.priority",
-            status: "$medicine_restock_requests.status",
-            reason: "$medicine_restock_requests.reason",
-            note: "$medicine_restock_requests.note",
-            created_at: "$medicine_restock_requests.created_at",
-            request_by_name: { $arrayElemAt: ["$profile_info.full_name", 0] }
-        }
-    });
-
-    const requests = await Medicine.aggregate(pipeline);
+    const requests = result[0]?.data || [];
+    const totalItems = result[0]?.totalCount[0]?.total || 0;
+    const stats = result[0]?.overallStats[0] || { total: 0, pending: 0, highPriority: 0, completed: 0 };
 
     return {
         requests,
         pagination: {
             currentPage: parseInt(page),
-            totalPages: Math.ceil(totalCount / limitNum),
-            totalItems: totalCount,
+            totalPages: Math.ceil(totalItems / limitNum),
+            totalItems: totalItems,
             itemsPerPage: limitNum
+        },
+        statistics: {
+            total: stats.total,
+            pending: stats.pending,
+            highPriority: stats.highPriority,
+            completed: stats.completed
         }
     };
 };
