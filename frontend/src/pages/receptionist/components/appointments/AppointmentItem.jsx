@@ -1,15 +1,15 @@
 import { Phone, Calendar, Eye, CheckCircle, XCircle } from 'lucide-react';
-import Card from '../../../components/ui/Card';
+import Card from '../../../../components/ui/Card';
 import StatusBadge from './StatusBadge';
 
-const AppointmentItem = ({ 
-    appointment, 
-    onConfirm, 
-    onCancel, 
-    onContact, 
-    onReschedule, 
+const AppointmentItem = ({
+    appointment,
+    onConfirm,
+    onCancel,
+    onContact,
+    onReschedule,
     onViewDetails,
-    onConfirmNew 
+    onConfirmNew
 }) => {
     return (
         <Card className="hover:shadow-lg transition-shadow">

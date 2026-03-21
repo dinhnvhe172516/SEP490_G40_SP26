@@ -1,4 +1,4 @@
-import Badge from '../../../components/ui/Badge';
+import Badge from '../../../../components/ui/Badge';
 
 export const getStatusVariant = (status) => {
     switch (status) {

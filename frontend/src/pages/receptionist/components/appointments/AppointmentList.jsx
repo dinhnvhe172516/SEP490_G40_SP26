@@ -1,16 +1,16 @@
 import { Calendar, Loader2 } from 'lucide-react';
-import Card from '../../../components/ui/Card';
+import Card from '../../../../components/ui/Card';
 import AppointmentItem from './AppointmentItem';
 
-const AppointmentList = ({ 
-    appointments, 
-    loading, 
-    onConfirm, 
-    onCancel, 
-    onContact, 
-    onReschedule, 
+const AppointmentList = ({
+    appointments,
+    loading,
+    onConfirm,
+    onCancel,
+    onContact,
+    onReschedule,
     onViewDetails,
-    onConfirmNew 
+    onConfirmNew
 }) => {
     if (loading) {
         return (

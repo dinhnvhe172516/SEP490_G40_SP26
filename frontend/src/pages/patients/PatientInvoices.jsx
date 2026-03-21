@@ -21,7 +21,7 @@ const PatientInvoices = () => {
     // Identity and primary data
     const [patientId, setPatientId] = useState(null);
     const [invoices, setInvoices] = useState([]);
-    
+
     // UI state (Loading, Pagination, Filtering)
     const [loading, setLoading] = useState(true);
     const [statusFilter, setStatusFilter] = useState('all');
@@ -37,7 +37,7 @@ const PatientInvoices = () => {
     const [toast, setToast] = useState({ show: false, type: 'success', message: '' });
 
     /* ─── 2. Lifecycle & Effects ────────────────────────────────────── */
-    
+
     /**
      * Effect: Fetch patient_id from the current user's Profile on mount.
      * patient_id is required to filter invoices on the backend.
@@ -73,9 +73,9 @@ const PatientInvoices = () => {
         try {
             const params = { page, limit: pageSize };
             if (statusFilter !== 'all') params.status = statusFilter;
-            
+
             const res = await billingService.getPatientInvoices(patientId, params);
-            
+
             let list = [];
             let pagination = {};
 
@@ -148,11 +148,11 @@ const PatientInvoices = () => {
     /* ─── 4. Render Layout ─────────────────────────────────────────── */
     // Log state for debugging blank screens
     if (import.meta.env.DEV) {
-        console.log('[PatientInvoices] Render:', { 
-            loading, 
-            patientId, 
+        console.log('[PatientInvoices] Render:', {
+            loading,
+            patientId,
             invoicesCount: safeInvoices.length,
-            statusFilter 
+            statusFilter
         });
     }
 
@@ -166,13 +166,13 @@ const PatientInvoices = () => {
                         className="mb-6 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors group"
                     >
                         <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-200" />
-                        <span className="font-medium">Back</span>
+                        <span className="font-medium">Quay Lại</span>
                     </button>
 
                     {/* Page header */}
                     <div className="mb-8">
-                        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Invoices</h1>
-                        <p className="text-gray-600">View your payment history and manage invoices</p>
+                        <h1 className="text-3xl font-bold text-gray-900 mb-2">Hóa đơn của tôi</h1>
+                        <p className="text-gray-600">Xem lịch sử thanh toán và quản lý hóa đơn</p>
                     </div>
 
                     {/* Quick statistics section */}
@@ -218,7 +218,7 @@ const PatientInvoices = () => {
             </div>
 
             {/* ─── 5. Modals & Overlays ────────────────────────────────── */}
-            
+
             {/* Invoice Detail Modal */}
             {showDetail && (
                 <InvoiceDetailModal

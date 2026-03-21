@@ -1,12 +1,12 @@
 import { Plus } from 'lucide-react';
-import Card from '../../../components/ui/Card';
+import Card from '../../../../components/ui/Card';
 
-const AppointmentFilters = ({ 
-    selectedDate, 
-    setSelectedDate, 
-    filterStatus, 
-    setFilterStatus, 
-    onBookNew 
+const AppointmentFilters = ({
+    selectedDate,
+    setSelectedDate,
+    filterStatus,
+    setFilterStatus,
+    onBookNew
 }) => {
     return (
         <Card className="mb-6">
