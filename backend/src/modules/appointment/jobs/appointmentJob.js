@@ -5,8 +5,8 @@ const NotificationService = require('../../notification/service/notification.ser
 const EmailService = require('../../../common/service/email.service');
 
 const initAppointmentJobs = () => {
-    // Chạy mỗi 2 phút một lần
-    cron.schedule('*/2 * * * *', async () => {
+    // Chạy mỗi 10 phút một lần
+    cron.schedule('*/10 * * * *', async () => {
         console.log('--- Đang kiểm tra lịch hẹn quá hạn ---');
         try {
             const now = new Date();
