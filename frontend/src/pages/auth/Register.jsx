@@ -297,10 +297,13 @@ const Register = () => {
                                     </p>
                                     <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
                                         <p className="text-sm text-green-800 mb-2">
-                                            📧 <strong>Email:</strong> {formData.email}
+                                            <strong>Email:</strong> {formData.email}
                                         </p>
-                                        <p className="text-sm text-green-800">
-                                            ✅ Bạn có thể đăng nhập ngay bây giờ!
+                                        <p className="text-sm text-green-800 mb-2">
+                                            Bạn có thể đăng nhập ngay bây giờ!
+                                        </p>
+                                        <p className="text-sm text-green-800 font-semibold">
+                                            <strong> Vui lòng kiểm tra và xác nhận email của bạn! </strong>
                                         </p>
                                     </div>
                                     <Button
