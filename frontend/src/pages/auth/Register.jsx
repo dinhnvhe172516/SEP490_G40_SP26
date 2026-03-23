@@ -29,6 +29,20 @@ const Register = () => {
         });
     };
 
+    const validateUsername = (username) => {
+        const errors = [];
+        if (username.length < 3) {
+            errors.push('Tên đăng nhập phải có ít nhất 3 ký tự');
+        }
+        if (username.length > 20) {
+            errors.push('Tên đăng nhập không được vượt quá 20 ký tự');
+        }
+        if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(username)) {
+            errors.push('Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và không được bắt đầu bằng số');
+        }
+        return errors;
+    };
+
     const validatePassword = (password) => {
         const errors = [];
 
@@ -60,6 +74,12 @@ const Register = () => {
         setError('');
 
         // Validation
+        const usernameErrors = validateUsername(formData.username);
+        if (usernameErrors.length > 0) {
+            setError(usernameErrors.join('. '));
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError('Mật khẩu xác nhận không khớp');
             return;

@@ -29,6 +29,19 @@ exports.register = async (data) => {
         throw new ValidationError('Username, email, password and full_name are required');
     }
 
+    if (username.length < 3) {
+        throw new ValidationError('Tên đăng nhập phải có ít nhất 3 ký tự');
+    }
+
+    if (username.length > 20) {
+        throw new ValidationError('Tên đăng nhập không được vượt quá 20 ký tự');
+    }
+
+    const usernameRegex = /^[a-zA-Z][a-zA-Z0-9_]*$/;
+    if (!usernameRegex.test(username)) {
+        throw new ValidationError('Tên đăng nhập chỉ được chứa chữ cái, số, dấu gạch dưới và không được bắt đầu bằng số');
+    }
+
 
     if (password.length < 8) {
         throw new ValidationError('Password must be at least 8 characters long');
@@ -602,7 +615,7 @@ exports.googleAuth = async (googleToken, ip_address = 'unknown', user_agent = 'u
                 full_name: name || '',
                 avatar_url: picture || undefined
             });
-            
+
             // Tự động tạo bản ghi Patient cho tài khoản Google mới
             await Patient.create({
                 account_id: account._id,
@@ -778,7 +791,7 @@ exports.setupPasswordService = async (email, token, newPassword) => {
     await account.save();
 
     await PasswordReset.deleteOne({ _id: setupTokenDoc._id });
-    
+
     // Đăng xuất các session cũ (nếu có)
     await Session.deleteMany({ account_id: account._id });
 
