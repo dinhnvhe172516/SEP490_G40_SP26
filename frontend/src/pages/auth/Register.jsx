@@ -90,7 +90,34 @@ const Register = () => {
             }, 1000);
 
         } catch (err) {
-            setError(err.response?.data?.message || 'Đăng ký thất bại. Vui lòng thử lại.');
+            console.error('Registration error details:', err);
+            
+            const errorData = err.data || err.response?.data;
+            let errorMessage = 'Đăng ký thất bại. Vui lòng thử lại.';
+            
+            if (errorData) {
+                if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+                    // Combine validation errors
+                    errorMessage = errorData.errors.map(e => e.message).join('. ');
+                } else if (errorData.message) {
+                    let msg = errorData.message;
+                    if (msg.includes('validation failed:')) {
+                        const parts = msg.split('validation failed:')[1];
+                        if (parts) {
+                            errorMessage = parts.split(',').map(part => {
+                                const subParts = part.split(':');
+                                return subParts[subParts.length - 1].trim();
+                            }).join('. ');
+                        }
+                    } else {
+                        errorMessage = msg;
+                    }
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
+            }
+
+            setError(errorMessage);
             setLoading(false);
         }
     };
