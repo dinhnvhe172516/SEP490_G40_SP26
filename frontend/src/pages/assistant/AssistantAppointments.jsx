@@ -147,6 +147,11 @@ const AssistantAppointments = () => {
     setShowViewModal(true);
   };
 
+  const handleAssignClick = (appointment) => {
+    setSelectedAppointment(appointment);
+    setShowAssignModal(true);
+  };
+
   const closeModals = () => {
     setShowAssignModal(false);
     setShowViewModal(false);
@@ -413,6 +418,19 @@ const AssistantAppointments = () => {
                       />
                       <span className="text-sm font-medium">Chi tiết</span>
                     </button>
+
+                    {/* Nút Gán bác sĩ: Chỉ hiển thị khi đã CHECKED_IN */}
+                    {apt.status === "CHECKED_IN" && (
+                      <button
+                        onClick={() => handleAssignClick(apt)}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-300 shadow-md active:transform active:scale-95"
+                      >
+                        <UserPlus size={18} />
+                        <span className="text-sm font-bold tracking-tight">
+                          Bắt đầu khám
+                        </span>
+                      </button>
+                    )}
 
                     {/* Nút Xem hồ sơ: Nút hành động chính, nổi bật và rõ ràng */}
                     {apt.status === "IN_CONSULTATION" && (

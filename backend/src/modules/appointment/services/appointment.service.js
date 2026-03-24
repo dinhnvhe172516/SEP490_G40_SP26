@@ -965,11 +965,13 @@ const staffCreateService = async (dataCreate) => {
 
 const updateService = async (id, data) => {
     try {
+        const { userRole, ...updateFields } = data;
+
         // Chỉ cho phép update các trường liên quan đến lịch khám
         const allowedUpdates = {};
-        if (data.appointment_date) allowedUpdates.appointment_date = data.appointment_date;
-        if (data.appointment_time) allowedUpdates.appointment_time = data.appointment_time;
-        if (data.reason !== undefined) allowedUpdates.reason = data.reason;
+        if (updateFields.appointment_date) allowedUpdates.appointment_date = updateFields.appointment_date;
+        if (updateFields.appointment_time) allowedUpdates.appointment_time = updateFields.appointment_time;
+        if (updateFields.reason !== undefined) allowedUpdates.reason = updateFields.reason;
 
         // Tìm lịch hẹn hiện tại
         const existingAppt = await AppointmentModel.findById(id);
@@ -978,8 +980,13 @@ const updateService = async (id, data) => {
         }
 
         // Tùy chọn: Thêm kiểm tra trạng thái, chỉ lịch SCHEDULED mới được sửa
-        if (existingAppt.status !== "SCHEDULED") {
-            throw new errorRes.BadRequestError("Only SCHEDULED appointments can be updated");
+        if (existingAppt.status !== "SCHEDULED" && existingAppt.status !== "PENDING_CONFIRMATION") {
+            throw new errorRes.BadRequestError("Only SCHEDULED or PENDING_CONFIRMATION appointments can be updated");
+        }
+
+        // LOGIC MỚI: Nếu là Bệnh nhân cập nhật, chuyển trạng thái sang PENDING_CONFIRMATION
+        if (userRole === "PATIENT") {
+            allowedUpdates.status = "PENDING_CONFIRMATION";
         }
 
         // Cập nhật
@@ -988,6 +995,40 @@ const updateService = async (id, data) => {
             { $set: allowedUpdates },
             { new: true } // trả về document sau khi update
         ).lean();
+
+        // GỬI THÔNG BÁO KHI BỆNH NHÂN CẬP NHẬT
+        if (userRole === "PATIENT" && updatedAppt) {
+            const formattedDate = new Date(updatedAppt.appointment_date).toLocaleDateString('vi-VN');
+
+            // 1. Thông báo cho LỄ TÂN qua WebSocket (real-time)
+            notificationService.sendToRole(['RECEPTIONIST'], {
+                type: 'APPOINTMENT_UPDATE_REQUESTED',
+                title: 'Yêu cầu đổi lịch khám',
+                message: `Bệnh nhân ${updatedAppt.full_name} yêu cầu đổi lịch sang ${updatedAppt.appointment_time} ngày ${formattedDate}`,
+                action_url: `/receptionist/appointments?id=${updatedAppt._id}`,
+                metadata: {
+                    entity_id: updatedAppt._id,
+                    entity_type: 'APPOINTMENT'
+                }
+            }).catch(err => logger.error("Lỗi gửi thông báo cập nhật cho lễ tân:", err.message));
+
+            // 2. Thông báo xác nhận cho BỆNH NHÂN (real-time qua WebSocket)
+            if (updatedAppt.patient_id) {
+                const patient = await PatientModel.findById(updatedAppt.patient_id).select('account_id').lean();
+                if (patient?.account_id) {
+                    notificationService.sendToUser(patient.account_id.toString(), {
+                        type: 'APPOINTMENT_UPDATE_CONFIRMED',
+                        title: 'Yêu cầu đổi lịch đã được gửi',
+                        message: `Yêu cầu đổi lịch sang ${updatedAppt.appointment_time} ngày ${formattedDate} đã được gửi. Vui lòng chờ lễ tân xác nhận.`,
+                        action_url: '/appointments',
+                        metadata: {
+                            entity_id: updatedAppt._id,
+                            entity_type: 'APPOINTMENT'
+                        }
+                    }).catch(err => logger.error("Lỗi gửi thông báo xác nhận cho bệnh nhân:", err.message));
+                }
+            }
+        }
 
         return updatedAppt;
 
@@ -1008,25 +1049,24 @@ const updateService = async (id, data) => {
 */
 const updateStatusOnly = async (id, status, doctorId = null) => {
     try {
+        // Lấy thông tin lịch hẹn TRƯỚC khi cập nhật để biết trạng thái cũ
+        const oldAppt = await AppointmentModel.findById(id).lean();
+        if (!oldAppt) {
+            throw new errorRes.NotFoundError("Appointment not found");
+        }
+
         let newData = null;
 
         // --- KỊCH BẢN 1: BỆNH NHÂN CHECK-IN TẠI QUẦY ---
         if (status === "CHECKED_IN") {
-            // Bước 1: Phải tìm lịch hẹn trước để lấy ngày khám (appointment_date)
-            const existingAppt = await AppointmentModel.findById(id);
-
-            if (!existingAppt) {
-                throw new errorRes.NotFoundError("Appointment not found");
-            }
-
             // Bảo vệ API (Idempotent): Nếu khách ấn Check-in 2 lần liên tiếp, 
             // hoặc đã có số rồi thì không cấp số mới, trả về kết quả luôn.
-            if (existingAppt.status === "CHECKED_IN" && existingAppt.queue_number) {
-                return existingAppt;
+            if (oldAppt.status === "CHECKED_IN" && oldAppt.queue_number) {
+                return oldAppt;
             }
 
             // Bước 2: Gọi hàm sinh số thứ tự thông minh từ Model
-            const nextNumber = await AppointmentModel.getNextQueueNumber(existingAppt.appointment_date);
+            const nextNumber = await AppointmentModel.getNextQueueNumber(oldAppt.appointment_date);
 
             // Bước 3: Cập nhật ĐỒNG THỜI cả trạng thái và số thứ tự
             newData = await AppointmentModel.findByIdAndUpdate(
@@ -1120,6 +1160,65 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
         // --- KIỂM TRA LẠI KẾT QUẢ ---
         if (!newData) {
             throw new errorRes.NotFoundError("Appointment not found or update failed");
+        }
+
+        // --- GỬI EMAIL + THÔNG BÁO KHI LỄ TÂN XỬ LÝ YÊU CẦU ĐỔI LỊCH ---
+        // Duyệt: PENDING_CONFIRMATION -> SCHEDULED
+        const isApproved = oldAppt.status === 'PENDING_CONFIRMATION' && status === 'SCHEDULED';
+        // Từ chối: PENDING_CONFIRMATION -> CANCELLED (hoặc bất kỳ ai hủy lịch)
+        const isRejected = oldAppt.status === 'PENDING_CONFIRMATION' && status === 'CANCELLED';
+        // Hủy lịch thông thường (nếu muốn gửi mail cả khi hủy lịch thường)
+        const isGeneralCancel = status === 'CANCELLED';
+
+        if ((isApproved || isGeneralCancel) && newData.patient_id) {
+            try {
+                // Lấy email từ account hoặc profile hoặc appointment
+                const patient = await PatientModel.findById(newData.patient_id).select('account_id email').lean();
+                const account = patient?.account_id
+                    ? await AuthModel.Account.findById(patient.account_id).select('email').lean()
+                    : null;
+
+                const patientEmail = account?.email || newData.email || patient?.email;
+                const formattedDate = new Date(newData.appointment_date).toLocaleDateString('vi-VN');
+
+                if (isApproved) {
+                    // 1. Gửi Email xác nhận
+                    emailService.sendAppointmentUpdateApprovedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
+                        .catch(err => logger.error('Lỗi gửi email xác nhận lịch:', err.message));
+
+                    // 2. Gửi thông báo in-app (WebSocket)
+                    if (patient?.account_id) {
+                        notificationService.sendToUser(patient.account_id.toString(), {
+                            type: 'APPOINTMENT_UPDATE_CONFIRMED',
+                            title: 'Lịch hẹn đã được xác nhận',
+                            message: `Yêu cầu đổi lịch sang ${newData.appointment_time} ngày ${formattedDate} đã được phòng khám xác nhận.`,
+                            action_url: '/appointments',
+                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' }
+                        }).catch(err => logger.error('Lỗi gửi thông báo xác nhận cho bệnh nhân:', err.message));
+                    }
+                } else if (isGeneralCancel) {
+                    // Gửi Email từ chối/hủy
+                    emailService.sendAppointmentUpdateRejectedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
+                        .catch(err => logger.error('Lỗi gửi email hủy/từ chối lịch:', err.message));
+
+                    if (patient?.account_id) {
+                        const notifyTitle = isRejected ? 'Yêu cầu đổi lịch không được chấp nhận' : 'Lịch hẹn đã bị hủy';
+                        const notifyMsg = isRejected
+                            ? `Yêu cầu đổi lịch sang ${newData.appointment_time} ngày ${formattedDate} chưa phù hợp. Vui lòng đặt lịch khác.`
+                            : `Lịch hẹn khám của bạn vào khung giờ ${newData.appointment_time} ngày ${formattedDate} đã bị hủy.`;
+
+                        notificationService.sendToUser(patient.account_id.toString(), {
+                            type: 'APPOINTMENT_UPDATE_REJECTED',
+                            title: notifyTitle,
+                            message: notifyMsg,
+                            action_url: '/appointments',
+                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' }
+                        }).catch(err => logger.error('Lỗi gửi thông báo hủy cho bệnh nhân:', err.message));
+                    }
+                }
+            } catch (notifyErr) {
+                logger.error('Lỗi xử lý thông báo/email cho bệnh nhân:', notifyErr);
+            }
         }
 
         return newData;
