@@ -213,7 +213,7 @@ const Login = () => {
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 {/* Username field */}
                                 <div className="relative group">
-                                    <div className={`absolute left-3 transition-all duration-300 ${username || focusedField === 'username' ? '-top-2 text-xs bg-white px-1 text-primary-600' : 'top-3 text-gray-500'}`}>
+                                    <div className={`absolute left-3 transition-all duration-300 z-10 ${username || focusedField === 'username' ? '-top-2 text-xs bg-white px-1 text-primary-600' : 'top-3 text-gray-500'}`}>
                                         <User size={username || focusedField === 'username' ? 14 : 16} className="inline mr-1" />
                                         <span className="font-medium">Email / Tên đăng nhập</span>
                                     </div>
