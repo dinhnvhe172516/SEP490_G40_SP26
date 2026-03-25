@@ -1197,9 +1197,16 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                         }).catch(err => logger.error('Lỗi gửi thông báo xác nhận cho bệnh nhân:', err.message));
                     }
                 } else if (isGeneralCancel) {
-                    // Gửi Email từ chối/hủy
-                    emailService.sendAppointmentUpdateRejectedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
-                        .catch(err => logger.error('Lỗi gửi email hủy/từ chối lịch:', err.message));
+                    // GỬI EMAIL THÔNG BÁO HỦY/TỪ CHỐI
+                    if (isRejected) {
+                        // Trường hợp đặc biệt: Từ chối yêu cầu đổi lịch
+                        emailService.sendAppointmentUpdateRejectedEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
+                            .catch(err => logger.error('Lỗi gửi email từ chối đổi lịch:', err.message));
+                    } else {
+                        // Trường hợp hủy lịch thông thường
+                        emailService.sendAppointmentCancelledEmail(patientEmail, newData.full_name, formattedDate, newData.appointment_time)
+                            .catch(err => logger.error('Lỗi gửi email hủy lịch:', err.message));
+                    }
 
                     if (patient?.account_id) {
                         const notifyTitle = isRejected ? 'Yêu cầu đổi lịch không được chấp nhận' : 'Lịch hẹn đã bị hủy';

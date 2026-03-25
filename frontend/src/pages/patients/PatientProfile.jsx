@@ -91,7 +91,9 @@ const PatientProfile = () => {
 
         // Đồng bộ với AuthContext
         updateUser({
+          name: profileData.name,
           full_name: profileData.name,
+          email: profileData.email,
           phone: profileData.phone,
           address: profileData.address,
           gender: profileData.gender,
@@ -200,7 +202,9 @@ const PatientProfile = () => {
 
       // Đồng bộ với AuthContext
       updateUser({
+        name: formData.name,
         full_name: formData.name,
+        email: formData.email,
         phone: formData.phone,
         address: formData.address,
         gender: formData.gender,
