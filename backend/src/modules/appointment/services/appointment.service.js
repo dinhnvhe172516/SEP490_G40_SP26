@@ -1,48 +1,48 @@
 const logger = require("../../../common/utils/logger");
 const errorRes = require("../../../common/errors");
 const mongoose = require("mongoose");
-const Pagination = require("../../../common/responses/Pagination");
 
-const StaffModel = require("../models/index.model");
-const { Model: AuthModel } = require("../../auth/index");
 const PatientModel = require("../../../modules/patient/model/patient.model");
 const AppointmentModel = require("./../models/appointment.model");
 const { model: ServiceModel } = require("../../service/index")
 
-const bcrypt = require('bcrypt');
 const emailService = require("../../../common/service/email.service");
 const notificationService = require("../../notification/service/notification.service");
 
-/*
-    get list appointment with pagination and filter
-    (
-        search: search by full_name, phone, email;
-        status: filter by status;
-        sort: sort by appointment_date;
-        page
-        limit
-    )
-*/
-const getListService = async (query, doctor_id) => {
+/**
+ * get list appointment with pagination and filter
+ * (
+ * search: search by full_name, phone, email;
+ * status: filter by status;
+ * doctor_id: filter by doctor id;
+ * lte_date: less than eq by date;
+ * sort: sort by appointment_date;
+ * page
+ * limit
+ * )
+ */
+const getListService = async (query, doctor_id, lte_date) => {
     const context = "AppointmentService.getListService";
     try {
         logger.debug("Fetching list of appointments with query", {
             context: context,
             query: query,
-            doctor_id: doctor_id
+            doctor_id: doctor_id,
+            lte_date: lte_date
         });
 
-        // 1. Lấy và chuẩn hóa các tham số từ query
+        // 1. Lấy và chuẩn hóa các tham số
         const search = query.search?.trim();
         const statusFilter = query.status ? query.status.toUpperCase() : null;
-        const appointmentDate = query.appointment_date;
-        const filterDoctorId = query.doctor_id || doctor_id; // Check both Places
+        const filterDoctorId = doctor_id || query.doctor_id; 
+        const filterLteDate = lte_date || query.lte_date;    
+        
         const sortOrder = query.sort === "desc" ? -1 : 1;
         const page = Math.max(1, parseInt(query.page || 1));
         const limit = Math.max(1, parseInt(query.limit || 5));
         const skip = (page - 1) * limit;
 
-        // 2. Xây dựng điều kiện lọc (Match)
+        // 2. Xây dựng điều kiện lọc (Match Condition)
         const matchCondition = {};
 
         // Lọc theo trạng thái (status)
@@ -50,23 +50,19 @@ const getListService = async (query, doctor_id) => {
             matchCondition.status = statusFilter;
         }
 
-        // Lọc theo ngày (appointment_date)
-        if (appointmentDate) {
-            const startOfDay = new Date(appointmentDate);
-            startOfDay.setUTCHours(0, 0, 0, 0);
-
-            const endOfDay = new Date(appointmentDate);
-            endOfDay.setUTCHours(23, 59, 59, 999);
-
-            matchCondition.appointment_date = {
-                $gte: startOfDay,
-                $lte: endOfDay
-            };
-        }
-
-        // Lọc theo doctor_id (Phải ép kiểu về ObjectId trong Aggregation)
+        // Lọc theo doctor_id (Ép kiểu về ObjectId)
         if (filterDoctorId) {
             matchCondition.doctor_id = new mongoose.Types.ObjectId(filterDoctorId);
+        }
+
+        // Lọc theo khoảng thời gian <= lte_date
+        if (filterLteDate) {
+            const endOfDay = new Date(filterLteDate);
+            endOfDay.setUTCHours(23, 59, 59, 999); 
+
+            matchCondition.appointment_date = {
+                $lte: endOfDay
+            };
         }
 
         // Tìm kiếm (Search) theo tên, số điện thoại, email
@@ -81,7 +77,7 @@ const getListService = async (query, doctor_id) => {
 
         // 3. Xây dựng Aggregation Pipeline
         const aggregatePipeline = [
-            // BƯỚC 1 & 2: Lọc và Sắp xếp toàn bộ dữ liệu (rất nhanh vì có index)
+            // BƯỚC 1 & 2: Lọc và Sắp xếp
             { $match: matchCondition },
             { $sort: { appointment_date: sortOrder } },
 
@@ -89,11 +85,10 @@ const getListService = async (query, doctor_id) => {
             {
                 $facet: {
                     data: [
-                        // Cắt lấy đúng số lượng của trang hiện tại trước (Ví dụ: 5 record)
                         { $skip: skip },
                         { $limit: limit },
 
-                        // HIỆU NĂNG CAO: Chỉ Lookup thông tin bác sĩ cho 5 record này
+                        // HIỆU NĂNG CAO: Chỉ Lookup thông tin bác sĩ cho các record của trang hiện tại
                         {
                             $lookup: {
                                 from: "staffs", // Tên collection chứa Staff
@@ -102,14 +97,13 @@ const getListService = async (query, doctor_id) => {
                                 as: "doctor_info"
                             }
                         },
-                        // Flatten mảng doctor_info thành object
                         {
                             $addFields: {
                                 doctor_info: { $arrayElemAt: ["$doctor_info", 0] }
                             }
                         },
 
-                        // Tùy chọn: Nếu bạn muốn lấy luôn Tên và Avatar Bác sĩ từ bảng Profile
+                        // Lấy Tên và Avatar Bác sĩ từ bảng Profile
                         {
                             $lookup: {
                                 from: "profiles",
@@ -215,7 +209,6 @@ const getListService = async (query, doctor_id) => {
         ];
 
         // 4. Thực thi truy vấn
-        // (Đảm bảo gọi đúng Model Lịch hẹn của bạn)
         const result = await AppointmentModel.aggregate(aggregatePipeline);
 
         const appointments = result[0]?.data || [];
@@ -1356,6 +1349,91 @@ const findByTreatmentId = async (treatmentId) => {
     }
 }
 
+/**
+ * Calculate total amount by appointment
+ * * @param {ObjectId} appointmentId - Appointment ID to calculate amount for
+ * @returns {Promise<number>} total amount of appointment or 0
+ */
+const calculateTotalAmount = async (appointmentId) => {
+    const context = "AppointmentService.calculateTotalAmount";
+    
+    try {
+        const appointment = await AppointmentModel.findById(appointmentId).lean();
+        
+        if (!appointment) {
+            logger.error("Could not find appointment by id.", {
+                context,
+                appointmentId
+            });
+            return 0;
+        }
+        const serviceBooking = appointment.book_service || [];
+        
+        logger.debug("Services found.", {
+            context,
+            serviceCount: serviceBooking.length,
+            serviceBooking: serviceBooking
+        });
+
+        const totalAmount = serviceBooking.reduce((total, service) => {
+            const price = service.unit_price || 0;
+            return total + price; 
+        }, 0);
+
+        logger.debug("Final total amount calculated.", {
+            context,
+            totalAmount
+        });
+
+        return totalAmount;
+
+    } catch (error) {
+        logger.error("Error calculating total amount", {
+            context,
+            error
+        });
+        return 0; // Trả về 0 trực tiếp khi có lỗi
+    }
+}
+
+/**
+ * check duplicate appointment if full_name, phone, appointment_date, appointment_time is existed
+ * @param {String} full_name full name patient 
+ * @param {String} phone phone number patient
+ * @param {String} appointment_date date booking
+ * @param {String} appointment_time time booing
+ */
+const checkDuplicateFullNameAndPhoneAndAppointDateAndAppointTime = async(full_name, phone, appointment_date, appointment_time) => {
+    const contex = "AppointmentService.CheckDuplicateFullNameAndPhoneAndAppointDateAndAppointTime";
+    try {
+        const appointment = await AppointmentModel.findOne({
+            full_name: full_name,
+            phone: phone,
+            appointment_date: appointment_date,
+            appointment_time: appointment_time
+        });
+        logger.debug("Finding appointment.", {
+            context: contex,
+            full_name: full_name, 
+            phone: phone, 
+            appointment_date: appointment_date, 
+            appointment_time: appointment_time,
+            appointment: appointment
+        });
+        return !!appointment;
+    } catch (error) {
+        logger.error("Erro check duplicate", {
+            contex: contex,
+            full_name: full_name, 
+            phone: phone, 
+            appointment_date: appointment_date, 
+            appointment_time: appointment_time,
+            error: error
+        });
+        return true;
+    }
+}
+
 module.exports = {
     getListService,
     getByIdService,
@@ -1367,5 +1445,7 @@ module.exports = {
     checkinService,
     findById,
     findByTreatmentId,
-    getListOfPatientServiceWithDate
+    getListOfPatientServiceWithDate,
+    calculateTotalAmount,
+    checkDuplicateFullNameAndPhoneAndAppointDateAndAppointTime
 };
