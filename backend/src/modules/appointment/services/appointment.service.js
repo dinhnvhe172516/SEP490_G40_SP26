@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 
 const PatientModel = require("../../../modules/patient/model/patient.model");
 const AppointmentModel = require("./../models/appointment.model");
-const { model: ServiceModel } = require("../../service/index")
+const { model: ServiceModel } = require("../../service/index");
+const AuthModel = require("../../auth/models/index.model");
 
 const emailService = require("../../../common/service/email.service");
 const notificationService = require("../../notification/service/notification.service");

@@ -7,9 +7,9 @@ import {
     ClipboardList,
     Wrench,
     LogOut,
-    Menu,
     Clock,
-    UserCheck
+    UserCheck,
+    Bell
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -31,16 +31,17 @@ const ReceptionistSidebar = () => {
 
         // 2. Perform logout
         logout();
-        
+
         // 3. Navigate to login (or /) with state
         navigate('/login', { state: { toast: logoutToast } });
     };
 
     const menuItems = [
         { path: '/receptionist/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/receptionist/check-in', icon: UserCheck, label: 'Tiếp đón' },
         { path: '/receptionist/patients', icon: Users, label: 'Bệnh nhân' },
+        { path: '/receptionist/check-in', icon: UserCheck, label: 'Tiếp đón' },
         { path: '/receptionist/appointments', icon: Calendar, label: 'Lịch hẹn' },
+        { path: '/receptionist/pending-appointments', icon: Bell, label: 'Chờ xác nhận' },
         { path: '/receptionist/invoices', icon: DollarSign, label: 'Hóa đơn' },
         { path: '/receptionist/services', icon: ClipboardList, label: 'Dịch vụ' },
         { path: '/receptionist/equipment', icon: Wrench, label: 'Thiết bị' },

@@ -412,8 +412,6 @@ const updateController = async (req, res) => {
 
     // 1. Chỉ lấy các trường cho phép
     const { appointment_date, appointment_time, reason } = dataUpdate;
-    // Extract user role securely from the token
-    const userRole = req.user?.role?.name ? req.user.role.name.toUpperCase() : undefined;
 
     // Kiểm tra xem có dữ liệu nào để update không
     if (!appointment_date && !appointment_time && reason === undefined) {
@@ -425,7 +423,6 @@ const updateController = async (req, res) => {
       appointment_date,
       appointment_time,
       reason,
-      userRole,
     };
 
     const updated = await ServiceProcess.updateService(id, updateData);
@@ -439,6 +436,41 @@ const updateController = async (req, res) => {
     // Logging lỗi chi tiết để debug
     logger.error("Error update appointment controller", {
       context: "AppointmentController.updateController",
+      message: error.message,
+      stack: error.stack,
+    });
+    throw error;
+  }
+};
+
+// Bệnh nhân yêu cầu dời lịch
+const patientRequestUpdateController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const dataUpdate = req.body || {};
+
+    const { appointment_date, appointment_time, reason } = dataUpdate;
+
+    if (!appointment_date && !appointment_time && reason === undefined) {
+      throw new errorRes.BadRequestError("No data provided for update");
+    }
+
+    const updateData = {
+      appointment_date,
+      appointment_time,
+      reason,
+      userRole: "PATIENT", // Ép Role để service tự động đổi thành PENDING_CONFIRMATION và báo lễ tân
+    };
+
+    const updated = await ServiceProcess.updateService(id, updateData);
+
+    return new successRes.UpdateSuccess(
+      updated,
+      "Appointment update requested successfully",
+    ).send(res);
+  } catch (error) {
+    logger.error("Error patient update appointment controller", {
+      context: "AppointmentController.patientRequestUpdateController",
       message: error.message,
       stack: error.stack,
     });
@@ -609,6 +641,7 @@ module.exports = {
   getByIdController,
   createController,
   updateController,
+  patientRequestUpdateController,
   updateStatusController,
   checkinController,
   staffCreateController,
