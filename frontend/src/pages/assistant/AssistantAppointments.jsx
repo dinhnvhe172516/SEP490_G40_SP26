@@ -49,6 +49,16 @@ const AssistantAppointments = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [showPrepareModal, setShowPrepareModal] = useState(false);
 
+  // --- debounced searchTerm ---
+  const [debouncedSearch, setDebouncedSearch] = useState(searchTerm);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // --- FETCH DATA ---
   const fetchData = async () => {
     setLoading(true);
@@ -56,7 +66,7 @@ const AssistantAppointments = () => {
       // 1. Fetch appointments for selected date
       const apptParams = {
         appointment_date: selectedDate,
-        limit: 6,
+        limit: 50, // Tăng limit lên để xem hết trong ngày
       };
       if (filterDoctor !== "all") {
         apptParams.doctor_id = filterDoctor;
@@ -64,11 +74,14 @@ const AssistantAppointments = () => {
       if (filterStatus !== "all") {
         apptParams.status = filterStatus;
       }
+      if (debouncedSearch) {
+        apptParams.search = debouncedSearch;
+      }
 
       const apptResponse =
         await appointmentService.getStaffAppointments(apptParams);
 
-      // Lấy dữ liệu từ response dựa theo chuẩn cấu trúc: response.data.data là mảng
+      // Lấy dữ liệu từ response
       let apptData = [];
       if (apptResponse && apptResponse.data) {
         if (Array.isArray(apptResponse.data.data)) {
@@ -84,14 +97,7 @@ const AssistantAppointments = () => {
         const staffResponse = await staffService.getStaffs({
           role_name: "DOCTOR",
         });
-        let docsData = [];
-        if (staffResponse && staffResponse.data) {
-          if (Array.isArray(staffResponse.data.data)) {
-            docsData = staffResponse.data.data;
-          } else if (Array.isArray(staffResponse.data)) {
-            docsData = staffResponse.data;
-          }
-        }
+        let docsData = staffResponse.data?.data || staffResponse.data || [];
         setDoctors(docsData);
       }
 
@@ -112,18 +118,9 @@ const AssistantAppointments = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedDate, filterDoctor, filterStatus]);
+  }, [selectedDate, filterDoctor, filterStatus, debouncedSearch]);
 
-  const filteredAppointments = useMemo(() => {
-    return appointments.filter((apt) => {
-      const patientName = apt.full_name || "";
-      const patientPhone = apt.phone || "";
-      const matchesSearch =
-        patientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        patientPhone.includes(searchTerm);
-      return matchesSearch;
-    });
-  }, [appointments, searchTerm]);
+  const filteredAppointments = appointments; // Đã lọc ở backend
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -385,8 +382,8 @@ const AssistantAppointments = () => {
                         <span className="font-medium">Dịch vụ: </span>
                         {apt.book_service && apt.book_service.length > 0
                           ? apt.book_service
-                              .map((s) => s.service_name || "Khám chung")
-                              .join(", ")
+                            .map((s) => s.service_name || "Khám chung")
+                            .join(", ")
                           : apt.reason || "Khám chung"}
                       </p>
                       <p className="text-sm text-gray-600 mt-1">

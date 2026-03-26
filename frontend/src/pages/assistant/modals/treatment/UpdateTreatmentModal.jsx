@@ -158,8 +158,6 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
         medicine_usage: cleanMedicineUsage,
       };
 
-      await treatmentApi.updateTreatmentMedicine(treatment._id, payload);
-
       if (onSuccess) onSuccess(finalStatus);
       onClose();
     } catch (err) {

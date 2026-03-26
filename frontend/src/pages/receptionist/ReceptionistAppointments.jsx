@@ -62,8 +62,8 @@ const ReceptionistAppointments = () => {
         return appointments.filter(apt => {
             const aptDateStr = apt.appointment_date ? new Date(apt.appointment_date).toISOString().split('T')[0] : '';
             const matchesDate = aptDateStr === selectedDate;
-            const matchesStatus = filterStatus === 'all' 
-                ? apt.status !== 'PENDING_CONFIRMATION' 
+            const matchesStatus = filterStatus === 'all'
+                ? apt.status !== 'PENDING_CONFIRMATION'
                 : apt.status === filterStatus;
             return matchesDate && matchesStatus;
         });
