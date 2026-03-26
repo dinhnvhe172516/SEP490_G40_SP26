@@ -46,6 +46,16 @@ const receptionistRoutes = [
         )
     },
     {
+        path: '/receptionist/re-examination',
+        element: (
+            <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
+                <ReceptionistLayout>
+                    {/* thêm trang tái khám ở đây */}
+                </ReceptionistLayout>
+            </ProtectedRoute>
+        )
+    },
+    {
         path: '/receptionist/invoices',
         element: (
             <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
