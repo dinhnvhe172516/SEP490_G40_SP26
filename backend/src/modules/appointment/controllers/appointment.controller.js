@@ -412,6 +412,8 @@ const updateController = async (req, res) => {
 
     // 1. Chỉ lấy các trường cho phép
     const { appointment_date, appointment_time, reason } = dataUpdate;
+    // Extract user role securely from the token
+    const userRole = req.user?.role?.name ? req.user.role.name.toUpperCase() : undefined;
 
     // Kiểm tra xem có dữ liệu nào để update không
     if (!appointment_date && !appointment_time && reason === undefined) {
@@ -423,6 +425,7 @@ const updateController = async (req, res) => {
       appointment_date,
       appointment_time,
       reason,
+      userRole,
     };
 
     const updated = await ServiceProcess.updateService(id, updateData);
