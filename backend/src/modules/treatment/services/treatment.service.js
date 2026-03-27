@@ -238,9 +238,16 @@ const getListTreatementWithAppointmentNull = async (query) => {
         };
 
         if (filterDate) {
+            const startOfToday = new Date(); 
+            startOfToday.setUTCHours(0, 0, 0, 0);
+
             const endOfDay = new Date(filterDate);
             endOfDay.setUTCHours(23, 59, 59, 999);
-            initialMatch.planned_date = { $lte: endOfDay };
+
+            initialMatch.planned_date = { 
+                $gte: startOfToday, 
+                $lte: endOfDay 
+            };
         }
 
         // 3. Xây dựng Aggregation Pipeline
