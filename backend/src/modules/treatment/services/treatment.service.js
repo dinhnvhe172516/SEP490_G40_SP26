@@ -380,10 +380,40 @@ const getListTreatementWithAppointmentNull = async (query) => {
     }
 };
 
+const addAppointmentIdOnTreatment = async (treatmentId, appointmentId, session) => {
+    const context = "TreatmentService.AddAppointmentIdOnTreatment";
+    try {
+        const treatmentUpdate = await model.Treatment.findByIdAndUpdate(
+            treatmentId,
+            { appointment_id: appointmentId, phase: 'SESSION' },
+            { new: true, session: session } 
+        );
+        
+        if (!treatmentUpdate) {
+            throw new errorRes.NotFoundError("Can't find treatment by id to update.");
+        }
+        
+        return treatmentUpdate;
+    } catch (error) {
+        logger.error("Error cannot add appointment_id into treatment", {
+            context: context,
+            treatmentId: treatmentId,
+            appointmentId: appointmentId,
+            error: error.message,
+            stack: error.stack
+        });
+        if (error.statusCode) {
+            throw error;
+        }
+        throw new errorRes.InternalServerError("Error cannot add appointment_id on treatment.");
+    }
+}
+
 module.exports = {
     getByIdService,
     createService,
     updateService,
     updateStatusOnly,
     getListTreatementWithAppointmentNull,
+    addAppointmentIdOnTreatment
 };

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
     X, User, Phone, Mail, Calendar, 
-    FileText, Activity, Stethoscope, FilePlus 
+    FileText, Activity, Stethoscope 
 } from 'lucide-react';
 import treatmentService from '../../../../services/treatmentService';
 
-const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
+const ViewDetailTreatment = ({ isOpen, onClose, treatmentId, onOpenBookingModal }) => {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
@@ -14,7 +14,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
         if (isOpen && treatmentId) {
             fetchDetail();
         } else {
-            // Reset state khi đóng modal
             setDetail(null);
             setError(null);
         }
@@ -25,7 +24,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
         setError(null);
         try {
             const response = await treatmentService.viewTreatmentDetail(treatmentId);
-            // Lấy data từ response dựa theo cấu trúc JSON bạn cung cấp
             const data = response?.data?.data || response?.data;
             setDetail(data);
         } catch (err) {
@@ -47,10 +45,8 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-            {/* Modal Container */}
-            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
                 
-                {/* Modal Header */}
                 <div className="sticky top-0 bg-white border-b border-slate-100 p-5 flex items-center justify-between z-10 rounded-t-2xl">
                     <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <Stethoscope className="text-blue-500" />
@@ -64,7 +60,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                     </button>
                 </div>
 
-                {/* Modal Body */}
                 <div className="p-6">
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-10">
@@ -78,7 +73,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                     ) : detail ? (
                         <div className="space-y-6">
                             
-                            {/* SECTION 1: Thông tin bệnh nhân */}
                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-100">
                                 <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 flex items-center gap-2">
                                     <User size={16} /> Thông tin Bệnh nhân
@@ -108,7 +102,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                                 </div>
                             </div>
 
-                            {/* SECTION 2: Thông tin Hồ sơ bệnh án */}
                             <div className="bg-blue-50 p-5 rounded-xl border border-blue-100">
                                 <h3 className="text-sm font-bold text-blue-600 uppercase mb-4 flex items-center gap-2">
                                     <FileText size={16} /> Thông tin Hồ sơ bệnh án
@@ -131,7 +124,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                                 </div>
                             </div>
 
-                            {/* SECTION 3: Chi tiết Điều trị (Treatment) */}
                             <div className="border border-slate-200 p-5 rounded-xl">
                                 <h3 className="text-sm font-bold text-slate-600 uppercase mb-4 flex items-center gap-2">
                                     <Activity size={16} /> Chỉ định điều trị hiện tại
@@ -168,7 +160,6 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                     ) : null}
                 </div>
 
-                {/* Modal Footer */}
                 <div className="border-t border-slate-100 p-5 bg-slate-50 rounded-b-2xl flex justify-end gap-3">
                     <button 
                         onClick={onClose}
@@ -176,16 +167,20 @@ const ViewDetailTreatment = ({ isOpen, onClose, treatmentId }) => {
                     >
                         Đóng
                     </button>
-                    {/* Bạn có thể thêm nút "Lên lịch hẹn" trực tiếp tại đây luôn nếu muốn tiện lợi cho User */}
-                    <button 
-                        onClick={() => {
-                            console.log("Tiến hành đặt lịch từ Modal cho", detail._id);
-                            // Xử lý logic đặt lịch ở đây...
-                        }}
-                        className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
-                    >
-                        <Calendar size={18} /> Lên lịch hẹn
-                    </button>
+                    {detail && (
+                        <button 
+                            onClick={() => {
+                                const formattedData = {
+                                    _id: detail._id,
+                                    record_info: detail.record_id
+                                };
+                                if(onOpenBookingModal) onOpenBookingModal(formattedData);
+                            }}
+                            className="px-5 py-2.5 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2"
+                        >
+                            <Calendar size={18} /> Lên lịch hẹn
+                        </button>
+                    )}
                 </div>
 
             </div>

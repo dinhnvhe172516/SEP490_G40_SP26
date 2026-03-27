@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { 
     Search, Calendar, User, Phone, FileText, 
     Stethoscope, Clock, CalendarPlus, AlertCircle, Eye,
-    Filter, RefreshCw, ArrowDownAZ, ArrowUpZA // Import thêm các icon mới
+    Filter, RefreshCw, ArrowDownAZ, ArrowUpZA 
 } from 'lucide-react';
 
 import treatmentService from '../../../services/treatmentService'; 
 import ViewDetailTreatment from './components/ViewDetailTreatment';
+import CreateAppointment from './components/CreateAppointment';
 
 const ReBooking = () => {
     const [treatments, setTreatments] = useState([]);
@@ -16,13 +17,17 @@ const ReBooking = () => {
     // State cho bộ lọc
     const [searchTerm, setSearchTerm] = useState('');
     const [filterDate, setFilterDate] = useState('');
-    const [sortOrder, setSortOrder] = useState('asc'); // State mới cho sắp xếp
+    const [sortOrder, setSortOrder] = useState('asc'); 
 
     // State cho Modal View Detail
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedTreatmentId, setSelectedTreatmentId] = useState(null);
 
-    // Thêm tham số overrideParams để hỗ trợ gọi API ngay lập tức khi xóa bộ lọc
+    // State cho Modal Create Appointment
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedTreatmentForBooking, setSelectedTreatmentForBooking] = useState(null);
+
+    // Hàm gọi API lấy danh sách
     const fetchPendingTreatments = async (overrideParams = {}) => {
         setLoading(true);
         setError(null);
@@ -33,7 +38,7 @@ const ReBooking = () => {
                 status: "PLANNED",
                 sort: sortOrder, 
                 limit: 20,
-                ...overrideParams // Ghi đè các giá trị nếu có truyền vào
+                ...overrideParams 
             };
             
             const response = await treatmentService.getListTreatementWithAppointmentNull(params);
@@ -47,23 +52,18 @@ const ReBooking = () => {
         }
     };
 
-    // Chỉ gọi tự động ở lần đầu render HOẶC khi thay đổi tiêu chí Sắp xếp (Sort)
+    // Gọi API lần đầu hoặc khi đổi sắp xếp
     useEffect(() => {
         fetchPendingTreatments();
-        // Cố tình bỏ searchTerm và filterDate ra khỏi mảng dependency để không tự động tìm
     }, [sortOrder]); 
 
-    // Hàm xử lý khi bấm nút "Lọc"
-    const handleApplyFilter = () => {
-        fetchPendingTreatments();
-    };
-
-    // Hàm xử lý khi bấm nút "Xóa bộ lọc"
+    // Các hàm xử lý bộ lọc
+    const handleApplyFilter = () => fetchPendingTreatments();
+    
     const handleClearFilter = () => {
         setSearchTerm('');
         setFilterDate('');
         setSortOrder('asc');
-        // Gọi API ngay lập tức với các tham số rỗng (tránh việc chờ state cập nhật)
         fetchPendingTreatments({ search: undefined, filter_date: undefined, sort: 'asc' });
     };
 
@@ -74,6 +74,7 @@ const ReBooking = () => {
         });
     };
 
+    // Các hàm Đóng/Mở Modal
     const handleOpenViewDetail = (id) => {
         setSelectedTreatmentId(id);
         setIsViewModalOpen(true);
@@ -82,6 +83,16 @@ const ReBooking = () => {
     const handleCloseViewDetail = () => {
         setIsViewModalOpen(false);
         setSelectedTreatmentId(null);
+    };
+
+    const handleOpenCreateModal = (treatmentItem) => {
+        setSelectedTreatmentForBooking(treatmentItem);
+        setIsCreateModalOpen(true);
+    };
+
+    const handleCloseCreateModal = () => {
+        setIsCreateModalOpen(false);
+        setSelectedTreatmentForBooking(null);
     };
 
     return (
@@ -98,7 +109,6 @@ const ReBooking = () => {
                     </p>
                 </div>
 
-                {/* Các công cụ Lọc & Tìm kiếm */}
                 <div className="flex flex-wrap items-center gap-3 mt-2 xl:mt-0">
                     <div className="relative flex-1 md:flex-none">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -107,7 +117,6 @@ const ReBooking = () => {
                             placeholder="Tên BN, Hồ sơ"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            // Bấm Enter để tìm nhanh cũng được
                             onKeyDown={(e) => e.key === 'Enter' && handleApplyFilter()} 
                             className="pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-sm font-medium w-full md:w-56 transition-all"
                         />
@@ -122,34 +131,19 @@ const ReBooking = () => {
                         />
                     </div>
 
-                    {/* Nút Lọc */}
-                    <button 
-                        onClick={handleApplyFilter}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-sm"
-                        title="Áp dụng tìm kiếm"
-                    >
+                    <button onClick={handleApplyFilter} className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold text-sm transition-all shadow-sm">
                         <Filter size={18} />
                         <span className="hidden md:inline">Lọc</span>
                     </button>
 
-                    {/* Nút Xóa bộ lọc */}
-                    <button 
-                        onClick={handleClearFilter}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 hover:text-red-500 font-bold text-sm transition-all"
-                        title="Xóa bộ lọc"
-                    >
+                    <button onClick={handleClearFilter} className="flex items-center gap-2 px-4 py-2.5 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 hover:text-red-500 font-bold text-sm transition-all">
                         <RefreshCw size={18} />
                         <span className="hidden md:inline">Xóa</span>
                     </button>
 
                     <div className="w-px h-8 bg-slate-200 hidden md:block mx-1"></div>
 
-                    {/* Nút Sort */}
-                    <button 
-                        onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-100 font-bold text-sm transition-all border border-orange-100"
-                        title="Sắp xếp theo ngày dự kiến"
-                    >
+                    <button onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')} className="flex items-center gap-2 px-4 py-2.5 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-100 font-bold text-sm transition-all border border-orange-100">
                         {sortOrder === 'asc' ? <ArrowUpZA size={18} /> : <ArrowDownAZ size={18} />}
                         <span className="hidden md:inline">
                             {sortOrder === 'asc' ? 'Cũ nhất trước' : 'Mới nhất trước'}
@@ -173,7 +167,7 @@ const ReBooking = () => {
                 </div>
             )}
 
-            {/* DANH SÁCH THẺ (GRID) */}
+            {/* DANH SÁCH THẺ */}
             {!loading && !error && treatments.length === 0 ? (
                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
                     <CalendarPlus className="mx-auto text-slate-300 mb-4" size={48} />
@@ -181,11 +175,9 @@ const ReBooking = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Render List Treatments giữ nguyên */}
                     {treatments.map((item) => (
                         <div key={item._id} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col h-full group">
                             
-                            {/* Phần đầu: Thông tin bệnh nhân */}
                             <div className="flex justify-between items-start mb-4 pb-4 border-b border-slate-100">
                                 <div className="flex gap-3">
                                     <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 flex-shrink-0">
@@ -206,7 +198,6 @@ const ReBooking = () => {
                                 </span>
                             </div>
 
-                            {/* Phần giữa: Thông tin điều trị */}
                             <div className="flex-1 space-y-3 mb-5">
                                 <div className="flex items-start gap-2 text-sm">
                                     <FileText size={16} className="text-slate-400 mt-0.5 flex-shrink-0" />
@@ -233,7 +224,6 @@ const ReBooking = () => {
                                 </div>
                             </div>
 
-                            {/* Nút hành động */}
                             <div className="flex gap-2 mt-auto">
                                 <button 
                                     onClick={() => handleOpenViewDetail(item._id)}
@@ -243,8 +233,8 @@ const ReBooking = () => {
                                     <Eye size={18} />
                                 </button>
                                 <button 
-                                    onClick={() => console.log("Mở modal đặt lịch cho:", item)}
-                                    className="flex-1 py-3 bg-blue-50 text-blue-600 font-bold rounded-xl flex items-center justify-center gap-2 group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                                    onClick={() => handleOpenCreateModal(item)}
+                                    className="flex-1 py-3 bg-blue-50 text-blue-600 font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-colors"
                                 >
                                     <CalendarPlus size={18} />
                                     Lên lịch hẹn
@@ -255,11 +245,23 @@ const ReBooking = () => {
                 </div>
             )}
 
-            {/* Popup Modal View Detail */}
+            {/* CÁC MODALS */}
             <ViewDetailTreatment 
                 isOpen={isViewModalOpen} 
                 onClose={handleCloseViewDetail} 
                 treatmentId={selectedTreatmentId} 
+                onOpenBookingModal={() => {
+                    handleCloseViewDetail(); // Đóng modal xem chi tiết
+                    // Cần fetch item detail từ list hoặc component con truyền ra
+                    // Tạm thời nếu view detail không trả full object, bạn có thể truyền ID
+                }}
+            />
+
+            <CreateAppointment 
+                isOpen={isCreateModalOpen}
+                onClose={handleCloseCreateModal}
+                treatmentData={selectedTreatmentForBooking}
+                onSuccess={() => fetchPendingTreatments()}
             />
         </div>
     );
