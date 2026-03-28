@@ -37,6 +37,7 @@ const getByIdService = async (id) => {
 
         const treatment = await model.Treatment.findById(id)
             .populate("medicine_usage.medicine_id")
+            .populate("record_id")
             .lean();
 
         if (!treatment) {
@@ -305,9 +306,208 @@ const updateStatusOnly = async (id, status) => {
     }
 };
 
+/**
+ * get list treatement with appointment_id is null with filter
+ * (
+ *  search: search by full_name(patient name on dental record), record_name (dental record name), 
+ *  filter_date: filter treatement lte planned_date 
+ *  sort: sort by planned_date, default is desc
+ * )
+ */
+const getListTreatementWithAppointmentNull = async (query) => {
+    const context = "TreatmentService.getListTreatementWithAppointmentNull";
+    try {
+        logger.debug("Fetching treatments with appointment_id = null", { context, query });
+
+        // 1. Chuẩn hóa tham số query
+        const search = query.search?.trim();
+        const filterDate = query.filter_date;
+        const filterStatus = query.status || "PLANNED";
+        const sortOrder = query.sort === "desc" ? -1 : 1; 
+        const page = Math.max(1, parseInt(query.page || 1));
+        const limit = Math.max(1, parseInt(query.limit || 10));
+        const skip = (page - 1) * limit;
+
+        // 2. Điều kiện Match ở vòng 1 (Lọc ngay trên bảng Treatment)
+        const initialMatch = {
+            appointment_id: null,
+            status: filterStatus
+        };
+
+        if (filterDate) {
+            const startOfToday = new Date(); 
+            startOfToday.setUTCHours(0, 0, 0, 0);
+
+            const endOfDay = new Date(filterDate);
+            endOfDay.setUTCHours(23, 59, 59, 999);
+
+            initialMatch.planned_date = { 
+                $gte: startOfToday, 
+                $lte: endOfDay 
+            };
+        }
+
+        // 3. Xây dựng Aggregation Pipeline
+        const pipeline = [
+            // Bước 1: Lọc dữ liệu thô từ bảng Treatment
+            { $match: initialMatch },
+
+            // Bước 2: Lookup lấy thông tin Dental Record (Kết quả trả về là 1 MẢNG record_info)
+            // (Thao tác này tương đương với populate record_id)
+            {
+                $lookup: {
+                    from: "dental_records", 
+                    localField: "record_id",
+                    foreignField: "_id",
+                    as: "record_info"
+                }
+            }
+        ];
+
+        // Bước 3: Áp dụng điều kiện Search
+        if (search) {
+            const regexSearch = { $regex: search, $options: "i" };
+            pipeline.push({
+                $match: {
+                    $or: [
+                        { "record_info.full_name": regexSearch },
+                        { "record_info.record_name": regexSearch }
+                    ]
+                }
+            });
+        }
+
+        // Bước 4: Flatten mảng record_info thành Object
+        pipeline.push({
+            $addFields: {
+                record_info: { $arrayElemAt: ["$record_info", 0] }
+            }
+        });
+
+        // Bước 5: Sắp xếp
+        pipeline.push({ $sort: { planned_date: sortOrder } });
+
+        // Bước 6: Phân trang (Facet) và Lookup thêm Doctor + Profile
+        pipeline.push({
+            $facet: {
+                data: [
+                    { $skip: skip },
+                    { $limit: limit },
+                    
+                    // --- LOOKUP DOCTOR ---
+                    {
+                        $lookup: {
+                            from: "staffs", 
+                            localField: "doctor_id",
+                            foreignField: "_id",
+                            as: "doctor_info"
+                        }
+                    },
+                    // Flatten mảng doctor_info thành Object
+                    {
+                        $addFields: {
+                            doctor_info: { $arrayElemAt: ["$doctor_info", 0] }
+                        }
+                    },
+
+                    // --- LOOKUP PROFILE CỦA DOCTOR ---
+                    // (Thao tác này tương đương với việc populate profile_id bên trong doctor_info)
+                    {
+                        $lookup: {
+                            from: "profiles",
+                            localField: "doctor_info.profile_id", // Trỏ vào profile_id bên trong doctor_info vừa tạo
+                            foreignField: "_id",
+                            as: "doctor_profile" // Tạm thời để ở 1 mảng riêng
+                        }
+                    },
+                    // Gắn đè mảng doctor_profile thành dạng object lồng vào bên trong doctor_info
+                    {
+                        $addFields: {
+                            "doctor_info.profile": { $arrayElemAt: ["$doctor_profile", 0] }
+                        }
+                    },
+                    
+                    // --- DỌN DẸP DỮ LIỆU THỪA ---
+                    {
+                        $project: {
+                            __v: 0,
+                            doctor_profile: 0, // Ẩn mảng tạm dùng để chứa profile
+                            "record_info.__v": 0,
+                            "doctor_info.__v": 0,
+                            "doctor_info.profile.__v": 0,
+                            "doctor_info.password": 0 // Che password nếu có
+                        }
+                    }
+                ],
+                totalCount: [
+                    { $count: "count" }
+                ]
+            }
+        });
+
+        // 4. Thực thi truy vấn
+        const result = await model.Treatment.aggregate(pipeline);
+
+        const treatments = result[0]?.data || [];
+        const totalItems = result[0]?.totalCount[0]?.count || 0;
+
+        return {
+            data: treatments,
+            pagination: {
+                page: page,
+                size: limit,
+                totalItems: totalItems,
+                totalPages: Math.ceil(totalItems / limit)
+            }
+        };
+
+    } catch (error) {
+        logger.error("Error cannot get list treatment with appointment is null", {
+            context: context,
+            query: query,
+            error: error.message
+        });
+        
+        throw new errorRes.InternalServerError(
+            `Failed to fetch treatments without appointment: ${error.message}`
+        );
+    }
+};
+
+const addAppointmentIdOnTreatment = async (treatmentId, appointmentId, session) => {
+    const context = "TreatmentService.AddAppointmentIdOnTreatment";
+    try {
+        const treatmentUpdate = await model.Treatment.findByIdAndUpdate(
+            treatmentId,
+            { appointment_id: appointmentId, phase: 'SESSION' },
+            { new: true, session: session } 
+        );
+        
+        if (!treatmentUpdate) {
+            throw new errorRes.NotFoundError("Can't find treatment by id to update.");
+        }
+        
+        return treatmentUpdate;
+    } catch (error) {
+        logger.error("Error cannot add appointment_id into treatment", {
+            context: context,
+            treatmentId: treatmentId,
+            appointmentId: appointmentId,
+            error: error.message,
+            stack: error.stack
+        });
+        if (error.statusCode) {
+            throw error;
+        }
+        throw new errorRes.InternalServerError("Error cannot add appointment_id on treatment.");
+    }
+}
+
 module.exports = {
     getByIdService,
     createService,
     updateService,
     updateStatusOnly,
+    getListTreatementWithAppointmentNull,
+    addAppointmentIdOnTreatment
 };

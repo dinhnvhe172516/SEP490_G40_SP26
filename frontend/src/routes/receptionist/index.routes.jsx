@@ -10,6 +10,7 @@ import ReceptionistLeave from '../../pages/receptionist/ReceptionistLeave';
 import ReceptionistCheckIn from '../../pages/receptionist/ReceptionistCheckIn';
 import Payment from '../../pages/receptionist/payment/ReceptionistPayment';
 import ReceptionistSubServices from '../../pages/receptionist/ReceptionistSubServices';
+import ReBooking from '../../pages/receptionist/re-booking/ReBooking';
 import ReceptionistPendingAppointments from '../../pages/receptionist/ReceptionistPendingAppointments';
 
 /**
@@ -52,6 +53,16 @@ const receptionistRoutes = [
             <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
                 <ReceptionistLayout>
                     <ReceptionistAppointments />
+                </ReceptionistLayout>
+            </ProtectedRoute>
+        )
+    },
+    {
+        path: '/receptionist/re-examination',
+        element: (
+            <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
+                <ReceptionistLayout>
+                    <ReBooking />
                 </ReceptionistLayout>
             </ProtectedRoute>
         )

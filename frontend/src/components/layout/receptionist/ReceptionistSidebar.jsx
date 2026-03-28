@@ -9,6 +9,8 @@ import {
     LogOut,
     Clock,
     UserCheck,
+    CalendarSync
+    UserCheck,
     Bell
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -41,6 +43,7 @@ const ReceptionistSidebar = () => {
         { path: '/receptionist/patients', icon: Users, label: 'Bệnh nhân' },
         { path: '/receptionist/check-in', icon: UserCheck, label: 'Tiếp đón' },
         { path: '/receptionist/appointments', icon: Calendar, label: 'Lịch hẹn' },
+        { path: '/receptionist/re-examination', icon: CalendarSync, label: 'Tái khám' },
         { path: '/receptionist/pending-appointments', icon: Bell, label: 'Chờ xác nhận' },
         { path: '/receptionist/invoices', icon: DollarSign, label: 'Hóa đơn' },
         { path: '/receptionist/services', icon: ClipboardList, label: 'Dịch vụ' },
