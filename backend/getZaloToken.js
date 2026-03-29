@@ -2,8 +2,8 @@ const qs = require('querystring');
 
 // 🔴 BẠN XÓA XONG ĐIỀN THÔNG TIN THẬT VÀO 3 BIẾN BÊN DƯỚI: 🔴
 const APP_ID = '3874737669226678936';
-const APP_SECRET = 'Dán_App_Secret_của_bạn_vào_đây';
-const AUTH_CODE = 'Dán_Auth_Code_siêu_dài_vào_đây';
+const APP_SECRET = '5IzR3EhAjYZrMhJ605q6';
+const AUTH_CODE = 'S79ws_t8No8lMLxIwFv1LaOxLEZneqaW3JqZquwjE38o80pzthGF3ITb8ucVa0WqB0mJyTQe33TMBopgxAOR8Wmq7DFCXJHVGaK8qShS5XSlJ7_oaCf6AYqBOz_avZjiVXjmWD_YGZrxOZgatgyA62O_KwMBicPnRobnc8odO24vImIQYSeBAp8JE8Nknaqd2WvdwEsPVX8eA77Kxh1w52OqTOY4zazZI2CxuQgs7bWMP4RyWDfGKMys3lo-ct9j4rDVprZHIcEn2g-OVggPSGqxZhnI_wO4ucwnmX_prqc5G_I07VxnVkbTXhjQBgB4HIhNQS-2-AYCQ5LZ1zX2gzia479Ae7MUxMyBDJQ9Nf3z224nTlPTlzaKRm9UMIO1HqDD_ynjCW';
 
 async function getToken() {
     try {
@@ -19,9 +19,9 @@ async function getToken() {
                 code: AUTH_CODE
             })
         });
-        
+
         const data = await response.json();
-        
+
         if (!response.ok || data.error) {
             throw new Error(JSON.stringify(data));
         }
