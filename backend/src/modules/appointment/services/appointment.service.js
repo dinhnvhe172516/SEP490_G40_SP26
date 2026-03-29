@@ -1563,15 +1563,15 @@ const getListAppointmentToPayment = async (query) => {
         });
 
         const { date_filter, search } = query;
-        
+
         const page = parseInt(query.page, 10) || 1;
         const limit = parseInt(query.limit, 10) || 10;
         const skip = (page - 1) * limit;
 
         const appointmentMatch = {
-            status: "COMPLETED" 
+            status: "COMPLETED"
         };
-        
+
         if (search) {
             const searchRegex = new RegExp(search, "i");
             appointmentMatch.$or = [
@@ -1581,22 +1581,25 @@ const getListAppointmentToPayment = async (query) => {
         }
 
         const treatmentMatch = {
-            $expr: { $eq: ["$appointment_id", "$$apptId"] }, 
-            price: { $gt: 0 } 
+            $expr: { $eq: ["$appointment_id", "$$apptId"] },
+            price: { $gt: 0 }
         };
-        
-        if (date_filter) {
-            const dateStart = new Date();
-            dateStart.setHours(0, 0, 0, 0);
-            
-            const dateEnd = new Date(date_filter);
-            dateEnd.setHours(23, 59, 59, 999);
-            
-            treatmentMatch.planned_date = { 
-                $gte: dateStart, 
-                $lte: dateEnd 
-            };
-        }
+
+        const dateNow = new Date();
+        const dateEnd = new Date(date_filter || dateNow);
+        dateEnd.setHours(23, 59, 59, 999);
+        dateNow.setHours(0, 0, 0, 0);
+
+        logger.debug("Fillter Date", {
+            context: context,
+            date_filter: date_filter,
+            dateNow: dateNow,
+            dateEnd: dateEnd
+        });
+        treatmentMatch.planned_date = {
+            $gte: dateNow,
+            $lte: dateEnd
+        };
 
         const pipeline = [
             // B1: Lọc các Appointment thỏa mãn điều kiện cơ bản
@@ -1605,7 +1608,7 @@ const getListAppointmentToPayment = async (query) => {
             // B2: Lookup toàn bộ hóa đơn của lịch hẹn này
             {
                 $lookup: {
-                    from: "invoices", 
+                    from: "invoices",
                     localField: "_id",
                     foreignField: "appointment_id",
                     as: "existing_invoices"
@@ -1628,7 +1631,7 @@ const getListAppointmentToPayment = async (query) => {
             // B4: Lookup sang bảng treatments với pipeline tùy chỉnh
             {
                 $lookup: {
-                    from: "treatments", 
+                    from: "treatments",
                     let: { apptId: "$_id" },
                     pipeline: [
                         { $match: treatmentMatch }
@@ -1680,13 +1683,21 @@ const getListAppointmentToPayment = async (query) => {
                 }
             }
         ];
-
         const result = await AppointmentModel.aggregate(pipeline);
 
         const totalItems = result[0].metadata.length > 0 ? result[0].metadata[0].total : 0;
         const totalPages = Math.ceil(totalItems / limit);
         const data = result[0].data;
-
+        logger.debug("List appointment to payment result", {
+            context: context,
+                data: data,
+                pagination: {
+                    total_items: totalItems,
+                    total_pages: totalPages,
+                    current_page: page,
+                    limit: limit
+                }
+        })
         return {
             data,
             pagination: {
