@@ -9,9 +9,8 @@ import {
     LogOut,
     Clock,
     UserCheck,
-    CalendarSync
-    UserCheck,
-    Bell
+    CalendarSync,
+    Bell,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../../../contexts/AuthContext';
