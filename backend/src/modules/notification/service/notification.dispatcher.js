@@ -1,3 +1,4 @@
+const zaloService = require('../../../common/service/zalo.service');
 const Notification = require('../model/notification.model');
 const Account = require('../../auth/models/account.model');
 const Role = require('../../auth/models/role.model');
@@ -121,7 +122,7 @@ const dispatchEmail = async (notification) => {
 
 const dispatchZalo = async (notification) => {
     try {
-        const { scope, recipient_id, recipient_ids, target_roles, title, message } = notification;
+        const { scope, recipient_id, recipient_ids, target_roles, title, message, metadata } = notification;
         let phoneNumbers = [];
 
         // 1. Thu thập danh sách số điện thoại
@@ -174,17 +175,34 @@ const dispatchZalo = async (notification) => {
             return;
         }
 
-        // 2. Gửi Zalo ZNS (Mocking/Logging)
-        // Trong thực tế, bạn sẽ gọi Zalo API ở đây.
-        logger.info('[Zalo ZNS] Sending notification to:', { phoneNumbers, title });
+        // 2. Chuẩn bị dữ liệu Template ZNS
+        // Mapper dữ liệu thô sang Template Data theo quy định của Zalo (Cần update template_id thật vào .env)
+        const templateId = process.env.ZALO_ZNS_TEMPLATE_ID || 'mock_template_id';
+        const templateData = {
+            customer_name: metadata?.customer_name || 'Quý khách',
+            appointment_date: metadata?.appointment_date || 'N/A',
+            appointment_time: metadata?.appointment_time || 'N/A',
+            clinic_name: 'DCMS Dental Care',
+            message: message.substring(0, 200) // Giới hạn ký tự tin nhắn Zalo
+        };
 
-        // Giả sử gửi thành công 100% trong Mock mode
+        // 3. Gửi Zalo ZNS API thật
+        logger.info('[Zalo ZNS] Dispatching ZNS to phones:', { count: phoneNumbers.length, title });
+        
+        const sendResults = await Promise.all(
+            phoneNumbers.map(phone => zaloService.sendZNS(phone, templateId, templateData))
+        );
+
+        // Kiểm tra xem có bất kỳ tin nhắn nào gửi thành công không
+        const succeeded = sendResults.some(r => r.error === 0);
+
         await Notification.updateOne(
             { _id: notification._id },
             { 
                 $set: { 
-                    'channels.zalo.status': 'SENT',
-                    'channels.zalo.sent_at': new Date()
+                    'channels.zalo.status': succeeded ? 'SENT' : 'FAILED',
+                    'channels.zalo.sent_at': succeeded ? new Date() : null,
+                    'channels.zalo.api_response': sendResults // Lưu lại log phản hồi từ Zalo
                 } 
             }
         );
