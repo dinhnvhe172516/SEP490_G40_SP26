@@ -902,7 +902,7 @@ const createService = async (dataCreate, account_id) => {
             }
         }).catch(err => logger.error("Lỗi gửi thông báo cho nhân viên:", err.message));
 
-        // Gửi cho Bệnh nhân
+        // Gửi cho Bệnh nhân (in_app + zalo)
         notificationService.sendToUser(account_id, {
             type: 'NEW_APPOINTMENT',
             title: 'Đặt lịch thành công',
@@ -911,6 +911,11 @@ const createService = async (dataCreate, account_id) => {
             metadata: {
                 entity_id: newAppointment._id,
                 entity_type: 'APPOINTMENT'
+            },
+            channels: {
+                in_app: { enabled: true },
+                zalo: { enabled: true },
+                email: { enabled: true }
             }
         }).catch(err => logger.error("Lỗi gửi thông báo cho bệnh nhân:", err.message));
 
@@ -1292,7 +1297,11 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                             title: 'Lịch hẹn đã được xác nhận',
                             message: `Yêu cầu đổi lịch sang ${newData.appointment_time} ngày ${formattedDate} đã được phòng khám xác nhận.`,
                             action_url: '/appointments',
-                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' }
+                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' },
+                            channels: {
+                                in_app: { enabled: true },
+                                zalo: { enabled: true }
+                            }
                         }).catch(err => logger.error('Lỗi gửi thông báo xác nhận cho bệnh nhân:', err.message));
                     }
                 } else if (isGeneralCancel) {
@@ -1318,7 +1327,11 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                             title: notifyTitle,
                             message: notifyMsg,
                             action_url: '/appointments',
-                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' }
+                            metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' },
+                            channels: {
+                                in_app: { enabled: true },
+                                zalo: { enabled: true }
+                            }
                         }).catch(err => logger.error('Lỗi gửi thông báo hủy cho bệnh nhân:', err.message));
                     }
                 }
@@ -1690,13 +1703,13 @@ const getListAppointmentToPayment = async (query) => {
         const data = result[0].data;
         logger.debug("List appointment to payment result", {
             context: context,
-                data: data,
-                pagination: {
-                    total_items: totalItems,
-                    total_pages: totalPages,
-                    current_page: page,
-                    limit: limit
-                }
+            data: data,
+            pagination: {
+                total_items: totalItems,
+                total_pages: totalPages,
+                current_page: page,
+                limit: limit
+            }
         })
         return {
             data,
