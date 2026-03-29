@@ -77,7 +77,7 @@ const AssistantAppointments = () => {
       const apptParams = {
         appointment_date: selectedDate,
         page: currentPage,
-        limit: 1, // Tạm đổi thành 1 để bạn có thể thấy thanh phân trang ngay
+        limit: 6, // Tạm đổi thành 1 để bạn có thể thấy thanh phân trang ngay
       };
       if (filterDoctor !== "all") {
         apptParams.doctor_id = filterDoctor;
