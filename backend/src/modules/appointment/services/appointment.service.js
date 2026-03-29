@@ -35,6 +35,7 @@ const getListService = async (query, doctor_id, lte_date) => {
         // 1. Lấy và chuẩn hóa các tham số
         const search = query.search?.trim();
         const statusFilter = query.status && query.status !== "all" ? query.status.toUpperCase() : null;
+        const excludeStatus = query.exclude_status ? query.exclude_status.toUpperCase() : null;
         const filterDoctorId = doctor_id || (query.doctor_id && query.doctor_id !== "all" ? query.doctor_id : null);
         const filterLteDate = lte_date || query.lte_date;
         const filterSpecificDate = query.appointment_date;
@@ -50,6 +51,8 @@ const getListService = async (query, doctor_id, lte_date) => {
         // Lọc theo trạng thái (status)
         if (statusFilter) {
             matchCondition.status = statusFilter;
+        } else if (excludeStatus) {
+            matchCondition.status = { $ne: excludeStatus };
         }
 
         // Lọc theo doctor_id (Ép kiểu về ObjectId)

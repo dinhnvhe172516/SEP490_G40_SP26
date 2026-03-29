@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Toast from '../../components/ui/Toast';
 import appointmentService from '../../services/appointmentService';
+import SharedPagination from '../../components/ui/SharedPagination';
 
 // Sub-components
 import AppointmentHeader from './components/appointments/AppointmentHeader';
@@ -20,6 +21,11 @@ const ReceptionistAppointments = () => {
     const [selectedDate, setSelectedDate] = useState(todayStr);
     const [filterStatus, setFilterStatus] = useState('all');
 
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const itemsPerPage = 6;
+
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [toast, setToast] = useState({ show: false, type: '', message: '' });
@@ -38,16 +44,47 @@ const ReceptionistAppointments = () => {
     const fetchAppointments = async () => {
         setLoading(true);
         try {
-            const response = await appointmentService.getStaffAppointments({
-                page: 1,
-                limit: 1000
-            });
-            const data = response?.data?.data || response?.data || [];
-            const list = Array.isArray(data) ? data : data.data || [];
+            const queryParams = {
+                page: currentPage,
+                limit: itemsPerPage,
+                appointment_date: selectedDate,
+                exclude_status: 'PENDING_CONFIRMATION'
+            };
+
+            if (filterStatus && filterStatus !== 'all') {
+                queryParams.status = filterStatus;
+            }
+
+            const response = await appointmentService.getStaffAppointments(queryParams);
+
+            let list = [];
+            let paginationData = null;
+
+            if (response) {
+                if (Array.isArray(response.data?.data)) {
+                    list = response.data.data;
+                } else if (Array.isArray(response.data)) {
+                    list = response.data;
+                } else if (Array.isArray(response)) {
+                    list = response;
+                }
+                paginationData = response.pagination || response.data?.pagination;
+            }
+
             setAppointments(list);
+
+            if (paginationData) {
+                setTotalItems(paginationData.totalItems || 0);
+                const size = paginationData.size || itemsPerPage;
+                setTotalPages(Math.ceil((paginationData.totalItems || 0) / size) || 1);
+            } else {
+                setTotalItems(list.length);
+                setTotalPages(1);
+            }
+
         } catch (error) {
             console.error('Error fetching appointments:', error);
-            setToast({ show: true, type: 'error', message: '❌ Lỗi khi tải danh sách lịch hẹn!' });
+            setToast({ show: true, type: 'error', message: 'Lỗi khi tải danh sách lịch hẹn!' });
         } finally {
             setLoading(false);
         }
@@ -55,19 +92,15 @@ const ReceptionistAppointments = () => {
 
     useEffect(() => {
         fetchAppointments();
-    }, []);
+    }, [currentPage, selectedDate, filterStatus]);
 
-    // --- FILTER ---
-    const filteredAppointments = useMemo(() => {
-        return appointments.filter(apt => {
-            const aptDateStr = apt.appointment_date ? new Date(apt.appointment_date).toISOString().split('T')[0] : '';
-            const matchesDate = aptDateStr === selectedDate;
-            const matchesStatus = filterStatus === 'all'
-                ? apt.status !== 'PENDING_CONFIRMATION'
-                : apt.status === filterStatus;
-            return matchesDate && matchesStatus;
-        });
-    }, [appointments, selectedDate, filterStatus]);
+    // Reset pagination when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [selectedDate, filterStatus]);
+
+    // Dữ liệu đã được API lọc và phân trang từ Backend
+    const paginatedAppointments = appointments;
 
     // --- MODAL HANDLERS ---
     const handleConfirmClick = (appointment) => {
@@ -175,7 +208,7 @@ const ReceptionistAppointments = () => {
 
             {/* Appointments List */}
             <AppointmentList
-                appointments={filteredAppointments}
+                appointments={paginatedAppointments}
                 loading={loading}
                 onConfirm={handleConfirmClick}
                 onCancel={handleCancelClick}
@@ -184,6 +217,19 @@ const ReceptionistAppointments = () => {
                 onViewDetails={handleViewDetails}
                 onConfirmNew={handleConfirmAppointment}
             />
+
+            {/* Pagination Component */}
+            {appointments.length > 0 && !loading && (
+                <div className="mt-6 mb-8">
+                    <SharedPagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        totalItems={totalItems}
+                        onPageChange={setCurrentPage}
+                        itemLabel="lịch hẹn"
+                    />
+                </div>
+            )}
 
             {/* Modals */}
             <ConfirmAppointmentModal
