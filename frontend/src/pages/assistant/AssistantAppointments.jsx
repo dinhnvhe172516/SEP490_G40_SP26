@@ -25,6 +25,7 @@ import PrepareAppointmentModal from "./modals/PrepareAppointmentModal";
 import appointmentService from "../../services/appointmentService";
 import staffService from "../../services/staffService";
 import equipmentService from "../../services/equipmentService";
+import SharedPagination from "../../components/ui/SharedPagination";
 
 const AssistantAppointments = () => {
   const todayStr = new Date().toISOString().split("T")[0];
@@ -32,6 +33,10 @@ const AssistantAppointments = () => {
   const [filterDoctor, setFilterDoctor] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   const [appointments, setAppointments] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -59,6 +64,11 @@ const AssistantAppointments = () => {
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDate, filterDoctor, filterStatus, debouncedSearch]);
+
   // --- FETCH DATA ---
   const fetchData = async () => {
     setLoading(true);
@@ -66,7 +76,8 @@ const AssistantAppointments = () => {
       // 1. Fetch appointments for selected date
       const apptParams = {
         appointment_date: selectedDate,
-        limit: 50, // Tăng limit lên để xem hết trong ngày
+        page: currentPage,
+        limit: 1, // Tạm đổi thành 1 để bạn có thể thấy thanh phân trang ngay
       };
       if (filterDoctor !== "all") {
         apptParams.doctor_id = filterDoctor;
@@ -81,16 +92,36 @@ const AssistantAppointments = () => {
       const apptResponse =
         await appointmentService.getStaffAppointments(apptParams);
 
-      // Lấy dữ liệu từ response
+      // Lấy danh sách lịch hẹn và cấu trúc phân trang từ response trả về.
+      // Do Axios interceptor có thể trả về các cấu trúc khác nhau tùy cài đặt, ta cần kiêm tra:
       let apptData = [];
-      if (apptResponse && apptResponse.data) {
-        if (Array.isArray(apptResponse.data.data)) {
+      let paginationData = null;
+      if (apptResponse) {
+        if (Array.isArray(apptResponse.data?.data)) {
+          // Trường hợp 1: data bị lồng 2 lớp (VD: { data: { data: [...] } })
           apptData = apptResponse.data.data;
         } else if (Array.isArray(apptResponse.data)) {
+          // Trường hợp 2: Cấu trúc GetListSuccess chuẩn từ backend (VD: { data: [...], pagination: {...} })
           apptData = apptResponse.data;
+        } else if (Array.isArray(apptResponse)) {
+          // Trường hợp 3: API trả thẳng về mảng
+          apptData = apptResponse;
         }
+
+        // Phân trang có thể nằm trên cùng 1 cấp với data (apptResponse.pagination) 
+        // hoặc lồng cấp bên trong (apptResponse.data.pagination)
+        paginationData = apptResponse.pagination || apptResponse.data?.pagination;
       }
       setAppointments(apptData);
+
+      if (paginationData) {
+        setTotalItems(paginationData.totalItems || 0);
+        const size = paginationData.size || 10;
+        setTotalPages(Math.ceil((paginationData.totalItems || 0) / size) || 1);
+      } else {
+        setTotalItems(apptData.length);
+        setTotalPages(1);
+      }
 
       // 2. Fetch doctors for the filter
       if (doctors.length === 0) {
@@ -118,9 +149,9 @@ const AssistantAppointments = () => {
 
   useEffect(() => {
     fetchData();
-  }, [selectedDate, filterDoctor, filterStatus, debouncedSearch]);
+  }, [selectedDate, filterDoctor, filterStatus, debouncedSearch, currentPage]);
 
-  const filteredAppointments = appointments; // Đã lọc ở backend
+  const filteredAppointments = appointments;
 
   const getStatusInfo = (status) => {
     switch (status) {
@@ -455,6 +486,17 @@ const AssistantAppointments = () => {
           </Card>
         )}
       </div>
+
+      {/* Pagination */}
+      {filteredAppointments.length > 0 && !loading && (
+        <SharedPagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={totalItems}
+          onPageChange={setCurrentPage}
+          itemLabel="lịch hẹn"
+        />
+      )}
 
       {/* Modals */}
       <ViewAppointmentModal
