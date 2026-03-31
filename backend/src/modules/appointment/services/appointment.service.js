@@ -915,7 +915,8 @@ const createService = async (dataCreate, account_id) => {
             channels: {
                 in_app: { enabled: true },
                 zalo: { enabled: true },
-                email: { enabled: true }
+                email: { enabled: true },
+                sms: { enabled: true }
             }
         }).catch(err => logger.error("Lỗi gửi thông báo cho bệnh nhân:", err.message));
 
@@ -1330,7 +1331,8 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
                             metadata: { entity_id: newData._id, entity_type: 'APPOINTMENT' },
                             channels: {
                                 in_app: { enabled: true },
-                                zalo: { enabled: true }
+                                zalo: { enabled: true },
+                                sms: { enabled: true }
                             }
                         }).catch(err => logger.error('Lỗi gửi thông báo hủy cho bệnh nhân:', err.message));
                     }

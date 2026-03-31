@@ -53,6 +53,10 @@ const startAppointmentReminderCron = () => {
                             metadata: {
                                 entity_id: appt._id,
                                 entity_type: 'APPOINTMENT'
+                            },
+                            channels: {
+                                in_app: { enabled: true },
+                                sms: { enabled: true }
                             }
                         });
                     } catch (notifyErr) {
