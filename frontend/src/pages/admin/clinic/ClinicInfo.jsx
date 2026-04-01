@@ -152,6 +152,34 @@ const ClinicInfo = () => {
         }
 
         try {
+            // ========== FRONTEND VALIDATION ==========
+            if (!formData.clinic_name?.trim()) throw new Error('Tên phòng khám không được để trống');
+            if (!formData.clinic_address?.trim()) throw new Error('Địa chỉ không được để trống');
+            
+            // Validate Phone (10 digits starting with 0 or +84)
+            const phoneRegex = /^(0|\+84)[0-9]{9}$/;
+            if (formData.phone && !phoneRegex.test(formData.phone)) {
+                throw new Error('Số điện thoại không hợp lệ (phải đủ 10 số bắt đầu bằng 0 hoặc +84)');
+            }
+
+            // Validate Email
+            const emailRegex = /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/;
+            if (formData.email && !emailRegex.test(formData.email)) {
+                throw new Error('Email không hợp lệ');
+            }
+
+            // Validate Tax Code (10-13 digits)
+            const taxRegex = /^[0-9]{10,13}$/;
+            if (formData.tax_code && !taxRegex.test(formData.tax_code)) {
+                throw new Error('Mã số thuế không hợp lệ (phải từ 10 đến 13 chữ số)');
+            }
+
+            // Validate License Number
+            const licenseRegex = /^[A-Z0-9]{5,50}$/;
+            if (formData.license_number && !licenseRegex.test(formData.license_number)) {
+                throw new Error('Số giấy phép không hợp lệ (5-50 ký tự in hoa và chữ số)');
+            }
+
             setLoading(true);
 
             // Sử dụng FormData để gửi cả text và file
@@ -202,10 +230,14 @@ const ClinicInfo = () => {
             }
         } catch (err) {
             console.error('Error updating clinic:', err);
+            
+            // Lấy thông báo lỗi cụ thể từ Backend hoặc Error object
+            const errorMessage = err.data?.message || err.message || 'Lỗi khi cập nhật thông tin';
+            
             setToast({
                 show: true,
                 type: 'error',
-                message: `${err.message || 'Lỗi khi cập nhật thông tin'}`
+                message: errorMessage
             });
         } finally {
             setLoading(false);
