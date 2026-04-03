@@ -40,6 +40,13 @@ const UserFormModal = ({ isOpen, onClose, onSubmit }) => {
         certificate: null,
         certificateUrl: '',
         avatar: null,
+        degree: '',
+        education: '',
+        note: '',
+        work_start: '',
+        license_number: '',
+        issued_by: '',
+        issued_date: '',
     });
 
     const [errors, setErrors] = useState({});
@@ -76,6 +83,13 @@ const UserFormModal = ({ isOpen, onClose, onSubmit }) => {
                 certificate: null,
                 certificateUrl: '',
                 avatar: null,
+                degree: '',
+                education: '',
+                note: '',
+                work_start: '',
+                license_number: '',
+                issued_by: '',
+                issued_date: '',
             });
             setCertificatePreview(null);
             setErrors({});
@@ -365,15 +379,119 @@ const UserFormModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
                         </div>
 
+                        {/* Additional Info for Staff */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Bằng cấp
+                                </label>
+                                <input
+                                    type="text"
+                                    name="degree"
+                                    value={formData.degree}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="Vd: Thạc sĩ, Tiến sĩ..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Trường đào tạo
+                                </label>
+                                <input
+                                    type="text"
+                                    name="education"
+                                    value={formData.education}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="Vd: Đại học Y Dược..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Ngày bắt đầu làm việc
+                                </label>
+                                <input
+                                    type="date"
+                                    name="work_start"
+                                    value={formData.work_start}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Ghi chú
+                                </label>
+                                <input
+                                    type="text"
+                                    name="note"
+                                    value={formData.note}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    placeholder="Thông tin thêm..."
+                                />
+                            </div>
+                        </div>
+
                         {/* Certificate Upload - Only for Doctor */}
                         {roles.find(r => r._id === formData.role_id)?.name === 'DOCTOR' && (
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Chứng chỉ hành nghề <span className="text-gray-500 text-xs">(Tùy chọn)</span>
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-4">
+                                <label className="block text-sm font-bold text-purple-800 border-b border-purple-200 pb-2">
+                                    Thông tin Chứng chỉ hành nghề
                                 </label>
-                                <p className="text-xs text-gray-600 mb-3">
-                                    Upload chứng chỉ hành nghề bác sĩ (JPG, PNG hoặc PDF, tối đa 5MB)
-                                </p>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Số chứng chỉ <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="license_number"
+                                            value={formData.license_number}
+                                            onChange={handleChange}
+                                            required={roles.find(r => r._id === formData.role_id)?.name === 'DOCTOR'}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Vd: CCHN-123456"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Nơi cấp <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="issued_by"
+                                            value={formData.issued_by}
+                                            onChange={handleChange}
+                                            required={roles.find(r => r._id === formData.role_id)?.name === 'DOCTOR'}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            placeholder="Vd: Sở Y tế Hà Nội"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Ngày cấp <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            name="issued_date"
+                                            value={formData.issued_date}
+                                            onChange={handleChange}
+                                            required={roles.find(r => r._id === formData.role_id)?.name === 'DOCTOR'}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-2 mt-4">
+                                        Tài liệu đính kèm <span className="text-gray-500 text-xs">(Tùy chọn)</span>
+                                    </label>
+                                    <p className="text-xs text-gray-600 mb-3">
+                                        Upload chứng chỉ hành nghề bác sĩ (JPG, PNG hoặc PDF, tối đa 5MB)
+                                    </p>
 
                                 {!certificatePreview ? (
                                     <div>
@@ -431,6 +549,7 @@ const UserFormModal = ({ isOpen, onClose, onSubmit }) => {
                                         </div>
                                     </div>
                                 )}
+                                </div>
                             </div>
                         )}
                     </div>
