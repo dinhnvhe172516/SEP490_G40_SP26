@@ -307,13 +307,15 @@ const UserList = () => {
             />
 
             {/* Toast */}
-            <Toast
-                show={toast.show}
-                type={toast.type}
-                message={toast.message}
-                onClose={() => setToast({ ...toast, show: false })}
-                duration={3000}
-            />
+            {toast.show && (
+                <Toast
+                    show={toast.show}
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={() => setToast({ ...toast, show: false })}
+                    duration={4000}
+                />
+            )}
         </div>
     );
 };

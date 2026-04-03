@@ -696,17 +696,18 @@ const ClinicInfo = () => {
                 </div>
             </div>
 
-            {/* Toast Notification */}
-            <Toast
-                show={toast.show}
-                type={toast.type}
-                message={toast.message}
-                onClose={() => setToast(prev => ({ ...prev, show: false }))}
-                duration={3000}
-            />
+            {/* Toast */}
+            {toast.show && (
+                <Toast
+                    show={toast.show}
+                    type={toast.type}
+                    message={toast.message}
+                    onClose={() => setToast({ ...toast, show: false })}
+                    duration={3000}
+                />
+            )}
         </div>
     );
 };
 
 export default ClinicInfo;
-

@@ -28,7 +28,9 @@ const MedicineCard = ({
                 }`}>
                 <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                        <p className="text-xs opacity-90 mb-1">{medicine.category}</p>
+                        <p className="text-xs opacity-90 mb-1">
+                            {typeof medicine.category === 'object' ? medicine.category?.name : medicine.category}
+                        </p>
                         <h3 className="text-lg font-bold mb-1">
                             {medicine.medicine_name}
                         </h3>
@@ -60,7 +62,9 @@ const MedicineCard = ({
                 {/* Manufacturer */}
                 <div>
                     <p className="text-xs text-gray-500 mb-1">Nhà sản xuất</p>
-                    <p className="text-sm font-semibold text-gray-900">{medicine.manufacturer}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                        {typeof medicine.manufacturer === 'object' ? medicine.manufacturer?.name : medicine.manufacturer}
+                    </p>
                 </div>
 
                 {/* Stock */}
