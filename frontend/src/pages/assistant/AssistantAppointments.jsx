@@ -75,7 +75,7 @@ const AssistantAppointments = () => {
         appointment_date: selectedDate,
         page: currentPage,
         limit: 6,
-        status: "CHECKED_IN,IN_CONSULTATION",
+        excludeStatuses: "SCHEDULED,PENDING_CONFIRMATION,SCHEDULED,COMPLETED,CANCELLED,NO_SHOW",
       };
       if (filterDoctor !== "all") {
         apptParams.doctor_id = filterDoctor;
