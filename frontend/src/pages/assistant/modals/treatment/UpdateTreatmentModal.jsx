@@ -44,9 +44,8 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
       try {
         const response = await treatmentApi.viewTreatmentDetail(treatment._id);
         const detail = response?.data?.data || response?.data || response;
-
         // Cập nhật formData bao gồm note, price và phase
-        setFormData({
+        setFormData({ 
           note: detail.note || treatment.note || "",
           price: detail.price !== undefined ? detail.price : (treatment.price || 0),
           phase: detail.phase || treatment.phase || "PLAN"
@@ -68,8 +67,8 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
         }
       } catch {
         // Fallback
-        setFormData({
-          note: treatment.note || "",
+        setFormData({ 
+          note: treatment.note || "", 
           price: treatment.price !== undefined ? treatment.price : 0,
           phase: treatment.phase || "PLAN"
         });
@@ -234,7 +233,6 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
                   <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 border-b border-slate-100 pb-2">
                     <AlertCircle size={16} /> Thông tin điều trị & Chi phí
                   </h3>
-
                   {/* Cập nhật lại Grid: 2 cột để chứa Phase và Price cân đối */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     {/* TRƯỜNG PHASE MỚI */}
