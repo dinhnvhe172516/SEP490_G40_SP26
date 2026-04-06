@@ -126,7 +126,7 @@ const updateService = async (treatmentId, data) => {
 
                 // Nếu PLAN phase (không có appointment_id riêng) → tìm lịch khám ĐANG KHÁM của bệnh nhân
                 if (!targetAppointmentId) {
-                    debugLog(`PLAN phase: searching active appt for patient ${existingTreatment.patient_id}`);
+                    logger.debug(`PLAN phase: searching active appt for patient ${existingTreatment.patient_id}`, { context });
                     const activeAppt = await AppointmentModel.findOne({
                         patient_id: existingTreatment.patient_id,
                         status: 'IN_CONSULTATION'
