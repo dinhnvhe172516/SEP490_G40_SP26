@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { storage } from '../services/storage';
+import { storage, sessionStorage as sessionStorageService } from '../services/storage';
 import authService from '../services/authService';
 
 const AuthContext = createContext();
@@ -40,11 +40,26 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
+    const logout = async () => {
+        // Lấy refresh token từ storage (ưu tiên localStorage, sau đó sessionStorage)
+        const refreshToken = storage.get('refresh_token') || sessionStorageService.get('refresh_token');
+
+        // Xóa token & user info ở frontend trước (đảm bảo UI cập nhật ngay)
         setUser(null);
         setIsAuthenticated(false);
+        storage.remove('access_token');
+        storage.remove('refresh_token');
         storage.remove('dcms_user');
-        sessionStorage.removeItem('dcms_user');
+        sessionStorageService.remove('access_token');
+        sessionStorageService.remove('refresh_token');
+        sessionStorageService.remove('dcms_user');
+
+        // Gọi API invalidate session trên server (fire & forget)
+        if (refreshToken) {
+            authService.logout(refreshToken).catch(() => {
+                // Bỏ qua lỗi - user đã logout ở client rồi
+            });
+        }
     };
 
     const updateUser = (updatedData) => {
