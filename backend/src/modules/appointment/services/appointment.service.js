@@ -1572,7 +1572,9 @@ const checkDuplicateFullNameAndPhoneAndAppointDateAndAppointTime = async (full_n
 }
 
 /**
- * to get list appointment to payment with conditions treatment with price > 0 and No have appointment_id on invoices Modal || if have then only get with status invoice is PENDING with filter:
+ * to get list appointment to payment with conditions treatment with 
+ * price > 0 and No have appointment_id on invoices Modal || if have then only get with status invoice is PENDING with filter:
+ * 
  * - date_filter: get treatment by planned_date lte date_filter
  * - status: status of appointment is COMPLETED
  * - search: search by full_name or phone 
