@@ -91,8 +91,8 @@ apiClient.interceptors.response.use(
                 refreshToken
             });
 
-            // Backend trả về 'token', không phải 'access_token'
-            const access_token = response.data.data?.token || response.data.data?.access_token;
+            // Backend trả về 'token' hoặc 'accessToken' bên trong trường 'data'
+            const access_token = response.data.data?.accessToken || response.data.data?.token || response.data.accessToken || response.data.token;
 
             // Update tokens
             if (storage.get('refresh_token')) {

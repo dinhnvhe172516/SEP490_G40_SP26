@@ -73,11 +73,12 @@ const authService = {
         try {
             const response = await apiClient.post('/api/auth/refresh-token', { refreshToken });
 
-            if (response.data.access_token) {
+            const accessToken = response.data.accessToken || response.data.token;
+            if (accessToken) {
                 if (storage.get('access_token')) {
-                    storage.set('access_token', response.data.access_token);
+                    storage.set('access_token', accessToken);
                 } else {
-                    sessionStorage.set('access_token', response.data.access_token);
+                    sessionStorage.set('access_token', accessToken);
                 }
             }
 
