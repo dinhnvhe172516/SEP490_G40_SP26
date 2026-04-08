@@ -481,7 +481,7 @@ const updateController = async (req, res) => {
     };
 
     if (appointment_date && appointment_time) {
-      if (checkBookingInFuture(appointment_date, appointment_time)) {
+      if (!checkBookingInFuture(appointment_date, appointment_time)) {
         logger.warn("Cannot update appointment in the past", {
           context: "AppointmentController.updateController",
           appointment_date: appointment_date,
@@ -527,7 +527,7 @@ const patientRequestUpdateController = async (req, res) => {
       appointment_date,
       appointment_time,
       reason,
-      userRole: "PATIENT", // Ép Role để service tự động đổi thành PENDING_CONFIRMATION và báo lễ tân
+      userRole: "PATIENT", 
     };
 
     const updated = await ServiceProcess.updateService(id, updateData);
