@@ -12,8 +12,8 @@ const QRPaymentModal = ({ invoice, onClose, onPaid }) => {
         setChecking(true);
         try {
             const res = await billingService.checkPaymentStatus(invoice.invoice_code);
-            // Backend trả về { status: 'PAID' } khi thanh toán thành công
-            const status = res?.data?.status || res?.data?.data?.status;
+            // Backend trả về { status: 'PAID' } hoặc { status: 'PENDING' }
+            const status = res?.status || res?.data?.status;
             if (status === 'PAID' || status === 'COMPLETED') {
                 setPaid(true);
                 if (onPaid) onPaid(); // Thông báo cho component cha

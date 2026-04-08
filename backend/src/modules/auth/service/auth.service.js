@@ -419,7 +419,8 @@ exports.refreshToken = async (refreshToken) => {
     });
 
     return {
-        token: newAccessToken
+        token: newAccessToken,
+        accessToken: newAccessToken
     };
 };
 

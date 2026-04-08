@@ -16,6 +16,8 @@ const MainNavigation = () => {
     const navigate = useNavigate();
     const [avatarUrl, setAvatarUrl] = useState('');
 
+    console.log("clinicInfo: ", clinicInfo);
+
     // Fetch avatar when user is authenticated
     useEffect(() => {
         if (isAuthenticated) {
