@@ -53,13 +53,13 @@ async function startServer() {
             });
         });
 
-        process.on('SIGINT', () => {
-            console.log('\n⚠️  SIGINT signal received: closing HTTP server');
-            httpServer.close(() => {
-                console.log('✅ HTTP server closed');
-                process.exit(0);
-            });
-        });
+        // process.on('SIGINT', () => {
+        //     console.log('\n⚠️  SIGINT signal received: closing HTTP server');
+        //     httpServer.close(() => {
+        //         console.log('✅ HTTP server closed');
+        //         process.exit(0);
+        //     });
+        // });
 
     } catch (error) {
         console.error('❌ Error starting server:', error);

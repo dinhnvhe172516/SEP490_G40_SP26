@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import appointmentService from '../../services/appointmentService';
 import PublicLayout from '../../components/layout/PublicLayout';
 import Toast from '../../components/ui/Toast';
@@ -29,12 +28,10 @@ import SharedPagination from '../../components/ui/SharedPagination';
  * @component
  */
 const PatientAppointments = () => {
-    const { user } = useAuth();
     const navigate = useNavigate();
 
     // State quản lý danh sách appointments
     const [appointments, setAppointments] = useState([]);
-    const [filteredAppointments, setFilteredAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -115,7 +112,6 @@ const PatientAppointments = () => {
     const getStatusColor = (status) => {
         const colors = {
             'SCHEDULED': 'bg-blue-100 text-blue-700 border-blue-200',
-            'PENDING_CONFIRMATION': 'bg-orange-100 text-orange-700 border-orange-200',
             'CHECKED_IN': 'bg-yellow-100 text-yellow-700 border-yellow-200',
             'IN_CONSULTATION': 'bg-purple-100 text-purple-700 border-purple-200',
             'COMPLETED': 'bg-green-100 text-green-700 border-green-200',
@@ -131,7 +127,6 @@ const PatientAppointments = () => {
     const getStatusText = (status) => {
         const texts = {
             'SCHEDULED': 'Đã lên lịch',
-            'PENDING_CONFIRMATION': 'Chờ xác nhận',
             'CHECKED_IN': 'Đã check-in',
             'IN_CONSULTATION': 'Đang khám',
             'COMPLETED': 'Hoàn thành',
@@ -198,7 +193,6 @@ const PatientAppointments = () => {
                             appointment_date: updateForm.date,
                             appointment_time: updateForm.time,
                             reason: updateForm.reason,
-                            status: 'PENDING_CONFIRMATION' // Cập nhật trạng thái chờ xác nhận
                         }
                         : apt
                 )

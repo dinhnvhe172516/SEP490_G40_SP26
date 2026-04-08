@@ -49,7 +49,6 @@ const ReceptionistSidebar = () => {
 
     const menuItems = [
         { path: '/receptionist/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-        { path: '/receptionist/patients', icon: Users, label: 'Bệnh nhân' },
         { path: '/receptionist/check-in', icon: UserCheck, label: 'Tiếp đón' },
         {
             key: 'appointments',

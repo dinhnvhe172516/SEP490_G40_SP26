@@ -33,7 +33,7 @@ const appointmentService = {
 
     // Bệnh nhân yêu cầu đổi lịch khám
     updatePatientAppointment: async (id, data) => {
-        const response = await apiClient.patch(`/api/appointment/request-update/${id}`, data);
+        const response = await apiClient.patch(`/api/appointment/${id}`, data);
         return response;
     },
 

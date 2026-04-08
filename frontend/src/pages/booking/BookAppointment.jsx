@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import PublicLayout from '../../components/layout/PublicLayout';
-import Toast from '../../components/ui/Toast';
 import { ArrowLeft, Check, Loader2 } from 'lucide-react';
 import appointmentService from '../../services/appointmentService';
+import Swal from 'sweetalert2';
 
 // Import step components
 import ServiceDateTimeStep from './components/ServiceDateTimeStep';
@@ -16,8 +16,9 @@ const BookAppointment = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    // Form state
     const [currentStep, setCurrentStep] = useState(1);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     const [bookingData, setBookingData] = useState({
         service_id: null,
         service_name: '',
@@ -29,46 +30,50 @@ const BookAppointment = () => {
         reason: ''
     });
 
-    // Effect: Kiểm tra nếu có service truyền qua từ trang ServiceDetail
+    // =============================
+    // HANDLE LOCATION STATE
+    // =============================
     useEffect(() => {
-        // 1. Phục hồi dữ liệu sau khi đăng nhập thành công
-        const recoveredData = location.state?.bookingData || location.state?.recoveredBookingData;
+        const recoveredData =
+            location.state?.bookingData || location.state?.recoveredBookingData;
+
         if (recoveredData && currentStep === 1) {
             setBookingData(recoveredData);
-            setCurrentStep(2); // Nhảy thẳng sang bước xác nhận vì đã chọn xong ở bước 1 trước đó
-            
-            // Xóa state để người dùng có thể quay lại bước 1 mà không bị ép nhảy lại bước 2
+            setCurrentStep(2);
+
             const newState = { ...location.state };
             delete newState.bookingData;
             delete newState.recoveredBookingData;
+
             navigate(location.pathname, { state: newState, replace: true });
-            
             return;
         }
 
-        // 2. Nhận dữ liệu từ trang Chi tiết dịch vụ
         if (location.state?.service && currentStep === 1) {
             const { service, subService } = location.state;
+
             setBookingData(prev => ({
                 ...prev,
                 service_id: service._id,
                 service_name: service.service_name,
                 sub_service_id: subService?._id || null,
                 sub_service_name: subService?.sub_service_name || '',
-                service_price: subService ? subService.min_price : (service.price || 0)
+                service_price: subService
+                    ? subService.min_price
+                    : service.price || 0
             }));
         }
-    }, [location.state, currentStep]);
+    }, [location.state, currentStep, navigate]);
 
-    // Toast and UI states
-    const [toast, setToast] = useState({ show: false, type: 'success', message: '' });
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    // Step navigation
+    // =============================
+    // STEP CONTROL
+    // =============================
     const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 3));
     const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
 
-    // Handle combined service + date/time selection
+    // =============================
+    // STEP 1: SELECT SERVICE + TIME
+    // =============================
     const handleCombinedSelect = (service, subService, date, time) => {
         const newBookingData = {
             ...bookingData,
@@ -84,37 +89,42 @@ const BookAppointment = () => {
         setBookingData(newBookingData);
 
         if (!user) {
-            setToast({
-                show: true,
-                type: 'error',
-                message: 'Vui lòng đăng nhập để tiếp tục đặt lịch.'
-            });
-            setTimeout(() => {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Yêu cầu đăng nhập',
+                text: 'Vui lòng đăng nhập để tiếp tục đặt lịch.',
+                showConfirmButton: true,
+                confirmButtonText: 'Đăng nhập ngay',
+                confirmButtonColor: '#3b82f6'
+            }).then(() => {
                 navigate('/login', {
                     state: {
                         from: location.pathname,
                         bookingData: newBookingData
                     }
                 });
-            }, 1000);
+            });
             return;
         }
 
-        setCurrentStep(2); // Sang bước Xác nhận
+        setCurrentStep(2);
     };
 
-    // Handle booking submission
+    // =============================
+    // STEP 2: SUBMIT BOOKING
+    // =============================
     const handleSubmit = async (formData) => {
         if (!user) {
-            setToast({
-                show: true,
-                type: 'error',
-                message: 'Vui lòng đăng nhập để đặt lịch khám.'
-            });
-            setTimeout(() => {
-                // Save current step to return back after login if possible (or just go to login)
+            Swal.fire({
+                icon: 'warning',
+                title: 'Chưa đăng nhập',
+                text: 'Vui lòng đăng nhập để đặt lịch.',
+                showConfirmButton: true,
+                confirmButtonText: 'Đăng nhập ngay',
+                confirmButtonColor: '#3b82f6'
+            }).then(() => {
                 navigate('/login', { state: { from: '/booking' } });
-            }, 1500);
+            });
             return;
         }
 
@@ -123,8 +133,7 @@ const BookAppointment = () => {
         try {
             setIsSubmitting(true);
 
-            // Format data exactly for Mongoose backend requirements
-            const appointmentPayload = {
+            const payload = {
                 full_name,
                 phone,
                 email,
@@ -140,33 +149,52 @@ const BookAppointment = () => {
                 ]
             };
 
-            await appointmentService.createAppointment(appointmentPayload);
+            await appointmentService.createAppointment(payload);
 
-            setBookingData({
-                ...bookingData,
+            setBookingData(prev => ({
+                ...prev,
                 reason
+            }));
+
+            Swal.fire({
+                icon: 'success',
+                title: 'Tuyệt vời!',
+                text: 'Đặt lịch khám thành công!',
+                confirmButtonText: 'Tiếp tục',
+                customClass: {
+                    confirmButton: 'bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition-colors'
+                },
+                buttonsStyling: false
+            }).then(() => {
+                nextStep();
             });
 
-            nextStep();
-
-            setToast({
-                show: true,
-                type: 'success',
-                message: 'Đặt lịch khám thành công!'
-            });
         } catch (error) {
-            console.error("Booking Error: ", error);
-            setToast({
-                show: true,
-                type: 'error',
-                message: error.response?.data?.message || 'Lỗi khi đặt lịch. Vui lòng thử lại.'
+            console.error('Booking Error:', error.response?.data);
+
+            const errorMessage = 
+                error.response?.data?.message || 
+                (typeof error.response?.data === 'string' ? error.response.data : null) || 
+                'Lỗi khi đặt lịch. Vui lòng thử lại.';
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Không thể đặt lịch',
+                text: errorMessage,
+                confirmButtonText: 'Đã hiểu',
+                customClass: {
+                    confirmButton: 'bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium transition-colors'
+                },
+                buttonsStyling: false // Tắt style mặc định của thư viện để Tailwind có tác dụng
             });
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // Stepper UI
+    // =============================
+    // UI
+    // =============================
     const steps = [
         { number: 1, label: 'Chọn dịch vụ & thời gian' },
         { number: 2, label: 'Xác nhận' },
@@ -175,26 +203,19 @@ const BookAppointment = () => {
 
     return (
         <PublicLayout>
-            {/* Toast */}
-            {toast.show && (
-                <Toast
-                    type={toast.type}
-                    message={toast.message}
-                    onClose={() => setToast({ ...toast, show: false })}
-                    duration={3000}
-                />
-            )}
-
             <div className="min-h-[calc(100vh-160px)] bg-gradient-to-br from-blue-50 via-white to-indigo-50 py-12 px-4">
                 <div className="max-w-4xl mx-auto">
-                    {/* Back Button */}
+
+                    {/* Back */}
                     {currentStep < 3 && (
                         <button
-                            onClick={() => currentStep === 1 ? navigate(-1) : prevStep()}
-                            className="mb-6 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 transition-colors group"
+                            onClick={() =>
+                                currentStep === 1 ? navigate(-1) : prevStep()
+                            }
+                            className="mb-6 inline-flex items-center gap-2 text-gray-600 hover:text-gray-900"
                         >
-                            <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform duration-200" />
-                            <span className="font-medium">
+                            <ArrowLeft size={20} />
+                            <span>
                                 {currentStep === 1 ? 'Quay lại' : 'Bước trước'}
                             </span>
                         </button>
@@ -203,45 +224,35 @@ const BookAppointment = () => {
                     {/* Header */}
                     {currentStep < 3 && (
                         <div className="mb-8">
-                            <h1 className="text-3xl font-bold text-gray-900 mb-2">Đặt lịch khám</h1>
-                            <p className="text-gray-600">Đặt lịch khám nha khoa nhanh chóng và tiện lợi</p>
+                            <h1 className="text-3xl font-bold">
+                                Đặt lịch khám
+                            </h1>
+                            <p className="text-gray-600">
+                                Nhanh chóng và tiện lợi
+                            </p>
                         </div>
                     )}
 
-                    {/* Progress Stepper */}
+                    {/* Step Indicators */}
                     {currentStep < 3 && (
-                        <div className="mb-8">
-                            <div className="flex items-center justify-between">
-                                {steps.slice(0, 2).map((step, index) => (
-                                    <React.Fragment key={step.number}>
-                                        <div className="flex flex-col items-center">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold text-sm transition-all ${currentStep >= step.number
-                                                ? 'bg-primary-600 text-white'
-                                                : 'bg-gray-200 text-gray-600'
-                                                }`}>
-                                                {currentStep > step.number ? (
-                                                    <Check size={20} />
-                                                ) : (
-                                                    step.number
-                                                )}
-                                            </div>
-                                            <span className={`mt-2 text-sm font-medium ${currentStep >= step.number ? 'text-primary-600' : 'text-gray-500'
-                                                }`}>
-                                                {step.label}
-                                            </span>
-                                        </div>
-                                        {index < 1 && (
-                                            <div className={`flex-1 h-1 mx-4 ${currentStep > step.number ? 'bg-primary-600' : 'bg-gray-200'
-                                                }`} />
-                                        )}
-                                    </React.Fragment>
-                                ))}
-                            </div>
+                        <div className="mb-8 flex justify-between">
+                            {steps.slice(0, 2).map((step) => (
+                                <div key={step.number} className="text-center">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep >= step.number
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-200'
+                                        }`}>
+                                        {currentStep > step.number ? <Check size={20} /> : step.number}
+                                    </div>
+                                    <p className="text-sm mt-2">{step.label}</p>
+                                </div>
+                            ))}
                         </div>
                     )}
 
-                    {/* Step Content */}
-                    <div className="bg-white rounded-2xl shadow-xl p-8">
+                    {/* Content */}
+                    <div className="bg-white p-8 rounded-2xl shadow">
+
                         {currentStep === 1 && (
                             <ServiceDateTimeStep
                                 onSelect={handleCombinedSelect}
@@ -251,12 +262,13 @@ const BookAppointment = () => {
 
                         {currentStep === 2 && (
                             <div className="relative">
+
                                 {isSubmitting && (
-                                    <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex flex-col items-center justify-center rounded-xl">
-                                        <Loader2 className="w-10 h-10 animate-spin text-primary-600 mb-2" />
-                                        <p className="font-semibold text-gray-700 text-lg">Đang tiến hành đặt lịch...</p>
+                                    <div className="absolute inset-0 bg-white/60 flex items-center justify-center z-10 rounded-xl">
+                                        <Loader2 className="animate-spin text-blue-600 w-8 h-8" />
                                     </div>
                                 )}
+
                                 <BookingFormStep
                                     user={user}
                                     bookingData={bookingData}
@@ -274,6 +286,8 @@ const BookAppointment = () => {
                                     setBookingData({
                                         service_id: null,
                                         service_name: '',
+                                        sub_service_id: null,
+                                        sub_service_name: '',
                                         service_price: 0,
                                         date: '',
                                         time: '',
@@ -282,6 +296,7 @@ const BookAppointment = () => {
                                 }}
                             />
                         )}
+
                     </div>
                 </div>
             </div>

@@ -27,16 +27,6 @@ const receptionistRoutes = [
         )
     },
     {
-        path: '/receptionist/patients',
-        element: (
-            <ProtectedRoute allowedRoles={['RECEPTIONIST']}>
-                <ReceptionistLayout>
-                    <ReceptionistPatients />
-                </ReceptionistLayout>
-            </ProtectedRoute>
-        )
-    },
-    {
         path: '/receptionist/appointments',
         element: (
             <ProtectedRoute allowedRoles={['RECEPTIONIST']}>
