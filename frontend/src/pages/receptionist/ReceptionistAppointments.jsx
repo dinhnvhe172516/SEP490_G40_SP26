@@ -202,7 +202,6 @@ const ReceptionistAppointments = () => {
                 setSelectedDate={setSelectedDate}
                 filterStatus={filterStatus}
                 setFilterStatus={setFilterStatus}
-                onBookNew={() => setShowBookModal(true)}
             />
 
             {/* Appointments List */}
