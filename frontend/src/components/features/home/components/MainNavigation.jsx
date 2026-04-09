@@ -3,20 +3,14 @@ import { LogIn, Calendar, ChevronDown, LogOut, User as UserIcon, FileText, Recei
 import { useAuth } from '../../../../contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { getProfile } from '../../../../services/profileService';
-import serviceService from '../../../../services/serviceService';
-import clinicService from '../../../../services/clinicService';
 import NotificationBell from '../../notifications/NotificationBell';
 
-const MainNavigation = () => {
+const MainNavigation = ({ clinicInfo, services = [] }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [showServicesMenu, setShowServicesMenu] = useState(false);
-    const [services, setServices] = useState([]);
-    const [clinicInfo, setClinicInfo] = useState(null);
     const navigate = useNavigate();
     const [avatarUrl, setAvatarUrl] = useState('');
-
-    console.log("clinicInfo: ", clinicInfo);
 
     // Fetch avatar when user is authenticated
     useEffect(() => {
@@ -32,25 +26,6 @@ const MainNavigation = () => {
         }
     }, [isAuthenticated]);
 
-    // Fetch services và clinic info cho navbar
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Fetch services
-                const res = await serviceService.getAllServices({ limit: 100, filter: 'AVAILABLE' });
-                setServices(res?.data || []);
-
-                // Fetch clinic info for logo
-                const clinicRes = await clinicService.getPublicClinics();
-                if (clinicRes?.data && clinicRes.data.length > 0) {
-                    setClinicInfo(clinicRes.data[0]);
-                }
-            } catch (err) {
-                console.error('Fetch navbar data error:', err);
-            }
-        };
-        fetchData();
-    }, []);
 
     const handleLogout = () => {
         const logoutToast = {
@@ -65,7 +40,7 @@ const MainNavigation = () => {
         // 2. Perform logout (might trigger immediate guard redirect)
         logout();
         setShowProfileMenu(false);
-        
+
         // 3. Fallback navigate
         navigate('/', { state: { toast: logoutToast } });
     };

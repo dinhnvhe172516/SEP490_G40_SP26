@@ -4,10 +4,13 @@ import PublicLayout from "../../components/layout/PublicLayout";
 import Breadcrumb from "../../components/ui/Breadcrumb";
 import WhyChooseUs from "../../components/features/home/components/WhyChooseUs";
 import DoctorsTeam from "../../components/features/home/components/DoctorsTeam";
-import { Award, Users, Smile, Clock, MapPin, ChevronRight, Target, Heart, ShieldCheck } from "lucide-react";
+import { Award, Users, Smile, MapPin, ChevronRight, Target, Heart } from "lucide-react";
+import clinicService from "../../services/clinicService";
+import { useEffect, useState } from "react";
 
 const About = () => {
     const navigate = useNavigate();
+    const [clinicInfo, setClinicInfo] = useState(null);
 
     const stats = [
         { label: "Năm kinh nghiệm", value: "15+", icon: Award, color: "text-blue-500", bg: "bg-blue-50" },
@@ -29,6 +32,21 @@ const About = () => {
             }
         }
     };
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Fetch clinic info for logo
+                const clinicRes = await clinicService.getPublicClinics();
+                if (clinicRes?.data && clinicRes.data.length > 0) {
+                    setClinicInfo(clinicRes.data[0]);
+                }
+            } catch (err) {
+                console.error('Fetch homepage data error:', err);
+            }
+        };
+        fetchData();
+    }, []);
 
     return (
         <PublicLayout>
@@ -174,7 +192,7 @@ const About = () => {
                                     </button>
                                 </div>
                                 <p className="mt-8 text-sm text-gray-400 font-medium">
-                                    Mở cửa: Thứ 2 - Thứ 7 (8:00 - 20:00) | Chủ nhật (8:00 - 12:00)
+                                    Mở cửa: {clinicInfo?.working_house}
                                 </p>
                             </motion.div>
                         </div>
