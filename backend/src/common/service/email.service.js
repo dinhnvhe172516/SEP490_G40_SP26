@@ -5,9 +5,9 @@ require('dotenv').config();
 
 class EmailService {
     constructor() {
-        const port = parseInt(process.env.SMTP_PORT || '465');
+        const port = parseInt(process.env.SMTP_PORT || '587');
         const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-        
+
         // --- CHẨN ĐOÁN DNS ---
         dns.lookup(host, (err, address, family) => {
             if (err) logger.error(`[EmailService] DNS Lookup Failed for ${host}:`, err);
@@ -19,7 +19,7 @@ class EmailService {
         this.transporter = nodemailer.createTransport({
             host: host,
             port: port,
-            secure: port === 465, // true if port is 465
+            secure: port === 587, // true if port is 465
             auth: {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
