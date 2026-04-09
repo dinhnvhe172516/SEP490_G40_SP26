@@ -8,12 +8,26 @@ import { Colors } from '@/src/constants/theme';
 import { useColorScheme } from '@/src/hooks/use-color-scheme';
 import { useProfileData } from '@/src/hooks/useHomeData';
 
+import { Redirect } from 'expo-router';
+import { useAuth } from '@/src/constants/../context/AuthContext';
+import { ActivityIndicator, View } from 'react-native';
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
-  const { data: profileData } = useProfileData();
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#2563eb" />
+      </View>
+    );
+  }
 
-  // Hiển thị tab nha khoa chỉ khi đã đăng nhập (có avatar hoặc tên)
-  const isLoggedIn = !!(profileData?.data?.avatar_url || profileData?.data?.full_name);
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    return <Redirect href="/(auth)/login" />;
+  }
 
   return (
     <Tabs
@@ -35,7 +49,6 @@ export default function TabLayout() {
         name="appointments"
         options={{
           title: 'Lịch hẹn',
-          href: isLoggedIn ? undefined : null,
           tabBarIcon: ({ color }) => <IconSymbol size={26} name="calendar" color={color} />,
         }}
       />
@@ -43,7 +56,6 @@ export default function TabLayout() {
         name="dental-record"
         options={{
           title: 'Hồ sơ',
-          href: isLoggedIn ? undefined : null, // null ẩn hoàn toàn tab khi chưa đăng nhập
           tabBarIcon: ({ color }) => (
             <Image
               source={require('@/assets/images/file-medical.png')}

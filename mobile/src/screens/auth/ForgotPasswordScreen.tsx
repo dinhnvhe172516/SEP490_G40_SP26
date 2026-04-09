@@ -6,6 +6,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForgotPassword, useResetPassword } from '@/src/hooks/useAuth';
 import { AuthHeader } from '@/src/components/features/auth/AuthHeader';
 import { ThemedText } from '@/src/components/ui/themed-text';
+import { requestOtpSchema, resetPasswordSchema } from '@/src/schemas/auth.schema';
+import { errorMapper } from '@/src/utils/errorMapper';
 
 export function ForgotPasswordScreen() {
     const insets = useSafeAreaInsets();
@@ -21,52 +23,51 @@ export function ForgotPasswordScreen() {
     const [otp, setOtp] = useState('');
     const [newPassword, setNewPassword] = useState('');
     
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleRequestOTP = async () => {
-        if (!email) {
-            setErrorMsg('Vui lòng nhập email');
+        setLocalError(null);
+        
+        // 1. Client-side Validation
+        const validation = requestOtpSchema.safeParse({ email });
+        if (!validation.success) {
+            setLocalError(validation.error.issues[0].message);
             return;
         }
 
         try {
-            setIsLoading(true);
-            setErrorMsg('');
-
+            // 2. Trigger Mutation
             await forgotMutation.mutateAsync(email);
             setStep(2);
         } catch (err: any) {
-            console.error('Forgot password error:', err);
-            const msg = err.response?.data?.message || 'Không thể gửi yêu cầu hỗ trợ. Vui lòng kiểm tra lại email.';
-            setErrorMsg(msg);
-        } finally {
-            setIsLoading(false);
+            console.error('Forgot password screen error:', err);
         }
     };
     
     const handleResetPassword = async () => {
-        if (!otp || !newPassword) {
-            setErrorMsg('Vui lòng nhập mã OTP và mật khẩu mới');
+        setLocalError(null);
+        
+        // 1. Client-side Validation
+        const validation = resetPasswordSchema.safeParse({ email, otp, newPassword });
+        if (!validation.success) {
+            setLocalError(validation.error.issues[0].message);
             return;
         }
 
         try {
-            setIsLoading(true);
-            setErrorMsg('');
-
+            // 2. Trigger Mutation
             await resetMutation.mutateAsync({ email, otp, newPassword });
             
-            // Redirect to login after successful reset
-            router.replace('/login');
+            // 3. Navigation side effect
+            router.replace('/(auth)/login');
         } catch (err: any) {
-            console.error('Reset password error:', err);
-            const msg = err.response?.data?.message || 'Thiết lập mật khẩu thất bại. Vui lòng kiểm tra lại thông tin.';
-            setErrorMsg(msg);
-        } finally {
-            setIsLoading(false);
+            console.error('Reset password screen error:', err);
         }
     }
+
+    // Derive active mutation and error
+    const activeMutation = step === 1 ? forgotMutation : resetMutation;
+    const errorMsg = localError || (activeMutation.error ? errorMapper(activeMutation.error).message : '');
 
     return (
         <KeyboardAvoidingView
@@ -101,7 +102,7 @@ export function ForgotPasswordScreen() {
                             keyboardType="email-address"
                             value={email}
                             onChangeText={setEmail}
-                            editable={!isLoading && step === 1}
+                            editable={!activeMutation.isPending && step === 1}
                         />
                     </View>
 
@@ -116,7 +117,7 @@ export function ForgotPasswordScreen() {
                                     keyboardType="numeric"
                                     value={otp}
                                     onChangeText={setOtp}
-                                    editable={!isLoading}
+                                    editable={!activeMutation.isPending}
                                 />
                             </View>
 
@@ -124,12 +125,12 @@ export function ForgotPasswordScreen() {
                                 <ThemedText style={styles.label}>MẬT KHẨU MỚI</ThemedText>
                                 <TextInput
                                     style={styles.input}
-                                    placeholder="Nhập mật khẩu mới"
+                                    placeholder="8+ ký tự (Chữ hoa, số, đặc biệt)"
                                     placeholderTextColor="#9CA3AF"
                                     secureTextEntry={true}
                                     value={newPassword}
                                     onChangeText={setNewPassword}
-                                    editable={!isLoading}
+                                    editable={!activeMutation.isPending}
                                 />
                             </View>
                         </>
@@ -138,12 +139,12 @@ export function ForgotPasswordScreen() {
 
                 <View style={styles.actionContainer}>
                     <TouchableOpacity
-                        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                        style={[styles.loginButton, activeMutation.isPending && styles.loginButtonDisabled]}
                         activeOpacity={0.8}
                         onPress={step === 1 ? handleRequestOTP : handleResetPassword}
-                        disabled={isLoading}
+                        disabled={activeMutation.isPending}
                     >
-                        {isLoading ? (
+                        {activeMutation.isPending ? (
                             <ActivityIndicator color="#FFFFFF" size="small" />
                         ) : (
                             <ThemedText style={styles.loginButtonText}>
