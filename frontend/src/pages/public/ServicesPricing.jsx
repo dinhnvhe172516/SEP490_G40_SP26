@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import PublicLayout from '../../components/layout/PublicLayout';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import serviceService from '../../services/serviceService';
+import clinicService from '../../services/clinicService';
 
 // Helper: format số tiền VND
 const formatPrice = (price) => {
@@ -45,7 +46,23 @@ const ServicesPricing = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedServiceId, setSelectedServiceId] = useState('all');
     const [dropdownSearch, setDropdownSearch] = useState('');
+    const [clinicInfo, setClinicInfo] = useState(null);
     const dropdownRef = useRef(null);
+
+    // Fetch thông tin phòng khám
+    useEffect(() => {
+        const fetchClinicInfo = async () => {
+            try {
+                const clinicRes = await clinicService.getPublicClinics();
+                if (clinicRes?.data && clinicRes.data.length > 0) {
+                    setClinicInfo(clinicRes.data[0]);
+                }
+            } catch (err) {
+                console.error('Fetch clinic info error:', err);
+            }
+        };
+        fetchClinicInfo();
+    }, []);
 
     // Handle click outside to close dropdown
     useEffect(() => {
@@ -336,39 +353,66 @@ const ServicesPricing = () => {
 
                         {/* Sidebar */}
                         <div className="lg:col-span-1">
-                            <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-4">
-                                {/* Clinic banner */}
-                                <div className="aspect-video bg-gradient-to-br from-primary-100 to-primary-200 flex items-center justify-center">
-                                    <div className="text-center p-6">
-                                        <p className="text-gray-600 text-sm">Phòng khám nha khoa</p>
-                                        <p className="text-gray-800 font-semibold">DCMS Dental Clinic</p>
+                            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden sticky top-24">
+                                {/* Banner Background */}
+                                <div className="h-32 bg-gradient-to-r from-primary-600 to-primary-800 relative">
+                                    {clinicInfo?.thumbnail ? (
+                                        <img src={clinicInfo.thumbnail} alt="Clinic Thumbnail" className="w-full h-full object-cover opacity-90" />
+                                    ) : (
+                                        // Pattern fallback
+                                        <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }}></div>
+                                    )}
+                                </div>
+
+                                {/* Avatar/Logo overlapping */}
+                                <div className="flex justify-center -mt-16 relative z-10">
+                                    <div className="w-32 h-32 bg-white rounded-full p-2 shadow-lg border-4 border-white flex items-center justify-center overflow-hidden">
+                                        {clinicInfo?.logo ? (
+                                            <img src={clinicInfo.logo} alt="Clinic Logo" className="w-full h-full object-contain object-center scale-90" />
+                                        ) : (
+                                            <div className="w-full h-full bg-primary-50 rounded-full flex items-center justify-center text-primary-600 font-bold text-4xl">
+                                                {clinicInfo?.clinic_name?.charAt(0) || 'D'}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
-                                {/* Contact Info */}
-                                <div className="p-6">
-                                    <h3 className="font-semibold text-gray-900 mb-4">Liên hệ tư vấn</h3>
-                                    <div className="space-y-3">
-                                        <a
-                                            href="tel:19008059"
-                                            className="flex items-center gap-3 text-gray-700 hover:text-primary-600 transition-colors"
-                                        >
-                                            <span className="text-2xl">📞</span>
-                                            <div>
-                                                <p className="text-sm text-gray-500">Hotline</p>
-                                                <p className="font-semibold">1900 8059</p>
-                                            </div>
-                                        </a>
-                                        <Link
-                                            to="/book-appointment"
-                                            className="block w-full text-center mt-4 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-                                        >
-                                            Đặt lịch ngay
-                                        </Link>
-                                        <button className="w-full px-6 py-3 border-2 border-primary-600 text-primary-600 rounded-lg hover:bg-primary-50 transition-colors font-semibold">
-                                            Chat tư vấn
-                                        </button>
+                                {/* Clinic Name & Info */}
+                                <div className="text-center px-6 pt-4 pb-6 border-b border-gray-100">
+                                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Phòng khám nha khoa</p>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-6">{clinicInfo?.clinic_name || 'DCMS Dental Clinic'}</h3>
+                                    
+                                    {/* Contact list */}
+                                    <div className="flex flex-col gap-3 text-left">
+                                        <p className="font-semibold text-gray-900">Liên hệ tư vấn</p>
+                                        <div className="bg-gray-50 rounded-xl p-2 border border-gray-100">
+                                            <a
+                                                href={`tel:${clinicInfo?.phone || '19008059'}`}
+                                                className="flex items-center gap-4 p-2 rounded-lg hover:bg-white hover:shadow-sm transition-all group"
+                                            >
+                                                <div className="w-10 h-10 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform flex-shrink-0">
+                                                    <span className="text-lg">📞</span>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-0.5">Hotline</p>
+                                                    <p className="text-lg font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{clinicInfo?.phone || '1900 8059'}</p>
+                                                </div>
+                                            </a>
+                                        </div>
                                     </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div className="p-6 pt-5 space-y-3 bg-white">
+                                    <Link
+                                        to="/book-appointment"
+                                        className="flex items-center justify-center w-full px-6 py-3.5 bg-primary-600 text-white rounded-xl hover:bg-primary-700 hover:shadow-md hover:shadow-primary-600/20 transition-all font-bold group"
+                                    >
+                                        Đặt lịch ngay
+                                    </Link>
+                                    <button className="flex items-center justify-center w-full px-6 py-3.5 border-2 border-primary-100 text-primary-600 rounded-xl hover:border-primary-600 hover:bg-primary-50 transition-all font-bold">
+                                        Chat tư vấn
+                                    </button>
                                 </div>
                             </div>
                         </div>

@@ -1,52 +1,39 @@
-import { useMutation } from '@tanstack/react-query';
-import apiClient from '@/src/services/api';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { authService } from '../services/authService';
+import { authApi } from '../services/authApi';
+import { QUERY_KEYS } from '../constants/queryKeys';
 
-// Login
+// Login Hook
 export function useLogin() {
     return useMutation({
-        mutationFn: async (credentials: { identifier: string; password: string }) => {
-            const { data } = await apiClient.post('/api/auth/login', credentials);
-            return data;
-        },
+        mutationFn: (credentials: any) => authService.login(credentials),
     });
 }
 
-// Register
+// Register Hook
 export function useRegister() {
     return useMutation({
-        mutationFn: async (credentials: any) => {
-            const { data } = await apiClient.post('/api/auth/register', credentials);
-            return data;
-        },
+        mutationFn: (data: any) => authApi.register(data),
     });
 }
 
-// Forgot Password
+// Forgot Password Hooks
 export function useForgotPassword() {
     return useMutation({
-        mutationFn: async (email: string) => {
-            const { data } = await apiClient.post('/api/auth/forgot-password', { email });
-            return data;
-        },
+        mutationFn: (email: string) => authApi.forgotPassword(email),
     });
 }
 
-// Reset Password
 export function useResetPassword() {
     return useMutation({
-        mutationFn: async (payload: { email: string; otp: string; newPassword: string }) => {
-            const { data } = await apiClient.post('/api/auth/reset-password', payload);
-            return data;
-        },
+        mutationFn: (payload: any) => authApi.resetPassword(payload),
     });
 }
 
-// Logout
-export function useLogout() {
-    return useMutation({
-        mutationFn: async (refreshToken: string | null) => {
-            const { data } = await apiClient.post('/api/auth/logout', { refreshToken });
-            return data;
-        },
-    });
+// Profile/Session Hooks (can be added here using useQuery)
+export function useInvalidateAuth(queryClient: any) {
+    return () => {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.PROFILE });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.AUTH.SESSION });
+    };
 }

@@ -1,43 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import serviceService from '../../../services/serviceService';
 import {
     Phone,
-    Mail,
     MapPin,
     Facebook,
     Instagram,
     Youtube,
-    Send,
     Clock,
     Award,
-    Heart,
-    Shield,
-    Stethoscope,
     Sparkles,
     ChevronRight,
-    ArrowUpRight,
     CheckCircle2
 } from 'lucide-react';
 
-const HomeFooter = () => {
+const HomeFooter = ({ clinicInfo, services = [] }) => {
     const [email, setEmail] = useState('');
     const [subscribed, setSubscribed] = useState(false);
-    const [realServices, setRealServices] = useState([]);
 
-    useEffect(() => {
-        const fetchServices = async () => {
-            try {
-                const response = await serviceService.getAllServices({ status: 'ACTIVE', limit: 5 });
-                const servicesData = response.data?.data || response.data || [];
-                setRealServices(servicesData);
-            } catch (error) {
-                console.error("Failed to fetch services for footer:", error);
-            }
-        };
-        fetchServices();
-    }, []);
+    // Use top 5 services from props
+    const realServices = services.slice(0, 5);
 
     const handleSubscribe = (e) => {
         e.preventDefault();
@@ -76,12 +58,26 @@ const HomeFooter = () => {
                 <div className="grid lg:grid-cols-2 gap-16 pb-16 border-b border-gray-200/60 items-center">
                     <div>
                         <div className="flex items-center gap-3 mb-6 font-primary">
-                            <div className="w-12 h-12 bg-primary-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-200">
-                                <Award className="text-white" size={28} />
+                            <div className="w-12 h-12 bg-white-600 rounded-2xl flex items-center justify-center shadow-lg shadow-primary-200">
+                                <div className="flex items-center gap-2">
+                                    {clinicInfo?.logo && (
+                                        <img
+                                            src={clinicInfo.logo}
+                                            alt="Clinic Logo"
+                                            className="w-10 h-10 object-contain rounded-lg"
+                                            onError={(e) => {
+                                                e.target.onerror = null;
+                                                e.target.src = 'https://via.placeholder.com/40?text=D'; // Fallback
+                                            }}
+                                        />
+                                    )}
+                                </div>
                             </div>
                             <div>
-                                <h3 className="text-2xl font-black tracking-tight text-primary-700">DCMS</h3>
-                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Premium Dental Care</p>
+                                <h3 className="text-2xl font-black tracking-tight text-primary-700">{clinicInfo?.clinic_name || 'DCMS'}</h3>
+                                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                    Dental Clinic
+                                </p>
                             </div>
                         </div>
                         <h4 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
@@ -193,7 +189,7 @@ const HomeFooter = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Hotline tư vấn</p>
-                                    <p className="text-lg font-bold text-gray-800">1900 6789</p>
+                                    <p className="text-lg font-bold text-gray-800">{clinicInfo?.phone}</p>
                                 </div>
                             </div>
 
@@ -203,7 +199,7 @@ const HomeFooter = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Địa chỉ</p>
-                                    <p className="text-sm font-bold text-gray-800 leading-tight">123 Hoàn Kiếm, TP. Hà Nội</p>
+                                    <p className="text-sm font-bold text-gray-800 leading-tight">{clinicInfo?.clinic_address}</p>
                                 </div>
                             </div>
 
@@ -213,7 +209,7 @@ const HomeFooter = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest mb-1">Giờ làm việc</p>
-                                    <p className="text-sm font-bold text-gray-800">T2-CN: 08:00 - 20:00</p>
+                                    <p className="text-sm font-bold text-gray-800">{clinicInfo?.working_house}</p>
                                 </div>
                             </div>
                         </div>

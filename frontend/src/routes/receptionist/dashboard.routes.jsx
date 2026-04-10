@@ -6,7 +6,7 @@ const dashboardRoutes = [
     {
         path: '/receptionist/dashboard',
         element: (
-            <ProtectedRoute allowedRoles={['RECEPTIONIST', 'ADMIN_CLINIC']}>
+            <ProtectedRoute allowedRoles={['RECEPTIONIST']}>
                 <ReceptionistLayout>
                     <ReceptionistDashboard />
                 </ReceptionistLayout>
