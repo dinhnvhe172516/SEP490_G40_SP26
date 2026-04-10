@@ -141,6 +141,9 @@ app.use('/api/notification', notificationRoute);
 const { route: routePayment } = require('./modules/payment/index');
 app.use('/api/payment', routePayment);
 
+const {route: routeStatistic} = require('./modules/statistic');
+app.use('/api/statistic', routeStatistic);
+
 const zaloWebhookRoute = require('./common/routes/zalo.webhook.route');
 app.use('/api/zalo', zaloWebhookRoute);
 
