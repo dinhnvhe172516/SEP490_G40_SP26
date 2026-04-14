@@ -3,7 +3,7 @@ import { PackageX, ChevronDown, ChevronUp, Plus } from 'lucide-react';
 import EquipmentCard from './EquipmentCard';
 
 const EquipmentGrid = ({
-    filteredEquipment, // Dữ liệu bây giờ là mảng các Danh mục (Loại thiết bị)
+    filteredEquipment, 
     loading,
     equipmentUsage,
     onViewDetails,
@@ -14,7 +14,8 @@ const EquipmentGrid = ({
     getStatusText,
     formatDate,
     searchTerm,
-    statusFilter
+    statusFilter,
+    onOpenAddChildModal
 }) => {
     // State quản lý trạng thái đóng/mở của các nhóm (Mặc định ĐÓNG)
     const [openGroups, setOpenGroups] = useState({});
@@ -98,9 +99,8 @@ const EquipmentGrid = ({
                                 {/* Nút Thêm Thiết Bị */}
                                 <button
                                     onClick={(e) => {
-                                        e.stopPropagation(); // QUAN TRỌNG: Chặn sự kiện click để không gập/mở thẻ cha
-                                        // TODO: Gọi hàm mở Modal thêm thiết bị con ở đây
-                                        console.log("Mở modal thêm thiết bị cho category:", categoryId);
+                                        e.stopPropagation();
+                                        if (onOpenAddChildModal) onOpenAddChildModal(category);
                                     }}
                                     className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:text-blue-700 rounded-lg text-sm font-semibold transition-colors border border-blue-100"
                                 >

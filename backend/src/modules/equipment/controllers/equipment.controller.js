@@ -205,7 +205,7 @@ const addEquipmentItemsController = async (req, res) => {
         logger.debug('Add equipment items request received', {
             context: context,
             categoryId: categoryId,
-            itemCount: payload.equipment ? payload.equipment.length : 0
+            itemCount: payload,
         });
 
         if (!payload.equipment || !Array.isArray(payload.equipment) || payload.equipment.length === 0) {
@@ -255,7 +255,7 @@ const addEquipmentItemsController = async (req, res) => {
         });
 
         return new successRes.CreateSuccess(
-            updatedCategory, 
+            updatedCategory,
             'New equipment items added successfully'
         ).send(res);
 

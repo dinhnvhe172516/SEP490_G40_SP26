@@ -14,6 +14,8 @@ import EquipmentUsageModal from './components/EquipmentUsageModal';
 import EquipmentDetailModal from './components/EquipmentDetailModal';
 import EquipmentPagination from './components/EquipmentPagination';
 
+import AddChildEquipmentModal from './components/AddChildEquipmentModal';
+
 /**
  * EquipmentList - Trang quản lý thiết bị nha khoa
  * * Chức năng:
@@ -31,7 +33,7 @@ const EquipmentList = () => {
     const [equipmentUsage, setEquipmentUsage] = useState([]);
     const [pagination, setPagination] = useState({ totalItems: 0, totalPages: 0, page: 1, size: 5 });
     const [statistics, setStatistics] = useState({ total: 0, ready: 0, in_use: 0, maintenance: 0, repairing: 0, faulty: 0, sterilizing: 0 });
-    
+
     // State quản lý Filters (Cho UI)
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryStatus, setCategoryStatus] = useState('');
@@ -48,6 +50,10 @@ const EquipmentList = () => {
     const [selectedEquipment, setSelectedEquipment] = useState(null);
     const [selectedDetailEquipment, setSelectedDetailEquipment] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // [THÊM MỚI]: State quản lý Modal thêm thiết bị con
+    const [showAddChildModal, setShowAddChildModal] = useState(false);
+    const [selectedCategoryForChild, setSelectedCategoryForChild] = useState(null);
 
     // Equipment Form
     const [equipmentForm, setEquipmentForm] = useState({
@@ -69,10 +75,10 @@ const EquipmentList = () => {
 
     // Hàm gọi API lấy danh sách thiết bị (Đã tích hợp Parameter Filter)
     const fetchEquipment = async (
-        page = 1, 
-        size = pagination.size, 
-        search = searchTerm, 
-        catStatus = categoryStatus, 
+        page = 1,
+        size = pagination.size,
+        search = searchTerm,
+        catStatus = categoryStatus,
         iStatus = itemStatus
     ) => {
         try {
@@ -197,10 +203,6 @@ const EquipmentList = () => {
     };
 
     const handleCreateEquipment = async () => {
-        if (!equipmentForm.equipment_name.trim()) {
-            setToast({ show: true, type: 'error', message: '❌ Vui lòng nhập tên thiết bị!' });
-            return;
-        }
 
         if (!equipmentForm.equipment_type.trim()) {
             setToast({ show: true, type: 'error', message: '❌ Vui lòng nhập loại thiết bị!' });
@@ -290,6 +292,41 @@ const EquipmentList = () => {
         setShowUsageModal(true);
     };
 
+    // ========== [THÊM MỚI]: HANDLERS CHO MODAL THÊM THIẾT BỊ CON ==========
+
+    // Mở modal thêm thiết bị con
+    const handleOpenAddChildModal = (category) => {
+        setSelectedCategoryForChild(category);
+        setShowAddChildModal(true);
+    };
+
+    // Xử lý lưu thiết bị con gọi xuống Backend
+    const handleSaveChildEquipments = async (categoryId, newEquipments) => {
+        try {
+            await equipmentService.createEquipmentItem(categoryId, { equipment: newEquipments });
+            setToast({
+                show: true,
+                type: 'success',
+                message: `✅ Đã thêm ${newEquipments.length} máy mới vào danh mục thành công!`
+            });
+            // Đóng modal và reset state
+            setShowAddChildModal(false);
+            setSelectedCategoryForChild(null);
+
+            // Fetch lại data để cập nhật Grid
+            await fetchEquipment(pagination.page, pagination.size, searchTerm, categoryStatus, itemStatus);
+
+        } catch (err) {
+            console.error('Error adding child equipments:', err);
+            let errorMessage = 'Thêm máy con thất bại!';
+            if (err.response?.data?.message) errorMessage = err.response.data.message;
+            else if (err.data?.message) errorMessage = err.data.message;
+            else if (err.message) errorMessage = err.message;
+
+            setToast({ show: true, type: 'error', message: `❌ ${errorMessage}` });
+        }
+    };
+
     // ========== RENDER ==========
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
@@ -334,6 +371,7 @@ const EquipmentList = () => {
                     getStatusText={getStatusText}
                     formatDate={formatDate}
                     searchTerm={searchTerm}
+                    onOpenAddChildModal={handleOpenAddChildModal}
                 />
 
                 {/* Pagination */}
@@ -370,6 +408,17 @@ const EquipmentList = () => {
                 onClose={() => setShowDetailModal(false)}
                 getStatusColor={getStatusColor}
                 getStatusText={getStatusText}
+            />
+
+            {/* [THÊM MỚI]: Component Modal thêm thiết bị con */}
+            <AddChildEquipmentModal
+                show={showAddChildModal}
+                category={selectedCategoryForChild}
+                onSave={handleSaveChildEquipments}
+                onClose={() => {
+                    setShowAddChildModal(false);
+                    setSelectedCategoryForChild(null);
+                }}
             />
 
             {/* Toast Notification */}

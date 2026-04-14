@@ -387,8 +387,7 @@ const createEquipment = async (dataCreate) => {
     try {
         logger.debug("Processing new equipment data", {
             context: context,
-            equipment_type: dataCreate.equipment_type,
-            newItemsCount: dataCreate.equipment.length
+            dataCreate: dataCreate
         });
 
         // TÌM KIẾM xem loại thiết bị này đã tồn tại chưa
