@@ -16,17 +16,6 @@ import EquipmentPagination from './components/EquipmentPagination';
 
 import AddChildEquipmentModal from './components/AddChildEquipmentModal';
 
-/**
- * EquipmentList - Trang quản lý thiết bị nha khoa
- * * Chức năng:
- * - Xem danh sách thiết bị
- * - Thêm thiết bị mới
- * - Cập nhật thông tin thiết bị
- * - Xem lịch sử sử dụng thiết bị
- * - Theo dõi bảo trì
- * - Lọc và tìm kiếm qua API (Server-side)
- * * @component
- */
 const EquipmentList = () => {
     // ========== STATE MANAGEMENT ==========
     const [equipment, setEquipment] = useState([]);
@@ -34,7 +23,6 @@ const EquipmentList = () => {
     const [pagination, setPagination] = useState({ totalItems: 0, totalPages: 0, page: 1, size: 5 });
     const [statistics, setStatistics] = useState({ total: 0, ready: 0, in_use: 0, maintenance: 0, repairing: 0, faulty: 0, sterilizing: 0 });
 
-    // State quản lý Filters (Cho UI)
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryStatus, setCategoryStatus] = useState('');
     const [itemStatus, setItemStatus] = useState('');
@@ -51,81 +39,49 @@ const EquipmentList = () => {
     const [selectedDetailEquipment, setSelectedDetailEquipment] = useState(null);
     const [isEditMode, setIsEditMode] = useState(false);
 
-    // [THÊM MỚI]: State quản lý Modal thêm thiết bị con
+    // State quản lý Modal thêm thiết bị con
     const [showAddChildModal, setShowAddChildModal] = useState(false);
     const [selectedCategoryForChild, setSelectedCategoryForChild] = useState(null);
 
-    // Equipment Form
+    // THAY ĐỔI: Cấu trúc Form mặc định (Sửa lại cho khớp với Model mới)
     const [equipmentForm, setEquipmentForm] = useState({
-        equipment_name: '',
         equipment_type: '',
-        equipment_serial_number: '',
-        purchase_date: '',
-        supplier: '',
-        warranty: '',
-        status: 'READY'
+        status: 'ACTIVE',
+        equipment: []
     });
 
     // ========== DATA FETCHING ==========
     useEffect(() => {
-        // Load data lần đầu khi mount component
         fetchEquipment(1, pagination.size, '', '', '');
         setEquipmentUsage(mockEquipmentUsage);
     }, []);
 
-    // Hàm gọi API lấy danh sách thiết bị (Đã tích hợp Parameter Filter)
-    const fetchEquipment = async (
-        page = 1,
-        size = pagination.size,
-        search = searchTerm,
-        catStatus = categoryStatus,
-        iStatus = itemStatus
-    ) => {
+    const fetchEquipment = async (page = 1, size = pagination.size, search = searchTerm, catStatus = categoryStatus, iStatus = itemStatus) => {
         try {
             setLoading(true);
-
-            // Đóng gói params gửi xuống backend
-            const params = {
-                page: page,
-                limit: size,
-            };
+            const params = { page: page, limit: size };
             if (search) params.search = search;
             if (catStatus) params.category_status = catStatus;
             if (iStatus) params.status = iStatus;
 
             const response = await equipmentService.getEquipments(params);
-
             setEquipment(response.data || []);
-
-            if (response.pagination) {
-                setPagination(response.pagination);
-            }
-
-            if (response.statistics) {
-                setStatistics(response.statistics);
-            }
+            if (response.pagination) setPagination(response.pagination);
+            if (response.statistics) setStatistics(response.statistics);
         } catch (err) {
             console.error('Error fetching equipment:', err);
             setError(err.message);
-            setToast({
-                show: true,
-                type: 'error',
-                message: '❌ Lỗi khi tải danh sách thiết bị!'
-            });
+            setToast({ show: true, type: 'error', message: '❌ Lỗi khi tải danh sách thiết bị!' });
         } finally {
             setLoading(false);
         }
     };
 
     // ========== HANDLERS ==========
-
-    // Nhận sự kiện từ component EquipmentFilters
     const handleSearch = (filters) => {
         setSearchTerm(filters.searchTerm);
         setCategoryStatus(filters.categoryStatus);
         setItemStatus(filters.itemStatus);
-
-        // Gọi API lọc và đưa về trang 1
         fetchEquipment(1, pagination.size, filters.searchTerm, filters.categoryStatus, filters.itemStatus);
     };
 
@@ -164,59 +120,60 @@ const EquipmentList = () => {
             .filter(u => u.equipment_id === equipmentId)
             .map(u => {
                 const user = mockUsers.find(user => user.id === u.user_id);
-                return {
-                    ...u,
-                    userName: user?.full_name || 'Unknown'
-                };
+                return { ...u, userName: user?.full_name || 'Unknown' };
             });
     };
 
     // ========== CRUD HANDLERS ==========
+
+    // THAY ĐỔI: Khởi tạo form trống với 1 máy rỗng bên trong mảng equipment
     const handleAddEquipment = () => {
         setIsEditMode(false);
         setSelectedEquipment(null);
         setEquipmentForm({
-            equipment_name: '',
             equipment_type: '',
-            equipment_serial_number: '',
-            purchase_date: '',
-            supplier: '',
-            warranty: '',
-            status: 'READY'
+            status: 'ACTIVE',
+            equipment: [{
+                equipment_name: '',
+                equipment_serial_number: '',
+                purchase_date: '',
+                supplier: '',
+                warranty: '',
+                status: 'READY'
+            }]
         });
         setShowEquipmentModal(true);
     };
 
-    const handleEditEquipment = (equip) => {
+    // THAY ĐỔI: Map dữ liệu Danh mục và mảng máy con vào Form để Sửa
+    const handleEditEquipment = (category) => {
         setIsEditMode(true);
-        setSelectedEquipment(equip);
+        setSelectedEquipment(category); // category là toàn bộ object lấy từ Grid
+
+        // Format lại ngày tháng cho các thiết bị con
+        const formattedEquipment = (category.equipment || []).map(item => ({
+            ...item,
+            purchase_date: item.purchase_date ? item.purchase_date.split('T')[0] : '',
+            warranty: item.warranty ? item.warranty.split('T')[0] : ''
+        }));
+
         setEquipmentForm({
-            equipment_name: equip.equipment_name || '',
-            equipment_type: equip.equipment_type || '',
-            equipment_serial_number: equip.equipment_serial_number || '',
-            purchase_date: formatDateForInput(equip.purchase_date),
-            supplier: equip.supplier || '',
-            warranty: formatDateForInput(equip.warranty),
-            status: equip.status || 'READY'
+            equipment_type: category.equipment_type || '',
+            status: category.status || 'ACTIVE',
+            equipment: formattedEquipment
         });
         setShowEquipmentModal(true);
     };
 
     const handleCreateEquipment = async () => {
-
-        if (!equipmentForm.equipment_type.trim()) {
+        if (!equipmentForm.equipment_type?.trim()) {
             setToast({ show: true, type: 'error', message: '❌ Vui lòng nhập loại thiết bị!' });
             return;
         }
 
         try {
             await equipmentService.createEquipment(equipmentForm);
-            setToast({
-                show: true,
-                type: 'success',
-                message: '✅ Thêm thiết bị mới thành công!'
-            });
-
+            setToast({ show: true, type: 'success', message: '✅ Thêm thiết bị mới thành công!' });
             await fetchEquipment(pagination.page, pagination.size, searchTerm, categoryStatus, itemStatus);
             setShowEquipmentModal(false);
             setSelectedEquipment(null);
@@ -226,34 +183,22 @@ const EquipmentList = () => {
             if (err.response?.data?.message) errorMessage = err.response.data.message;
             else if (err.data?.message) errorMessage = err.data.message;
             else if (err.message) errorMessage = err.message;
-
             if (err.response?.status === 409 || err.statusCode === 409) {
                 errorMessage = 'Số serial đã tồn tại trong hệ thống!';
             }
-
             setToast({ show: true, type: 'error', message: `❌ ${errorMessage}` });
         }
     };
 
     const handleUpdateEquipment = async () => {
-        if (!equipmentForm.equipment_name.trim()) {
-            setToast({ show: true, type: 'error', message: '❌ Vui lòng nhập tên thiết bị!' });
-            return;
-        }
-
-        if (!equipmentForm.equipment_type.trim()) {
+        if (!equipmentForm.equipment_type?.trim()) {
             setToast({ show: true, type: 'error', message: '❌ Vui lòng nhập loại thiết bị!' });
             return;
         }
 
         try {
             await equipmentService.updateEquipment(selectedEquipment._id || selectedEquipment.id, equipmentForm);
-            setToast({
-                show: true,
-                type: 'success',
-                message: '✅ Cập nhật thiết bị thành công!'
-            });
-
+            setToast({ show: true, type: 'success', message: '✅ Cập nhật thiết bị thành công!' });
             await fetchEquipment(pagination.page, pagination.size, searchTerm, categoryStatus, itemStatus);
             setShowEquipmentModal(false);
             setSelectedEquipment(null);
@@ -263,11 +208,9 @@ const EquipmentList = () => {
             if (err.response?.data?.message) errorMessage = err.response.data.message;
             else if (err.data?.message) errorMessage = err.data.message;
             else if (err.message) errorMessage = err.message;
-
             if (err.response?.status === 409 || err.statusCode === 409) {
                 errorMessage = 'Số serial đã tồn tại trong hệ thống!';
             }
-
             setToast({ show: true, type: 'error', message: `❌ ${errorMessage}` });
         }
     };
@@ -292,15 +235,12 @@ const EquipmentList = () => {
         setShowUsageModal(true);
     };
 
-    // ========== [THÊM MỚI]: HANDLERS CHO MODAL THÊM THIẾT BỊ CON ==========
-
-    // Mở modal thêm thiết bị con
+    // ========== HANDLERS CHO MODAL THÊM THIẾT BỊ CON ==========
     const handleOpenAddChildModal = (category) => {
         setSelectedCategoryForChild(category);
         setShowAddChildModal(true);
     };
 
-    // Xử lý lưu thiết bị con gọi xuống Backend
     const handleSaveChildEquipments = async (categoryId, newEquipments) => {
         try {
             await equipmentService.createEquipmentItem(categoryId, { equipment: newEquipments });
@@ -309,20 +249,15 @@ const EquipmentList = () => {
                 type: 'success',
                 message: `✅ Đã thêm ${newEquipments.length} máy mới vào danh mục thành công!`
             });
-            // Đóng modal và reset state
             setShowAddChildModal(false);
             setSelectedCategoryForChild(null);
-
-            // Fetch lại data để cập nhật Grid
             await fetchEquipment(pagination.page, pagination.size, searchTerm, categoryStatus, itemStatus);
-
         } catch (err) {
             console.error('Error adding child equipments:', err);
             let errorMessage = 'Thêm máy con thất bại!';
             if (err.response?.data?.message) errorMessage = err.response.data.message;
             else if (err.data?.message) errorMessage = err.data.message;
             else if (err.message) errorMessage = err.message;
-
             setToast({ show: true, type: 'error', message: `❌ ${errorMessage}` });
         }
     };
@@ -331,19 +266,14 @@ const EquipmentList = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
                     <div>
                         <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
                             <Wrench className="text-blue-600" size={40} />
                             Quản lý Thiết bị
                         </h1>
-                        <p className="text-gray-600 text-lg">
-                            Danh sách thiết bị nha khoa - Theo dõi bảo trì và sử dụng
-                        </p>
+                        <p className="text-gray-600 text-lg">Danh sách thiết bị nha khoa - Theo dõi bảo trì và sử dụng</p>
                     </div>
-
-                    {/* Add Equipment Button */}
                     <button
                         onClick={handleAddEquipment}
                         className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -353,20 +283,17 @@ const EquipmentList = () => {
                     </button>
                 </div>
 
-                {/* Statistics */}
                 <EquipmentStatistics statistics={statistics} />
-
-                {/* Filters - Chỉ gọi duy nhất 1 hàm onSearch */}
                 <EquipmentFilters onSearch={handleSearch} />
 
-                {/* Equipment Grid */}
                 <EquipmentGrid
                     filteredEquipment={equipment}
                     loading={loading}
                     equipmentUsage={equipmentUsage}
                     onViewDetails={handleViewDetails}
                     onViewUsage={handleViewUsage}
-                    onEdit={handleEditEquipment}
+                    // Truyền thẳng handleEditEquipment vào Grid
+                    onEditCategory={handleEditEquipment}
                     getStatusColor={getStatusColor}
                     getStatusText={getStatusText}
                     formatDate={formatDate}
@@ -374,7 +301,6 @@ const EquipmentList = () => {
                     onOpenAddChildModal={handleOpenAddChildModal}
                 />
 
-                {/* Pagination */}
                 <EquipmentPagination
                     currentPage={pagination.page}
                     totalPages={pagination.totalPages}
@@ -384,7 +310,6 @@ const EquipmentList = () => {
                 />
             </div>
 
-            {/* Modals */}
             <EquipmentFormModal
                 show={showEquipmentModal}
                 isEditMode={isEditMode}
@@ -410,7 +335,6 @@ const EquipmentList = () => {
                 getStatusText={getStatusText}
             />
 
-            {/* [THÊM MỚI]: Component Modal thêm thiết bị con */}
             <AddChildEquipmentModal
                 show={showAddChildModal}
                 category={selectedCategoryForChild}
@@ -421,7 +345,6 @@ const EquipmentList = () => {
                 }}
             />
 
-            {/* Toast Notification */}
             <Toast
                 show={toast.show}
                 type={toast.type}
