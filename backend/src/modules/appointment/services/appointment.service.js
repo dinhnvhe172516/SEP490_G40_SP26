@@ -921,7 +921,7 @@ const createService = async (dataCreate, account_id) => {
             type: 'NEW_APPOINTMENT',
             title: 'Đặt lịch thành công',
             message: `Đặt lịch thành công! Lịch hẹn của bạn vào lúc ${appointmentTime} ngày ${formattedDateNoti} đã được ghi nhận.`,
-            action_url: `/patient/appointments`,
+            action_url: `/appointments`,
             metadata: {
                 entity_id: newAppointment._id,
                 entity_type: 'APPOINTMENT'
