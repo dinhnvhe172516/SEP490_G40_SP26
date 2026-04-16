@@ -1,51 +1,104 @@
-const nodemailer = require('nodemailer');
+const { EmailClient } = require('@azure/communication-email');
 const logger = require('../utils/logger');
 require('dotenv').config();
 
 class EmailService {
     constructor() {
-        logger.info("=== DEBUG SMTP PASS ===", {
-            SMTP_PASS: process.env.SMTP_PASS
-        });
-        this.transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT,
-            secure: process.env.SMTP_PORT,
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
+        if (!process.env.AZURE_EMAIL_CONNECTION_STRING) {
+            logger.error("[EmailService.Constructor.Connection] Missing AZURE_EMAIL_CONNECTION_STRING environment variable", {
+                AZURE_EMAIL_CONNECTION_STRING: process.env.AZURE_EMAIL_CONNECTION_STRING
+            });
+            throw new Error("Missing AZURE_EMAIL_CONNECTION_STRING");
+        }
 
-        // Verify connection configuration
-        this.transporter.verify((error, success) => {
-            if (error) {
-                logger.error('[EmailService.transporter.verify] SMTP Connection Error:', {
-                    createTransportInfo: {
-                        host: process.env.SMTP_HOST,
-                        port: process.env.SMTP_PORT,
-                        secure: process.env.SMTP_PORT,
-                        auth: {
-                            user: process.env.SMTP_USER,
-                            pass: process.env.SMTP_PASS
-                        },
-                        tls: {
-                            rejectUnauthorized: false
-                        }
-                    },
-                    SMTP_PASS: process.env.SMTP_PASS,
+        if (!process.env.AZURE_EMAIL_SENDER) {
+            logger.error("[EmailService.Constructor.Sender] Missing AZURE_EMAIL_SENDER environment variable", {
+                AZURE_EMAIL_SENDER: process.env.AZURE_EMAIL_SENDER
+            });
+            throw new Error("Missing AZURE_EMAIL_SENDER");
+        }
+
+        this.client = new EmailClient(process.env.AZURE_EMAIL_CONNECTION_STRING);
+
+        this.sender = process.env.AZURE_EMAIL_SENDER;
+        this.appName = process.env.APP_NAME || "Dental CMS";
+
+        console.log("[EmailService.Constructor] Azure Email initialized");
+    }
+
+    async sendWithRetry(message, retries = 3) {
+        let lastError;
+
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const poller = await this.client.beginSend(message);
+                const result = await poller.pollUntilDone();
+
+                logger.info(`[EmailService.sendWithRetry] Sent successfully (attempt ${attempt})`);
+                return result;
+            } catch (error) {
+                if (error.code === "Unauthorized" || error.code === "BadRequest") {
+                    throw error;
+                }
+                lastError = error;
+                logger.error(`[EmailService.sendWithRetry] Attempt ${attempt} failed:`, {
                     message: error.message,
-                    stack: error.stack,
-                    code: error.code,
-                    response: error.response,
+                    code: error.code
                 });
-            } else {
-                logger.info('[EmailService] SMTP Server is ready to take our messages');
+                // delay retry
+                await new Promise(res => setTimeout(res, 1000 * Math.pow(2, attempt)));
             }
+        }
+        logger.error("[EmailService.sendWithRetry] All retries failed", {
+            retries,
+            message: lastError?.message,
+            code: lastError?.code
         });
+        throw lastError;
+    }
+    // 📧 main send function
+    async sendEmail(to, subject, html) {
+        try {
+            logger.info(`[EmailService.sendEmail] Sending email to ${to}`);
+
+            const message = {
+                senderAddress: this.sender,
+                senderDisplayName: this.appName,
+                content: {
+                    subject: subject,
+                    html: html,
+                    plainText: this.stripHtml(html)
+                },
+                recipients: {
+                    to: Array.isArray(to)
+                        ? to.map(email => ({ address: email }))
+                        : [{ address: to }]
+                }
+            };
+
+            const result = await this.sendWithRetry(message);
+
+            logger.info(`[EmailService.sendEmail] Email sent:`, result);
+
+            return result;
+
+        } catch (error) {
+            logger.error(`[EmailService.sendEmail] Send failed:`, {
+                message: error.message,
+                stack: error.stack,
+                to,
+                subject
+            });
+
+            throw new Error("The system is having trouble sending the email. Please try again later.");
+        }
+    }
+
+    stripHtml(html) {
+        return html
+            .replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&");
     }
 
     async sendEmailVerificationEmail(email, verificationToken, userName = '') {
@@ -705,33 +758,6 @@ class EmailService {
 
     async sendAppointmentReminder(appointment) {
         return this.sendAppointmentReminderEmail(appointment.email, appointment.full_name, appointment.appointment_date.toDateString(), appointment.appointment_time);
-    }
-
-    async sendEmail(to, subject, html) {
-        try {
-            logger.info(`[EmailService.sendEmail - 1101] Sending email to ${to} with subject "${subject}"`);
-            const info = await this.transporter.sendMail({
-                from: `"${process.env.SMTP_FROM_NAME || 'Dental CMS'}" <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-                to,
-                subject,
-                html
-            });
-
-            logger.info('[EmailService.sendEmail - 1103] Email sent successfully:', info.messageId);
-            return info;
-        } catch (error) {
-            logger.error(' [EmailService.sendEmail - 4001] Error sending email:', {
-                message: error.message,
-                stack: error.stack,
-                errorCode: error.code,
-                errorResponse: error.response,
-                errorStatus: error.status,
-                error: error,
-                to,
-                subject
-            });
-            throw new Error("The system is having trouble sending the email. Please try again later.");
-        }
     }
 }
 
