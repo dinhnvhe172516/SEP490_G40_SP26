@@ -264,7 +264,8 @@ const createController = async (req, res) => {
     logger.debug("Base data", {
       context: context,
       patientId: patientID,
-      accountDoctorId: accountDoctorId
+      accountDoctorId: accountDoctorId,
+      dataCreate: dataCreate
     });
 
     // --- 1. FIND DOCTOR & APPOINTMENT ---

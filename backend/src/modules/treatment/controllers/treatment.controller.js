@@ -58,7 +58,11 @@ const createController = async (req, res) => {
   const context = "TreatmentController.createController";
   try {
     const { id: dentalRecordId } = req.params;
-
+    logger.debug("Create treatment request received", {
+      context: context,
+      dentalRecordId: dentalRecordId,
+      bodyData: req.body,
+    });
     const cleanedData = cleanObjectData(req.body || {});
     if (!dentalRecordId) {
       throw new errorRes.BadRequestError("Dental record ID is required in URL");
