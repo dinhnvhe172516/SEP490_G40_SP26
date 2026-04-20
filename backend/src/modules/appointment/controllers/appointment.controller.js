@@ -407,8 +407,16 @@ const staffCreateController = async (req, res) => {
       logger.warn("Appointment is existed.");
       throw new errorRes.ConflictError("Lịch hẹn đã tồn tại.");
     }
-
-    if (!await accountService.findAccountByPhone(cleanedData.phone)) {
+    const accountExisted = await accountService.findAccountByPhone(cleanedData.phone);
+    if (accountExisted) {
+      logger.info("Account with phone already exists, will link to new appointment", {
+        context: "AppointmentController.staffCreateController",
+        phone: cleanedData.phone,
+        accountId: accountExisted._id,
+      });
+      cleanedData.patient_id = accountExisted.patient_id;
+    }
+    if (!accountExisted) {
       const patientCreated = await accountService.createPatientFromUserProfile(
         cleanedData.full_name,
         cleanedData.phone
@@ -423,16 +431,15 @@ const staffCreateController = async (req, res) => {
         context: "AppointmentController.staffCreateController",
         patient: patientCreated,
       });
-
-      if (!patientCreated._id) {
-        logger.warn("Created patient account does not have an ID", {
+      cleanedData.patient_id = patientCreated._id;
+    }
+    if (!cleanedData.patient_id) {
+        logger.warn("Patient ID is missing", {
           context: "AppointmentController.staffCreateController",
           patient: patientCreated,
         });
         throw new errorRes.InternalServerError("Tạo tài khoản bệnh nhân thất bại.");
       }
-      cleanedData.patient_id = patientCreated._id;
-    }
     const newAppointment = await ServiceProcess.staffCreateService(cleanedData);
 
     if (!newAppointment) {
