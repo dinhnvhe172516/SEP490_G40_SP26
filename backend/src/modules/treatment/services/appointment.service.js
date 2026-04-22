@@ -344,6 +344,7 @@ const createService = async (dataCreate, account_id) => {
             message: error.message,
             stack: error.stack,
         });
+        if (error.statusCode) throw error;
         throw new errorRes.InternalServerError(`Error: ${error.message}`);
     }
 };
@@ -401,7 +402,6 @@ const staffCreateService = async (dataCreate) => {
             stack: error.stack,
         });
 
-        // Đã sửa để ném ra đúng HTTP Status (Ví dụ: 409 Conflict, 404 Not Found)
         if (error.statusCode) throw error;
         throw new errorRes.InternalServerError(`Error: ${error.message}`);
     }
