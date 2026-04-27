@@ -104,7 +104,7 @@ const TreatmentComponent = ({ treatment, index, onRefresh }) => {
   };
 
   // Danh sách các trạng thái KHÔNG cho phép cập nhật
-  const restrictedStatuses = ['APPROVED', 'REJECTED', 'DONE', 'CANCELLED'];
+  const restrictedStatuses = ['WAITING_APPROVAL', 'APPROVED', 'REJECTED', 'DONE', 'CANCELLED'];
   const canUpdate = !restrictedStatuses.includes(localStatus);
 
   const meds = treatment.medicine_usage || [];

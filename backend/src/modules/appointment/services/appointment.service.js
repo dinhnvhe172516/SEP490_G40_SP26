@@ -72,14 +72,14 @@ const getListService = async (query, doctor_id, lte_date, gte_date) => {
             // 1. Xử lý ngày bắt đầu (Nếu có)
             if (filterGteDate) {
                 const startOfDay = new Date(filterGteDate);
-                startOfDay.setUTCHours(0, 0, 0, 0);
+                startOfDay.setHours(0, 0, 0, 0);
                 matchCondition.appointment_date.$gte = startOfDay;
             }
 
             // 2. Xử lý ngày kết thúc (Nếu có)
             if (filterLteDate) {
                 const endOfDay = new Date(filterLteDate);
-                endOfDay.setUTCHours(23, 59, 59, 999);
+                endOfDay.setHours(23, 59, 59, 999);
                 matchCondition.appointment_date.$lte = endOfDay;
             }
         }
@@ -87,9 +87,9 @@ const getListService = async (query, doctor_id, lte_date, gte_date) => {
         // --- BỔ SUNG: Lọc theo ngày cụ thể (appointment_date) ---
         if (filterSpecificDate) {
             const start = new Date(filterSpecificDate);
-            start.setUTCHours(0, 0, 0, 0);
+            start.setHours(0, 0, 0, 0);
             const end = new Date(filterSpecificDate);
-            end.setUTCHours(23, 59, 59, 999);
+            end.setHours(23, 59, 59, 999);
 
             // Nếu dùng cả lte_date và appointment_date thì logic này sẽ ghi đè $lte của lte_date
             // Tuy nhiên trong thực tế trang Phụ tá sẽ dùng appointment_date.

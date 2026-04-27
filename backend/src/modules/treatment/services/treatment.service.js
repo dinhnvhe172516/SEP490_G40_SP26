@@ -82,6 +82,7 @@ const createService = async (dataCreate) => {
  * @param {*} data data to update, excluding 'status' and foreign keys
  */
 const updateService = async (treatmentId, data) => {
+    const { service: AppointmentService } = require("./../../appointment/index");
     const context = "TreatmentService.updateService";
     try {
         logger.debug("Raw data to update treatment", {
@@ -99,19 +100,10 @@ const updateService = async (treatmentId, data) => {
             throw new errorRes.BadRequestError(`Không thể cập nhật điều trị vì đã ở trạng thái ${existingTreatment.status}`);
         }
         if (data.phase !== "PLAN") {
-            data.doctor_id = await appointmentService.getDoctorIdFromAppointmentId(data.appointment_id)
-                .then(res => res.data)
-                .catch(err => {
-                    logger.error("Error fetching doctor_id from appointmentId during treatment update", {
-                        context,
-                        treatmentId,
-                        appointmentId: existingTreatment.appointment_id,
-                        message: err.message,
-                        stack: err.stack
-                    });
-                    return null; 
-                });
-            data.status = "IN_PROGRESS";
+            data.doctor_id = await AppointmentService.getDoctorByAppointmentId(existingTreatment.appointment_id);
+        } else {
+            data.doctor_id = null;
+            data.status = "PLANNED";
         }
         const dataUpdate = await model.Treatment.findByIdAndUpdate(
             treatmentId,
@@ -123,8 +115,11 @@ const updateService = async (treatmentId, data) => {
         // - SESSION phase: có appointment_id riêng → dùng trực tiếp
         // - PLAN phase: không có appointment_id riêng → fallback qua DentalRecord
         if (data.status === 'WAITING_APPROVAL') {
-            logger.debug(`WAITING_APPROVAL block reached. Phase: ${existingTreatment.phase}, ID: ${treatmentId}`);
-            logger.debug('[DEBUG-HARD] WAITING_APPROVAL block reached. phase =', existingTreatment.phase, '| appointment_id =', existingTreatment.appointment_id, '| record_id =', existingTreatment.record_id);
+            logger.debug("WAITING_APPROVAL block reached.", {
+                    Phase: existingTreatment.phase, 
+                    ID: treatmentId
+                }
+            );
             try {
                 const AppointmentModel = require('../../appointment/models/appointment.model');
                 let targetAppointmentId = existingTreatment.appointment_id;
@@ -270,15 +265,6 @@ const updateStatusOnly = async (id, status) => {
         const dataUpdate = { status };
         if (status === "IN_PROGRESS") {
             dataUpdate.phase = "SESSION";
-            const treatment = await findById(id);
-            if (!treatment) {
-                logger.warn("Treatment not found by id", {
-                    context: "TreatmentService.updateStatusOnly",
-                    treatmentId: id
-                });
-                throw new errorRes.NotFoundError("Không tìm thấy điều trị để cập nhật.");
-            }
-
             logger.debug("Treatment found for IN_PROGRESS update", {
                 context: "TreatmentService.updateStatusOnly",
                 treatmentId: id,
