@@ -125,6 +125,8 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
     setConfirmPopup({ isOpen: true, type, ...config });
   };
 
+  const blackListCompleteButton = ["WAITING_APPROVAL", "CANCELLED", "PLANNED", 'APPROVED'];
+
   const handleConfirmYes = () => {
     const type = confirmPopup.type;
     setConfirmPopup({ ...confirmPopup, isOpen: false });
@@ -316,12 +318,14 @@ const UpdateTreatmentModal = ({ isOpen, onClose, treatment, onSuccess }) => {
                 {submitType === "CANCEL_TREATMENT" ? <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin"></div> : <Ban size={18} />}
                 Hủy điều trị
               </button>
-
-              <button onClick={() => openConfirm("COMPLETE")} disabled={submitType !== null} className="w-full md:w-auto px-8 py-3 bg-orange-500 text-white rounded-2xl font-black hover:bg-orange-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-orange-200">
-                {submitType === "COMPLETE" ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={20} />}
-                Hoàn thành
-              </button>
-
+              {
+                !blackListCompleteButton.includes(treatment.status) && (
+                  <button onClick={() => openConfirm("COMPLETE")} disabled={submitType !== null} className="w-full md:w-auto px-8 py-3 bg-orange-500 text-white rounded-2xl font-black hover:bg-orange-600 transition-all flex justify-center items-center gap-2 shadow-lg shadow-orange-200">
+                    {submitType === "COMPLETE" ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <CheckCircle size={20} />}
+                    Hoàn thành
+                  </button>
+                )
+              }
               <button onClick={() => openConfirm("UPDATE")} disabled={submitType !== null} className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-700 transition-all flex justify-center items-center gap-2 shadow-lg shadow-blue-200">
                 {submitType === "UPDATE" ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Save size={18} />}
                 Lưu cập nhật
