@@ -100,10 +100,16 @@ const updateService = async (treatmentId, data) => {
             throw new errorRes.BadRequestError(`Không thể cập nhật điều trị vì đã ở trạng thái ${existingTreatment.status}`);
         }
         if (data.phase !== "PLAN") {
-            data.doctor_id = await AppointmentService.getDoctorByAppointmentId(existingTreatment.appointment_id);
+            if (!existingTreatment.appointment_id) {
+                const DentalRecord = require('../models/dental-record.model');
+                const record = await DentalRecord.findById(existingTreatment.record_id).lean();
+                data.appointment_id = record?.appointment_id;
+            }
+            data.doctor_id = await AppointmentService.getDoctorByAppointmentId(existingTreatment.appointment_id || data.appointment_id);
         } else {
             data.doctor_id = null;
             data.status = "PLANNED";
+            data.appointment_id = null;
         }
         const dataUpdate = await model.Treatment.findByIdAndUpdate(
             treatmentId,
@@ -116,9 +122,9 @@ const updateService = async (treatmentId, data) => {
         // - PLAN phase: không có appointment_id riêng → fallback qua DentalRecord
         if (data.status === 'WAITING_APPROVAL') {
             logger.debug("WAITING_APPROVAL block reached.", {
-                    Phase: existingTreatment.phase, 
-                    ID: treatmentId
-                }
+                Phase: existingTreatment.phase,
+                ID: treatmentId
+            }
             );
             try {
                 const AppointmentModel = require('../../appointment/models/appointment.model');
@@ -272,7 +278,7 @@ const updateStatusOnly = async (id, status) => {
                 recordId: treatment.record_id,
                 treatment: treatment
             });
-            
+
             const doctorId = await AppointmentService.getDoctorByAppointmentId(treatment.appointment_id);
             if (!doctorId) {
                 logger.warn("Doctor ID not found from appointment", {
