@@ -6,6 +6,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRegister } from '@/src/hooks/useAuth';
 import { AuthHeader } from '@/src/components/features/auth/AuthHeader';
 import { ThemedText } from '@/src/components/ui/themed-text';
+import { registerSchema } from '@/src/schemas/auth.schema';
+import { errorMapper } from '@/src/utils/errorMapper';
+import { Image } from 'expo-image';
 
 export function RegisterScreen() {
     const insets = useSafeAreaInsets();
@@ -15,19 +18,22 @@ export function RegisterScreen() {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleRegister = async () => {
-        if (!username || !fullName || !email || !password) {
-            setErrorMsg('Vui lòng nhập đầy đủ thông tin');
+        setLocalError(null);
+
+        // 1. Client-side Validation
+        const validation = registerSchema.safeParse({ username, full_name: fullName, email, password });
+        if (!validation.success) {
+            setLocalError(validation.error.issues[0].message);
             return;
         }
 
         try {
-            setIsLoading(true);
-            setErrorMsg('');
-
+            // 2. Trigger Mutation
             await registerMutation.mutateAsync({
                 username,
                 full_name: fullName,
@@ -35,16 +41,15 @@ export function RegisterScreen() {
                 password
             });
 
-            // Redirect to login after successful registration
-            router.replace('/login');
+            // 3. Navigation side effect
+            router.replace('/(auth)/login');
         } catch (err: any) {
-            console.error('Register error:', err);
-            const msg = err.response?.data?.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.';
-            setErrorMsg(msg);
-        } finally {
-            setIsLoading(false);
+            console.error('Register screen error:', err);
         }
     };
+
+    // Derive error message 
+    const errorMsg = localError || (registerMutation.error ? errorMapper(registerMutation.error).message : '');
 
     return (
         <KeyboardAvoidingView
@@ -58,74 +63,99 @@ export function RegisterScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <AuthHeader 
-                    title="Đăng ký" 
-                    subtitle="Tạo tài khoản mới để bắt đầu sử dụng dịch vụ của chúng tôi." 
-                    errorMsg={errorMsg} 
+                <AuthHeader
+                    title="Đăng ký"
+                    subtitle="Tạo tài khoản mới để quản lý sức khỏe răng miệng của bạn."
+                    errorMsg={errorMsg}
                 />
 
                 <View style={styles.formContainer}>
                     <View style={styles.inputGroup}>
                         <ThemedText style={styles.label}>TÊN ĐĂNG NHẬP</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập tên đăng nhập"
-                            placeholderTextColor="#9CA3AF"
-                            autoCapitalize="none"
-                            value={username}
-                            onChangeText={setUsername}
-                            editable={!isLoading}
-                        />
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Ít nhất 3 ký tự"
+                                placeholderTextColor="#9CA3AF"
+                                autoCapitalize="none"
+                                value={username}
+                                onChangeText={setUsername}
+                                editable={!registerMutation.isPending}
+                            />
+                        </View>
                     </View>
 
                     <View style={styles.inputGroup}>
                         <ThemedText style={styles.label}>HỌ VÀ TÊN</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập họ và tên"
-                            placeholderTextColor="#9CA3AF"
-                            value={fullName}
-                            onChangeText={setFullName}
-                            editable={!isLoading}
-                        />
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nhập họ và tên"
+                                placeholderTextColor="#9CA3AF"
+                                value={fullName}
+                                onChangeText={setFullName}
+                                editable={!registerMutation.isPending}
+                            />
+                        </View>
                     </View>
 
                     <View style={styles.inputGroup}>
                         <ThemedText style={styles.label}>EMAIL</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập địa chỉ email"
-                            placeholderTextColor="#9CA3AF"
-                            autoCapitalize="none"
-                            keyboardType="email-address"
-                            value={email}
-                            onChangeText={setEmail}
-                            editable={!isLoading}
-                        />
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="example@gmail.com"
+                                placeholderTextColor="#9CA3AF"
+                                autoCapitalize="none"
+                                keyboardType="email-address"
+                                value={email}
+                                onChangeText={setEmail}
+                                editable={!registerMutation.isPending}
+                            />
+                        </View>
                     </View>
 
                     <View style={styles.inputGroup}>
                         <ThemedText style={styles.label}>MẬT KHẨU</ThemedText>
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập mật khẩu"
-                            placeholderTextColor="#9CA3AF"
-                            secureTextEntry={true}
-                            value={password}
-                            onChangeText={setPassword}
-                            editable={!isLoading}
-                        />
+
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Ít nhất 8 ký tự (chữ hoa, số, kí tự đặc biệt)"
+                                placeholderTextColor="#9CA3AF"
+                                secureTextEntry={!showPassword}
+                                value={password}
+                                onChangeText={setPassword}
+                                editable={!registerMutation.isPending}
+                                autoCapitalize="none"
+                            />
+
+                            <TouchableOpacity
+                                style={styles.eyeButton}
+                                onPress={() => setShowPassword(prev => !prev)}
+                            >
+                                <Image
+                                    source={
+                                        showPassword
+                                            ? require('@/assets/images/hide.png')
+                                            : require('@/assets/images/view.png')
+                                    }
+                                    style={styles.eyeIcon}
+                                    contentFit="contain"
+                                />
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 </View>
 
                 <View style={styles.actionContainer}>
                     <TouchableOpacity
-                        style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
+                        style={[styles.loginButton, registerMutation.isPending && styles.loginButtonDisabled]}
                         activeOpacity={0.8}
                         onPress={handleRegister}
-                        disabled={isLoading}
+                        disabled={registerMutation.isPending}
                     >
-                        {isLoading ? (
+                        {registerMutation.isPending ? (
                             <ActivityIndicator color="#FFFFFF" size="small" />
                         ) : (
                             <ThemedText style={styles.loginButtonText}>Đăng ký ngay</ThemedText>
@@ -168,10 +198,7 @@ const styles = StyleSheet.create({
         color: '#2563eb',
     },
     input: {
-        backgroundColor: '#eff6ff',
-        borderWidth: 1,
-        borderColor: '#bfdbfe',
-        borderRadius: 16,
+        flex: 1,
         paddingHorizontal: 20,
         paddingVertical: 16,
         fontSize: 16,
@@ -210,5 +237,23 @@ const styles = StyleSheet.create({
         fontSize: 15,
         fontWeight: '700',
         color: '#1e3a8a',
-    }
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eff6ff',
+        borderWidth: 1,
+        borderColor: '#bfdbfe',
+        borderRadius: 16,
+    },
+
+    eyeButton: {
+        paddingHorizontal: 12,
+    },
+
+    eyeIcon: {
+        width: 20,
+        height: 20,
+        tintColor: '#60a5fa',
+    },
 });

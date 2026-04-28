@@ -53,8 +53,12 @@ const getListController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    // Trả về message tiếng Việt chung cho các lỗi hệ thống
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -114,7 +118,9 @@ const getListOfPatientControllerWithDate = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -172,7 +178,9 @@ const getListOfPatientController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -238,7 +246,9 @@ const getListOfDoctorController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -275,7 +285,9 @@ const getByIdController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -352,7 +364,9 @@ const createController = async (req, res) => {
       context: "appointmentController.createController",
       message: error.message,
     });
-    if (error.statusCode) throw error; // Ném lỗi ra để middleware error handler tổng bắt lấy
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -381,7 +395,7 @@ const staffCreateController = async (req, res) => {
         appointment_time_booked: cleanedData.appointment_time,
         time_now: new Date(),
       });
-      throw new errorRes.BadRequestError("bạn không thể đặt lịch hẹn cho quá khứ.");
+      throw new errorRes.BadRequestError("Bạn không thể đặt lịch hẹn cho quá khứ.");
     }
 
     // Validate mảng book_service nếu client có gửi kèm dịch vụ
@@ -407,8 +421,22 @@ const staffCreateController = async (req, res) => {
       logger.warn("Appointment is existed.");
       throw new errorRes.ConflictError("Lịch hẹn đã tồn tại.");
     }
-
-    if (!await accountService.findAccountByPhone(cleanedData.phone)) {
+    const accountExisted = await accountService.findAccountByPhone(cleanedData.phone);
+    if (accountExisted) {
+      logger.info("Account with phone already exists, will link to new appointment", {
+        context: "AppointmentController.staffCreateController",
+        phone: cleanedData.phone,
+        accountId: accountExisted._id,
+      });
+      const {patient} = await accountService.findPatientByAccountId(accountExisted._id);
+      logger.info("Patient linked to existing account", {
+        context: "AppointmentController.staffCreateController",
+        patientId: patient ? patient._id : null,
+        accountId: accountExisted._id,
+      });
+      cleanedData.patient_id = patient._id;
+    }
+    if (!accountExisted) {
       const patientCreated = await accountService.createPatientFromUserProfile(
         cleanedData.full_name,
         cleanedData.phone
@@ -425,6 +453,13 @@ const staffCreateController = async (req, res) => {
       });
       cleanedData.patient_id = patientCreated._id;
     }
+    if (!cleanedData.patient_id) {
+        logger.warn("Patient ID is missing", {
+          context: "AppointmentController.staffCreateController",
+          cleanedData: cleanedData,
+        });
+        throw new errorRes.InternalServerError("Tạo tài khoản bệnh nhân thất bại.");
+      }
     const newAppointment = await ServiceProcess.staffCreateService(cleanedData);
 
     if (!newAppointment) {
@@ -455,7 +490,9 @@ const staffCreateController = async (req, res) => {
       context: "appointmentController.staffCreateController",
       message: error.message,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -506,7 +543,9 @@ const updateController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -542,7 +581,9 @@ const patientRequestUpdateController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -668,7 +709,9 @@ const updateStatusController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -705,7 +748,9 @@ const checkinController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -735,7 +780,61 @@ const getListAppointmentToPaymentController = async (req, res) => {
       message: error.message,
       stack: error.stack,
     });
-    if (error.statusCode) throw error;
+    if (error.statusCode) {
+      throw error;
+    }
+    throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
+  }
+};
+
+const getServicesByAppointmentIdController = async (req, res) => {
+  const context = "AppointmentController.getServicesByAppointmentIdController";
+  try {
+    const { id: appointmentId } = req.params;
+    if (!appointmentId) {
+      logger.warn("Appointment ID is null or missing.", {
+        context,
+        appointment_id: appointmentId,
+      });
+      return new errorRes.NotFoundError("Mã lịch hẹn không được để trống.");
+    }
+    const services = await ServiceProcess.getServicesByAppointmentId(appointmentId);
+    return new successRes.GetDetailSuccess(
+      services,
+      "Lấy danh sách dịch vụ của lịch hẹn thành công.",
+    ).send(res);
+  } catch (err) {
+    logger.error("Error get services by appointment id.", {
+      context,
+      error: err,
+    });
+    if (err.statusCode) throw err;
+    throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
+  }
+};
+
+const getDoctorByAppointmentIdController = async (req, res) => {
+  const context = "AppointmentController.getDoctorByAppointmentIdController";
+  try {
+    const { id: appointmentId } = req.params;
+    if (!appointmentId) {
+      logger.warn("Appointment ID is null or missing.", {
+        context,
+        appointment_id: appointmentId,
+      });
+      return new errorRes.NotFoundError("Mã lịch hẹn không được để trống.");
+    }
+    const services = await ServiceProcess.getDoctorByAppointmentId(appointmentId);
+    return new successRes.GetDetailSuccess(
+      services,
+      "Lấy thông tin nha sĩ của lịch hẹn thành công.",
+    ).send(res);
+  } catch (err) {
+    logger.error("Error get doctor by appointment id.", {
+      context,
+      error: err,
+    });
+    if (err.statusCode) throw err;
     throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau.");
   }
 };
@@ -753,5 +852,7 @@ module.exports = {
   getListOfPatientControllerWithDate,
   getListOfDoctorController,
   calculateTotalAmountFromAppointment,
-  getListAppointmentToPaymentController
+  getListAppointmentToPaymentController,
+  getServicesByAppointmentIdController,
+  getDoctorByAppointmentIdController,
 };

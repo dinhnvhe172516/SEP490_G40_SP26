@@ -4,7 +4,7 @@
   "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "node --watch src/server.js",
+    "dev": "nodemon src/server.js",
     "debug": "node --inspect src/server.js",
     "debug:dev": "nodemon -L --inspect src/server.js",
     "start": "node src/server.js",
@@ -15,6 +15,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@azure/communication-email": "^1.1.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.9.0",

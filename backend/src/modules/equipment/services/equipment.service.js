@@ -155,7 +155,7 @@ const getEquipments = async (query) => {
             message: error.message,
             stack: error.stack,
         });
-        throw new errorRes.InternalServerError(`An error occurred while fetching equipments: ${error.message}`);
+        throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau");
     }
 };
 
@@ -343,7 +343,7 @@ const getEquipmentById = async (id, query) => {
             stack: error.stack,
         });
         throw new errorRes.InternalServerError(
-            `An error occurred while fetching equipment by id: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };
@@ -372,7 +372,7 @@ const checkExitSerialNumber = async (serialNumber) => {
             stack: error.stack,
         });
         throw new errorRes.InternalServerError(
-            `An error occurred while checking equipment serial number: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };
@@ -387,8 +387,7 @@ const createEquipment = async (dataCreate) => {
     try {
         logger.debug("Processing new equipment data", {
             context: context,
-            equipment_type: dataCreate.equipment_type,
-            newItemsCount: dataCreate.equipment.length
+            dataCreate: dataCreate
         });
 
         // TÌM KIẾM xem loại thiết bị này đã tồn tại chưa
@@ -402,7 +401,7 @@ const createEquipment = async (dataCreate) => {
                 context: context,
                 equipment_type: dataCreate.equipment_type
             });
-            throw new errorRes.ConflictError(`Equipment type '${dataCreate.equipment_type}' already exists. Please use the add items API instead.`);
+            throw new errorRes.ConflictError(`Loại thiết bị '${dataCreate.equipment_type}' đã tồn tại. Vui lòng sử dụng chức năng thêm thiết bị vào danh mục.`);
         }
 
         // NẾU CHƯA TỒN TẠI -> Tạo document mới hoàn toàn
@@ -426,7 +425,7 @@ const createEquipment = async (dataCreate) => {
         if (error.statusCode) throw error;
 
         throw new errorRes.InternalServerError(
-            `An error occurred while creating equipment: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };
@@ -453,7 +452,7 @@ const addEquipmentItems = async (categoryId, newItems) => {
 
         // Nếu trả về null nghĩa là cái categoryId truyền vào bị sai hoặc đã bị xóa
         if (!updatedCategory) {
-            throw new errorRes.NotFoundError("Equipment category not found");
+            throw new errorRes.NotFoundError("Không tìm thấy danh mục thiết bị");
         }
 
         return updatedCategory;
@@ -467,7 +466,7 @@ const addEquipmentItems = async (categoryId, newItems) => {
         });
         if (error.statusCode) throw error;
         throw new errorRes.InternalServerError(
-            `An error occurred while adding equipment items: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };
@@ -502,7 +501,7 @@ const checkExitSerialNumberNotId = async (serialNumber, id) => {
             stack: error.stack,
         });
         throw new errorRes.InternalServerError(
-            `An error occurred while checking equipment serial number: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };
@@ -521,37 +520,37 @@ const updateCategory = async (categoryId, updateData) => {
         return updatedCategory;
     } catch (error) {
         if (error.statusCode) throw error;
-        throw new errorRes.InternalServerError(`Error updating category: ${error.message}`);
+        throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau");
     }
 };
 
 /**
  * Update 1 item cụ thể trong mảng equipment
  */
-const updateEquipmentItem = async (equipmentItemId, dataUpdate) => {
-    const context = "EquipmentService.updateEquipmentItem";
-    try {
-        const setQuery = {};
-        for (const key in dataUpdate) {
-            setQuery[`equipment.$.${key}`] = dataUpdate[key];
-        }
+const updateEquipmentItem = async (categoryId, dataUpdate) => {
+    const context = "EquipmentService.updateEquipmentCategory";
+    logger.debug("Updating equipment category with data", {
+        context,
+        categoryId,
+        dataUpdate
+    });
 
-        // 2. Tìm document chứa item đó, và chỉ update đúng phần tử (nhờ toán tử $)
-        const updatedDoc = await EquipmentModel.findOneAndUpdate(
-            { "equipment._id": equipmentItemId },
-            { $set: setQuery },
+    try {
+        const updatedDoc = await EquipmentModel.findByIdAndUpdate(
+            categoryId,
+            { $set: dataUpdate },
             { new: true, runValidators: true }
         );
 
         if (!updatedDoc) {
-            throw new errorRes.NotFoundError("Equipment item not found");
+            throw new errorRes.NotFoundError("Không tìm thấy danh mục thiết bị");
         }
-
         return updatedDoc;
+
     } catch (error) {
-        logger.error("Error updating equipment item", { context, message: error.message });
+        logger.error("Error updating equipment category", { context, message: error.message });
         if (error.statusCode) throw error;
-        throw new errorRes.InternalServerError(`An error occurred while updating equipment item: ${error.message}`);
+        throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau");
     }
 };
 
@@ -620,7 +619,7 @@ const getStatistics = async () => {
             message: error.message,
             stack: error.stack,
         });
-        throw new errorRes.InternalServerError(`An error occurred while fetching equipment statistics: ${error.message}`);
+        throw new errorRes.InternalServerError("Hệ thống lỗi, vui lòng thực hiện sau");
     }
 };
 
@@ -692,7 +691,7 @@ const reportIncident = async (id, incidentData) => {
             stack: error.stack,
         });
         throw new errorRes.InternalServerError(
-            `An error occurred while reporting equipment incident: ${error.message}`
+            "Hệ thống lỗi, vui lòng thực hiện sau"
         );
     }
 };

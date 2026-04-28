@@ -1,29 +1,104 @@
-const nodemailer = require('nodemailer');
+const { EmailClient } = require('@azure/communication-email');
 const logger = require('../utils/logger');
 require('dotenv').config();
 
 class EmailService {
     constructor() {
-        this.transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST || 'smtp.gmail.com',
-            port: parseInt(process.env.SMTP_PORT || '587'),
-            secure: process.env.SMTP_PORT == '465', // true for 465, false for other ports
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-        });
+        if (!process.env.AZURE_EMAIL_CONNECTION_STRING) {
+            logger.error("[EmailService.Constructor.Connection] Missing AZURE_EMAIL_CONNECTION_STRING environment variable", {
+                AZURE_EMAIL_CONNECTION_STRING: process.env.AZURE_EMAIL_CONNECTION_STRING
+            });
+            throw new Error("Missing AZURE_EMAIL_CONNECTION_STRING");
+        }
 
-        // Verify connection configuration
-        this.transporter.verify((error, success) => {
-            if (error) {
-                logger.error('[EmailService] SMTP Connection Error:', error);
-            } else {
-                logger.info('[EmailService] SMTP Server is ready to take our messages');
+        if (!process.env.AZURE_EMAIL_SENDER) {
+            logger.error("[EmailService.Constructor.Sender] Missing AZURE_EMAIL_SENDER environment variable", {
+                AZURE_EMAIL_SENDER: process.env.AZURE_EMAIL_SENDER
+            });
+            throw new Error("Missing AZURE_EMAIL_SENDER");
+        }
+
+        this.client = new EmailClient(process.env.AZURE_EMAIL_CONNECTION_STRING);
+
+        this.sender = process.env.AZURE_EMAIL_SENDER;
+        this.appName = process.env.APP_NAME || "Dental CMS";
+
+        console.log("[EmailService.Constructor] Azure Email initialized");
+    }
+
+    async sendWithRetry(message, retries = 3) {
+        let lastError;
+
+        for (let attempt = 1; attempt <= retries; attempt++) {
+            try {
+                const poller = await this.client.beginSend(message);
+                const result = await poller.pollUntilDone();
+
+                logger.info(`[EmailService.sendWithRetry] Sent successfully (attempt ${attempt})`);
+                return result;
+            } catch (error) {
+                if (error.code === "Unauthorized" || error.code === "BadRequest") {
+                    throw error;
+                }
+                lastError = error;
+                logger.error(`[EmailService.sendWithRetry] Attempt ${attempt} failed:`, {
+                    message: error.message,
+                    code: error.code
+                });
+                // delay retry
+                await new Promise(res => setTimeout(res, 1000 * Math.pow(2, attempt)));
             }
+        }
+        logger.error("[EmailService.sendWithRetry] All retries failed", {
+            retries,
+            message: lastError?.message,
+            code: lastError?.code
         });
+        throw lastError;
+    }
+    // 📧 main send function
+    async sendEmail(to, subject, html) {
+        try {
+            logger.info(`[EmailService.sendEmail] Sending email to ${to}`);
 
-        logger.info('[EmailService] Initialized with SMTP (Nodemailer)');
+            const message = {
+                senderAddress: this.sender,
+                senderDisplayName: this.appName,
+                content: {
+                    subject: subject,
+                    html: html,
+                    plainText: this.stripHtml(html)
+                },
+                recipients: {
+                    to: Array.isArray(to)
+                        ? to.map(email => ({ address: email }))
+                        : [{ address: to }]
+                }
+            };
+
+            const result = await this.sendWithRetry(message);
+
+            logger.info(`[EmailService.sendEmail] Email sent:`, result);
+
+            return result;
+
+        } catch (error) {
+            logger.error(`[EmailService.sendEmail] Send failed:`, {
+                message: error.message,
+                stack: error.stack,
+                to,
+                subject
+            });
+
+            throw new Error("The system is having trouble sending the email. Please try again later.");
+        }
+    }
+
+    stripHtml(html) {
+        return html
+            .replace(/<[^>]*>/g, "")
+            .replace(/&nbsp;/g, " ")
+            .replace(/&amp;/g, "&");
     }
 
     async sendEmailVerificationEmail(email, verificationToken, userName = '') {
@@ -629,28 +704,60 @@ class EmailService {
         return this.sendEmail(email, subject, html);
     }
 
-    async sendEmail(to, subject, html) {
-        try {
-            logger.info(`[EmailService] Sending email to ${to} with subject "${subject}"`);
+    async sendAppointmentReminderEmail(email, patientName, date, time) {
+        if (!email) return;
+        const subject = '⏳ Nhắc Nhở Lịch Hẹn - Dental Clinic Management System';
+        const clinicName = process.env.SMTP_FROM_NAME || 'Dental CMS';
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #ff9966 0%, #ff5e62 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .info-box { background: white; border-left: 4px solid #ff5e62; padding: 20px; margin: 20px 0; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+                    .info-table { width: 100%; border-collapse: collapse; }
+                    .info-table td { padding: 10px 0; border-bottom: 1px solid #eee; }
+                    .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1 style="margin: 0;">⏳ Nhắc Nhở Lịch Hẹn</h1>
+                    </div>
+                    <div class="content">
+                        <p>Xin chào <strong>${patientName}</strong>,</p>
+                        <p><strong>${clinicName}</strong> xin thông báo nhắc nhở bạn về lịch hẹn khám nha khoa sắp diễn ra.</p>
+                        
+                        <div class="info-box">
+                            <table class="info-table">
+                                <tr>
+                                    <td><strong>Thời gian hẹn:</strong></td>
+                                    <td style="text-align: right; color: #ff5e62; font-weight: bold;">${time} - ${date}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <p style="color: #d9534f; font-size: 14px;"><strong>* Lưu ý:</strong> Vui lòng đến phòng khám đúng giờ để được phục vụ tốt nhất.</p>
+                        <p>Hẹn gặp lại bạn!</p>
+                        
+                        <div class="footer">
+                            <p style="margin-bottom: 5px;">Đây là email tự động. Vui lòng không trả lời email này.</p>
+                            <p>© 2026 ${clinicName}. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `;
+        return this.sendEmail(email, subject, html);
+    }
 
-            const fromEmail = process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER;
-            const fromName = process.env.SMTP_FROM_NAME || 'Dental CMS';
-
-            const mailOptions = {
-                from: `"${fromName}" <${fromEmail}>`,
-                to: to, // Nodemailer handles string "a@b.com, c@d.com" or array ["a@b.com", "c@d.com"]
-                subject: subject,
-                html: html
-            };
-
-            const info = await this.transporter.sendMail(mailOptions);
-
-            logger.info('[EmailService] Email sent successfully:', info.messageId);
-            return info;
-        } catch (error) {
-            logger.error('[EmailService] Error sending email:', error);
-            throw new Error('Failed to send email: ' + error.message);
-        }
+    async sendAppointmentReminder(appointment) {
+        return this.sendAppointmentReminderEmail(appointment.email, appointment.full_name, appointment.appointment_date.toDateString(), appointment.appointment_time);
     }
 }
 

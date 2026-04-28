@@ -103,7 +103,10 @@ const CreateDentalRecordModal = ({
             return;
         }
 
-        if (!patientId) return;
+        if (!patientId) {
+            setErrors({ submit: 'Không thể tạo hồ sơ: Thiếu thông tin ID bệnh nhân!' });
+            return;
+        }
         setIsSubmitting(true);
         setErrors({});
         try {

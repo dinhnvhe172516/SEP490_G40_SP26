@@ -2,71 +2,50 @@ import { useState } from 'react';
 import { StyleSheet, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useQueryClient } from '@tanstack/react-query';
-import * as SecureStore from 'expo-secure-store';
 
 import { useLogin } from '@/src/hooks/useAuth';
 import { AuthHeader } from '@/src/components/features/auth/AuthHeader';
 import { AuthForm } from '@/src/components/features/auth/AuthForm';
 import { AuthAction } from '@/src/components/features/auth/AuthAction';
+import { useAuth } from '@/src/context/AuthContext';
+import { loginSchema } from '@/src/schemas/auth.schema';
+import { errorMapper } from '@/src/utils/errorMapper';
 
 export function LoginScreen() {
     const insets = useSafeAreaInsets();
-    const queryClient = useQueryClient();
+    const { setAuth } = useAuth();
     const loginMutation = useLogin();
 
     const [identifier, setIdentifier] = useState('');
     const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
+    const [localError, setLocalError] = useState<string | null>(null);
 
     const handleLogin = async () => {
-        if (!identifier || !password) {
-            setErrorMsg('Vui lòng nhập đầy đủ thông tin');
+        setLocalError(null);
+
+        // 1. Client-side Validation using Zod
+        const validation = loginSchema.safeParse({ identifier, password });
+        if (!validation.success) {
+            setLocalError(validation.error.issues[0].message);
             return;
         }
 
         try {
-            setIsLoading(true);
-            setErrorMsg('');
+            // 2. Trigger Mutation
+            const user = await loginMutation.mutateAsync({ identifier, password });
 
-            // Call real login API using mutation instead of useQuery directly
-            const responseData = await loginMutation.mutateAsync({ identifier, password });
-
-            // Extract tokens (adjust fields based on your backend response structure)
-            const resData = responseData?.data as any;
-            const accessToken = resData?.token;
-            const refreshToken = resData?.refreshToken;
-            const roleName = resData?.role?.name;
-
-            if (roleName !== 'PATIENT') {
-                setErrorMsg('Tài khoản của bạn không được cấp quyền truy cập ứng dụng này.');
-                return;
+            // 3. Update Global Auth State
+            setAuth(user);
+        } catch (err) {
+            // Error is handled by React Query state (loginMutation.error)
+            if (__DEV__) {
+                console.error('Login screen error:', err);
             }
-
-            if (accessToken) {
-                await SecureStore.setItemAsync('access_token', accessToken);
-                if (refreshToken) {
-                    await SecureStore.setItemAsync('refresh_token', refreshToken);
-                }
-
-                // Invalidate profile query to refetch authenticated data
-                queryClient.invalidateQueries({ queryKey: ['profile'] });
-                queryClient.invalidateQueries({ queryKey: ['appointments', 'patient'] });
-
-                router.replace('/');
-            } else {
-                setErrorMsg('Không nhận được token từ máy chủ. Vui lòng thử lại.');
-            }
-
-        } catch (err: any) {
-            console.error('Login error:', err);
-            const msg = err.response?.data?.message || 'Đăng nhập thất bại. Vui lòng kiểm tra lại tài khoản và mật khẩu.';
-            setErrorMsg(msg);
-        } finally {
-            setIsLoading(false);
         }
     };
+
+    // Derive error message for display
+    const errorMsg = localError || (loginMutation.error ? errorMapper(loginMutation.error).message : '');
 
     return (
         <KeyboardAvoidingView
@@ -80,21 +59,21 @@ export function LoginScreen() {
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
             >
-                <AuthHeader errorMsg={errorMsg} />
+                <AuthHeader errorMsg={errorMsg} showBackButton={false} />
 
                 <AuthForm
                     identifier={identifier}
                     setIdentifier={setIdentifier}
                     password={password}
                     setPassword={setPassword}
-                    isLoading={isLoading}
-                    onForgotPassword={() => router.push('/forgot-password')}
+                    isLoading={loginMutation.isPending}
+                    onForgotPassword={() => router.push('/(auth)/forgot-password')}
                 />
 
                 <AuthAction
-                    isLoading={isLoading}
+                    isLoading={loginMutation.isPending}
                     onLogin={handleLogin}
-                    onRegister={() => router.push('/register')}
+                    onRegister={() => router.push('/(auth)/register')}
                 />
             </ScrollView>
         </KeyboardAvoidingView>

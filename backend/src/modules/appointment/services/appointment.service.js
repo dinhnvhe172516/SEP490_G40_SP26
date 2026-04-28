@@ -72,14 +72,14 @@ const getListService = async (query, doctor_id, lte_date, gte_date) => {
             // 1. Xử lý ngày bắt đầu (Nếu có)
             if (filterGteDate) {
                 const startOfDay = new Date(filterGteDate);
-                startOfDay.setUTCHours(0, 0, 0, 0);
+                startOfDay.setHours(0, 0, 0, 0);
                 matchCondition.appointment_date.$gte = startOfDay;
             }
 
             // 2. Xử lý ngày kết thúc (Nếu có)
             if (filterLteDate) {
                 const endOfDay = new Date(filterLteDate);
-                endOfDay.setUTCHours(23, 59, 59, 999);
+                endOfDay.setHours(23, 59, 59, 999);
                 matchCondition.appointment_date.$lte = endOfDay;
             }
         }
@@ -87,9 +87,9 @@ const getListService = async (query, doctor_id, lte_date, gte_date) => {
         // --- BỔ SUNG: Lọc theo ngày cụ thể (appointment_date) ---
         if (filterSpecificDate) {
             const start = new Date(filterSpecificDate);
-            start.setUTCHours(0, 0, 0, 0);
+            start.setHours(0, 0, 0, 0);
             const end = new Date(filterSpecificDate);
-            end.setUTCHours(23, 59, 59, 999);
+            end.setHours(23, 59, 59, 999);
 
             // Nếu dùng cả lte_date và appointment_date thì logic này sẽ ghi đè $lte của lte_date
             // Tuy nhiên trong thực tế trang Phụ tá sẽ dùng appointment_date.
@@ -561,7 +561,7 @@ const getByIdService = async (id) => {
             stack: error.stack,
         });
 
-        if (error.statusCode) throw error;
+    
 
         throw new errorRes.InternalServerError(
             "Hệ thống lỗi vui lòng thực hiện sau"
@@ -921,7 +921,7 @@ const createService = async (dataCreate, account_id) => {
             type: 'NEW_APPOINTMENT',
             title: 'Đặt lịch thành công',
             message: `Đặt lịch thành công! Lịch hẹn của bạn vào lúc ${appointmentTime} ngày ${formattedDateNoti} đã được ghi nhận.`,
-            action_url: `/patient/appointments`,
+            action_url: `/appointments`,
             metadata: {
                 entity_id: newAppointment._id,
                 entity_type: 'APPOINTMENT'
@@ -1038,7 +1038,7 @@ const staffCreateService = async (dataCreate) => {
         });
 
         // Đã sửa để ném ra đúng HTTP Status (Ví dụ: 409 Conflict, 404 Not Found)
-        if (error.statusCode) throw error;
+    
         throw new errorRes.InternalServerError("Hệ thống lỗi vui lòng thực hiện sau");
     }
 };
@@ -1157,7 +1157,7 @@ const updateService = async (id, data) => {
             stack: error.stack,
         });
 
-        if (error.statusCode) throw error;
+    
         throw new errorRes.InternalServerError("Hệ thống lỗi vui lòng thực hiện sau");
     }
 };
@@ -1367,7 +1367,7 @@ const updateStatusOnly = async (id, status, doctorId = null) => {
         });
 
         // Ném tiếp các lỗi đã được định nghĩa (ví dụ: NotFoundError)
-        if (error.statusCode) throw error;
+    
 
         // Bắt các lỗi hệ thống (Database lỗi, rớt mạng...)
         throw new errorRes.InternalServerError("Hệ thống lỗi vui lòng thực hiện sau");
@@ -1440,7 +1440,7 @@ const checkinService = async (data) => {
             data: data
         });
 
-        if (error.statusCode) throw error;
+    
         throw new errorRes.InternalServerError("Hệ thống lỗi vui lòng thực hiện sau");
     }
 };
@@ -1775,6 +1775,52 @@ const getFirstAppointmentOfPatientAtNowWithStatusCheckin = async (patientId) => 
     }
 };
 
+const getServicesByAppointmentId = async (appointmentId) => {
+    try {
+        const appointment = await AppointmentModel.findById(appointmentId).lean();
+        if (!appointment) {
+            logger.error("Could not find appointment by id.", {
+                context: "AppointmentService.getServicesByAppointmentId",
+                appointmentId
+            });
+            return [];
+        }
+        return appointment.book_service || [];
+    } catch (error) {
+        logger.error("Error get services by appointment id", {
+            context: "AppointmentService.getServicesByAppointmentId",
+            appointmentId,
+            error
+        });
+        return [];
+    }
+};
+
+const getDoctorByAppointmentId = async (appointmentId) => {
+    try {
+        const context = "AppointmentService.getDoctorByAppointmentId";
+        logger.debug("Getting doctor by appointment id", {
+            context,
+            appointmentId: appointmentId
+        });
+        const appointment = await AppointmentModel.findById(appointmentId).lean();
+        if (!appointment) {
+            logger.error("Could not find appointment by id.", {
+                context: "AppointmentService.getDoctorByAppointmentId",
+                appointmentId
+            });
+            return null;
+        }
+        return appointment.doctor_id || null;
+    } catch (error) {
+        logger.error("Error get doctor by appointment id", {
+            context: "AppointmentService.getDoctorByAppointmentId",
+            appointmentId,
+            error
+        });
+        return null;
+    }
+};
 
 module.exports = {
     getListService,
@@ -1791,5 +1837,7 @@ module.exports = {
     calculateTotalAmount,
     checkDuplicateFullNameAndPhoneAndAppointDateAndAppointTime,
     getListAppointmentToPayment,
-    getFirstAppointmentOfPatientAtNowWithStatusCheckin
+    getFirstAppointmentOfPatientAtNowWithStatusCheckin,
+    getServicesByAppointmentId,
+    getDoctorByAppointmentId,
 };
