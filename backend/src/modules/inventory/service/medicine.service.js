@@ -1,7 +1,8 @@
 const Medicine = require("../model/medicine.model");
 const MedicineCategory = require("../model/medicine-category.model");
 const notificationService = require("../../notification/service/notification.service");
-
+const logger = require("../../../common/utils/logger");
+const errorResponse = require("../../../common/errors/index");
 /**
  * Lấy danh sách thuốc có phân trang, tìm kiếm và lọc theo danh mục
  */
@@ -574,4 +575,29 @@ exports.updateRestockRequestStatus = async (medicineId, requestId, newStatus) =>
         status: request.status,
         medicine_name: medicine.medicine_name
     };
+};
+
+exports.updateMedicinePartial = async (medicineId, updateData) => {
+    try {
+        const medicine = await Medicine.findByIdAndUpdate(medicineId, updateData, { new: true });
+        if (!medicine) {
+            logger.warn("Medicine not found for partial update", {
+                context: "medicine.service.updateMedicinePartial",
+                medicineId: medicineId,
+                updateData: updateData
+            });
+            throw new errorResponse.NotFoundError("Không tìm thấy thuốc");
+        }
+        return medicine;
+    } catch (error) {
+        logger.error("Error in updateMedicinePartial", {
+            context: "medicine.service.updateMedicinePartial",
+            medicineId: medicineId,
+            updateData: updateData,
+            message: error.message,
+            stack: error.stack,
+            error: error
+        });
+        throw error;
+    }
 };
