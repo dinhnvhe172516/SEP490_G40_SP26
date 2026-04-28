@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+
 import { DollarSign, Search, FileText, CheckCircle, Clock, Eye, CreditCard, Plus, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Badge from '../../components/ui/Badge';

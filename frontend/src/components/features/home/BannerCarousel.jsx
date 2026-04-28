@@ -1,6 +1,7 @@
 import {
-    ChevronLeft, ChevronRight
+    ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { Link } from "react-router-dom";
 import { useState, useEffect } from 'react';
 const BannerCarousel = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
@@ -121,13 +122,14 @@ const BannerCarousel = () => {
                                     </div>
                                 )}
 
-                                <button
-                                    onClick={scrollToBooking}
+
+                                <Link
+                                    to="/book-appointment"
                                     className="bg-primary-600 text-white px-8 py-4 rounded-lg font-bold text-base hover:bg-primary-700 transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-2"
                                 >
                                     Đặt lịch tư vấn ngay
                                     <span>→</span>
-                                </button>
+                                </Link>
                             </div>
 
                             {/* Right: Image */}
