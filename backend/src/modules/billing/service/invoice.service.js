@@ -8,16 +8,15 @@ const errorRes = require('../../../common/errors');
 const notificationService = require('../../notification/service/notification.service');
 const AppointmentModel = require('../../appointment/models/appointment.model');
 const AuthModel = require('../../auth/models/index.model');
+const TreatmentModel = require('../../treatment/models/treatment.model');
+const MedicineModel = require('../../inventory/model/medicine.model');
 
 const getListInvoice = async (query) => {
     try {
         const search = query.search?.trim();
         const statusFilter = query.status;
         const patientIdFilter = query.patient_id;
-<<<<<<< HEAD
-=======
         const invoiceTypeFilter = query.invoice_type; // 'MEDICAL' | 'MEDICINE'
->>>>>>> dinh
         const page = Math.max(1, parseInt(query.page || 1));
         const limit = Math.max(1, parseInt(query.limit || 10));
         const skip = (page - 1) * limit;
@@ -287,8 +286,6 @@ const updateInvoiceStatus = async (id, status, note, updated_by, payment_method)
             message: error.message,
         });
         throw error;
-<<<<<<< HEAD
-=======
     }
 };
 
@@ -302,9 +299,6 @@ const createMedicineInvoice = async (treatmentId) => {
         if (!mongoose.isValidObjectId(treatmentId)) {
             throw new errorRes.BadRequestError('Treatment ID không hợp lệ');
         }
-
-        const TreatmentModel = mongoose.model('Treatment');
-        const MedicineModel = mongoose.model('Medicine');
 
         const treatment = await TreatmentModel.findById(treatmentId).lean();
         if (!treatment) {
@@ -377,7 +371,6 @@ const createMedicineInvoice = async (treatmentId) => {
         if (['BadRequestError', 'NotFoundError'].includes(error.name)) throw error;
         logger.error('Error creating medicine invoice', { context, message: error.message });
         throw error;
->>>>>>> dinh
     }
 };
 
@@ -513,11 +506,6 @@ module.exports = {
     createInvoice,
     updateInvoiceStatus,
     getInvoiceStats,
-<<<<<<< HEAD
-    autoCreateInvoiceFromAppointment
-};
-=======
     autoCreateInvoiceFromAppointment,
     createMedicineInvoice
 };
->>>>>>> dinh

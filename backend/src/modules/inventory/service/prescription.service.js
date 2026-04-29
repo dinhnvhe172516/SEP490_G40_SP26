@@ -41,7 +41,7 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
                 populate: { path: "profile_id", select: "full_name" }
             })
             .populate("medicine_usage.medicine_id", "medicine_name unit dosage")
-            .select("patient_id doctor_id medicine_usage createdAt")
+            .select("patient_id doctor_id medicine_usage createdAt skipped_dispense")
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(limitNum);
@@ -63,7 +63,7 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
                 patient_phone: patientProfile?.phone || "",
                 doctor_name: doctorProfile?.full_name || "N/A",
                 created_at: t.createdAt,
-                dispense_status: allDispensed ? "Đã xuất" : "Chờ xuất",
+                dispense_status: t.skipped_dispense ? "Mua ngoài" : (allDispensed ? "Đã xuất" : "Chờ xuất"),
                 medicines: t.medicine_usage.map((m) => ({
                     _id: m._id,
                     medicine_name: m.medicine_id?.medicine_name || "N/A",
@@ -88,7 +88,6 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
         }
 
         return {
-<<<<<<< HEAD
             prescriptions: filtered,
             pagination: {
                 currentPage: parseInt(page),
@@ -96,23 +95,6 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
                 totalItems: totalCount,
                 itemsPerPage: limitNum
             }
-=======
-            _id: t._id,
-            patient_name: patientProfile?.full_name || "N/A",
-            patient_phone: patientProfile?.phone || "",
-            doctor_name: doctorProfile?.full_name || "N/A",
-            created_at: t.createdAt,
-            dispense_status: t.skipped_dispense ? "Mua ngoài" : (allDispensed ? "Đã xuất" : "Chờ xuất"),
-            medicines: t.medicine_usage.map((m) => ({
-                _id: m._id,
-                medicine_name: m.medicine_id?.medicine_name || "N/A",
-                unit: m.medicine_id?.unit || "",
-                dosage: m.medicine_id?.dosage || "",
-                quantity: m.quantity,
-                usage_instruction: m.usage_instruction,
-                dispensed: m.dispensed
-            }))
->>>>>>> dinh
         };
     } catch (error) {
         logger.error(`Error in getPrescriptions: ${error.message}`);
@@ -214,7 +196,10 @@ exports.dispensePrescription = async (treatmentId) => {
             dispensedItems.push(item);
         }
 
-        await treatment.save();
+        await Treatment.updateOne(
+            { _id: treatment._id },
+            { $set: { medicine_usage: treatment.medicine_usage } }
+        );
 
         return {
             treatment_id: treatment._id,
@@ -229,20 +214,6 @@ exports.dispensePrescription = async (treatmentId) => {
         }
         throw error;
     }
-<<<<<<< HEAD
-=======
-
-    await Treatment.updateOne(
-        { _id: treatment._id },
-        { $set: { medicine_usage: treatment.medicine_usage } }
-    );
-
-    return {
-        treatment_id: treatment._id,
-        dispensed_count: dispensedItems.length,
-        message: "Xuất thuốc thành công"
-    };
->>>>>>> dinh
 };
 
 /**

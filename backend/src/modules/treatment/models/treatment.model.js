@@ -109,6 +109,10 @@ const treatmentSchema = new Schema(
             type: String,
             enum: ['PLANNED', 'WAITING_APPROVAL', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'],
             default: 'PLANNED'
+        },
+        skipped_dispense: {
+            type: Boolean,
+            default: false
         }
     },
     {
