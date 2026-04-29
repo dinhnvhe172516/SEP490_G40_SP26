@@ -103,6 +103,15 @@ const invoiceSchema = new Schema(
             enum: ['CASH', 'TRANSFER'],
             default: 'CASH',
             required: true
+        },
+
+        // MEDICAL  → Hóa đơn dịch vụ khám bệnh (tạo từ appointment)
+        // MEDICINE → Hóa đơn thuốc (tạo từ đơn thuốc sau khám)
+        invoice_type: {
+            type: String,
+            enum: ['MEDICAL', 'MEDICINE'],
+            default: 'MEDICAL',
+            required: true
         }
     },
     { timestamps: true, collection: 'invoices' }
