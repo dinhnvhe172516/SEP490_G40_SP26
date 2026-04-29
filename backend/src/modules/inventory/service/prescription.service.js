@@ -88,13 +88,21 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
         }
 
         return {
-            prescriptions: filtered,
-            pagination: {
-                currentPage: parseInt(page),
-                totalPages: Math.ceil(totalCount / limitNum),
-                totalItems: totalCount,
-                itemsPerPage: limitNum
-            }
+            _id: t._id,
+            patient_name: patientProfile?.full_name || "N/A",
+            patient_phone: patientProfile?.phone || "",
+            doctor_name: doctorProfile?.full_name || "N/A",
+            created_at: t.createdAt,
+            dispense_status: t.skipped_dispense ? "Mua ngoài" : (allDispensed ? "Đã xuất" : "Chờ xuất"),
+            medicines: t.medicine_usage.map((m) => ({
+                _id: m._id,
+                medicine_name: m.medicine_id?.medicine_name || "N/A",
+                unit: m.medicine_id?.unit || "",
+                dosage: m.medicine_id?.dosage || "",
+                quantity: m.quantity,
+                usage_instruction: m.usage_instruction,
+                dispensed: m.dispensed
+            }))
         };
     } catch (error) {
         logger.error(`Error in getPrescriptions: ${error.message}`);
@@ -214,6 +222,17 @@ exports.dispensePrescription = async (treatmentId) => {
         }
         throw error;
     }
+
+    await Treatment.updateOne(
+        { _id: treatment._id },
+        { $set: { medicine_usage: treatment.medicine_usage } }
+    );
+
+    return {
+        treatment_id: treatment._id,
+        dispensed_count: dispensedItems.length,
+        message: "Xuất thuốc thành công"
+    };
 };
 
 /**
@@ -245,11 +264,11 @@ exports.skipDispensePrescription = async (treatmentId) => {
 
         await Treatment.updateOne(
             { _id: treatment._id },
-            { 
-                $set: { 
+            {
+                $set: {
                     medicine_usage: treatment.medicine_usage,
-                    skipped_dispense: treatment.skipped_dispense 
-                } 
+                    skipped_dispense: treatment.skipped_dispense
+                }
             }
         );
 
