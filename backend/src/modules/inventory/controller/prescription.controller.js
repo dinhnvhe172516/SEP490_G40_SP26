@@ -1,4 +1,5 @@
 const prescriptionService = require("../service/prescription.service");
+const InvoiceService = require("../../billing/service/invoice.service");
 
 exports.getPrescriptions = async (req, res) => {
     try {
@@ -27,6 +28,29 @@ exports.dispensePrescription = async (req, res) => {
         });
     } catch (error) {
         const statusCode = error.statusCode || 500;
+        return res.status(statusCode).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+/**
+ * POST /api/inventory/prescriptions/:id/create-invoice
+ * Tạo hóa đơn thuốc riêng từ treatment (medicine_usage)
+ * Frontend gọi sau khi dispensePrescription thành công, rồi mở PaymentModal
+ */
+exports.createMedicineInvoiceController = async (req, res) => {
+    try {
+        const { id } = req.params; // treatmentId
+        const invoice = await InvoiceService.createMedicineInvoice(id);
+        return res.status(201).json({
+            success: true,
+            message: 'Tạo hóa đơn thuốc thành công',
+            data: invoice
+        });
+    } catch (error) {
+        const statusCode = error.statusCode || error.status || 500;
         return res.status(statusCode).json({
             success: false,
             message: error.message

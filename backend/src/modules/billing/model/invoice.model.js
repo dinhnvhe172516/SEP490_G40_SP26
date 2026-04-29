@@ -35,7 +35,8 @@ const invoiceSchema = new Schema(
                 service_id: {
                     type: Schema.Types.ObjectId,
                     ref: 'Service',
-                    required: true
+                    required: false,
+                    default: null
                 },
                 sub_service_id: {
                     type: Schema.Types.ObjectId,
