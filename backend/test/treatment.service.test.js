@@ -114,6 +114,27 @@ describe('TreatmentService', () => {
             await expect(treatmentService.createService({}))
                 .rejects.toThrow(errorRes.InternalServerError);
         });
+
+        it('TC-TRM-06.1: Ném thẳng lỗi gốc (đã có statusCode) thay vì bọc lại bằng InternalServerError', async () => {
+            const customError = new errorRes.BadRequestError('Thiếu thông tin bắt buộc');
+            model.Treatment.create.mockRejectedValueOnce(customError);
+            
+            await expect(treatmentService.createService({}))
+                .rejects.toThrow(errorRes.BadRequestError);
+        });
+
+        it('TC-TRM-06.2: Đảm bảo ghi log lỗi (logger.error) chi tiết khi có sự cố hệ thống', async () => {
+            const err = new Error('Connection Timeout');
+            model.Treatment.create.mockRejectedValueOnce(err);
+            
+            await expect(treatmentService.createService({}))
+                .rejects.toThrow(errorRes.InternalServerError);
+                
+            expect(logger.error).toHaveBeenCalledWith(
+                "Error at create new treatment.",
+                expect.objectContaining({ message: 'Connection Timeout' })
+            );
+        });
     });
 
     // ============================================

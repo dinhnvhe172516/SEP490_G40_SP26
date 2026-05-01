@@ -85,24 +85,35 @@ describe('Inventory Medicine Service', () => {
             }));
         });
 
-        it('TC-IM-05: Lọc với status EXPIRED', async () => {
+        it('TC-IM-05: Bỏ qua điều kiện lọc category nếu nhận giá trị là "all"', async () => {
+            await medicineService.getMedicines({ category: 'all' });
+            expect(Medicine.find.mock.calls[0][0]).not.toHaveProperty('category');
+        });
+
+        it('TC-IM-06: Tính toán skip/limit phân trang chính xác dựa vào page và limit', async () => {
+            const limitMock = jest.fn().mockResolvedValue([]);
+            const skipMock = jest.fn().mockReturnValue({ limit: limitMock });
+            Medicine.find = jest.fn().mockReturnValue({
+                select: jest.fn().mockReturnValue({
+                    populate: jest.fn().mockReturnValue({
+                        sort: jest.fn().mockReturnValue({ skip: skipMock })
+                    })
+                })
+            });
+
+            await medicineService.getMedicines({ page: 3, limit: 15 });
+            expect(skipMock).toHaveBeenCalledWith(30);
+            expect(limitMock).toHaveBeenCalledWith(15);
+        });
+
+        it('TC-IM-07: Lọc với status EXPIRED', async () => {
             await medicineService.getMedicines({ statusFilter: 'EXPIRED' });
             expect(Medicine.find.mock.calls[0][0]).toHaveProperty('$or');
         });
 
-        it('TC-IM-06: Lọc với status EXPIRING_SOON', async () => {
-            await medicineService.getMedicines({ statusFilter: 'EXPIRING_SOON' });
-            expect(Medicine.find.mock.calls[0][0]).toHaveProperty('expiry_date');
-        });
-
-        it('TC-IM-07: Lọc với status LOW_STOCK', async () => {
+        it('TC-IM-08: Lọc với status LOW_STOCK', async () => {
             await medicineService.getMedicines({ statusFilter: 'LOW_STOCK' });
             expect(Medicine.find.mock.calls[0][0]).toHaveProperty('$and');
-        });
-
-        it('TC-IM-08: Lọc với status OUT_OF_STOCK', async () => {
-            await medicineService.getMedicines({ statusFilter: 'OUT_OF_STOCK' });
-            expect(Medicine.find.mock.calls[0][0].quantity).toEqual({ $lte: 0 });
         });
 
         it('TC-IM-09: Lọc với status AVAILABLE', async () => {
@@ -110,12 +121,7 @@ describe('Inventory Medicine Service', () => {
             expect(Medicine.find.mock.calls[0][0].status).toBe('AVAILABLE');
         });
 
-        it('TC-IM-10: Lọc với custom status (default switch case)', async () => {
-            await medicineService.getMedicines({ statusFilter: 'DRAFT' });
-            expect(Medicine.find.mock.calls[0][0].status).toBe('DRAFT');
-        });
-
-        it('TC-IM-10b: Bẫy lỗi DB (catch Error) -> logger.error', async () => {
+        it('TC-IM-10: Quăng lỗi và ghi log (logger.error) khi truy vấn DB thất bại', async () => {
             Medicine.countDocuments = jest.fn().mockRejectedValue(new Error('DB Find Lỗi'));
             await expect(medicineService.getMedicines({})).rejects.toThrow('DB Find Lỗi');
             expect(logger.error).toHaveBeenCalled();

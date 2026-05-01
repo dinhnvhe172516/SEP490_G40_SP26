@@ -45,6 +45,25 @@ describe('Inventory Dashboard Service', () => {
 
             expect(result.totalInventoryQuantity).toBe(0); // Rơi vào nhánh fallback || 0
         });
+
+        it('TC-ID-02.1: Quăng lỗi gốc (throw error) khi truy vấn Medicine.countDocuments thất bại', async () => {
+            const dbError = new Error('DB connection timeout');
+            Medicine.countDocuments = jest.fn().mockRejectedValueOnce(dbError);
+            
+            // Do mockRejectedValueOnce ném lỗi, Promise.all sẽ gãy ngay lập tức
+            await expect(dashboardService.getDashboardStats())
+                .rejects.toThrow('DB connection timeout');
+        });
+
+        it('TC-ID-02.2: Quăng lỗi khi aggregate tổng số lượng tồn kho (Medicine.aggregate) gặp sự cố', async () => {
+            Medicine.countDocuments = jest.fn().mockResolvedValue(10); // Giả lập count bình thường
+            
+            const aggError = new Error('Aggregate pipeline error');
+            Medicine.aggregate = jest.fn().mockRejectedValueOnce(aggError);
+
+            await expect(dashboardService.getDashboardStats())
+                .rejects.toThrow('Aggregate pipeline error');
+        });
     });
 
     describe('getLowStockMedicines(limit)', () => {
@@ -60,6 +79,33 @@ describe('Inventory Dashboard Service', () => {
 
             expect(result).toEqual(mockData);
         });
+
+        it('TC-ID-03.1: Sử dụng limit mặc định (bằng 3) khi không truyền tham số', async () => {
+            const mockData = [{ medicine_name: 'Aspirin' }];
+            const limitMock = jest.fn().mockResolvedValue(mockData);
+            Medicine.find = jest.fn().mockReturnValue({
+                sort: jest.fn().mockReturnValue({
+                    limit: limitMock
+                })
+            });
+
+            const result = await dashboardService.getLowStockMedicines();
+
+            expect(result).toEqual(mockData);
+            expect(limitMock).toHaveBeenCalledWith(3); // Kiểm tra xem limit(3) có được gọi hay không
+        });
+
+        it('TC-ID-03.2: Quăng lỗi gốc (throw error) khi truy vấn Database thất bại', async () => {
+            const dbError = new Error('Database query failed');
+            Medicine.find = jest.fn().mockReturnValue({
+                sort: jest.fn().mockReturnValue({
+                    limit: jest.fn().mockRejectedValueOnce(dbError) // Giả lập lỗi ở bước limit cuối cùng
+                })
+            });
+
+            await expect(dashboardService.getLowStockMedicines())
+                .rejects.toThrow('Database query failed');
+        });
     });
 
     describe('getNearExpiredMedicines(days)', () => {
@@ -72,6 +118,37 @@ describe('Inventory Dashboard Service', () => {
             const result = await dashboardService.getNearExpiredMedicines(10);
 
             expect(result).toEqual(mockData);
+        });
+
+        it('TC-ID-04.1: Sử dụng giá trị mặc định days = 30 khi không truyền tham số', async () => {
+            const mockData = [{ medicine_name: 'Amoxicillin' }];
+            Medicine.find = jest.fn().mockReturnValue({
+                sort: jest.fn().mockResolvedValue(mockData)
+            });
+
+            const result = await dashboardService.getNearExpiredMedicines();
+
+            expect(result).toEqual(mockData);
+            // Đảm bảo truy vấn được gọi với các mốc thời gian bằng kiểu Date
+            expect(Medicine.find).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    expiry_date: expect.objectContaining({
+                        $gte: expect.any(Date),
+                        $lte: expect.any(Date)
+                    })
+                }),
+                expect.any(Object)
+            );
+        });
+
+        it('TC-ID-04.2: Quăng lỗi gốc (throw error) khi truy vấn Database thất bại', async () => {
+            const dbError = new Error('Database query execution failed');
+            Medicine.find = jest.fn().mockReturnValue({
+                sort: jest.fn().mockRejectedValueOnce(dbError) // Giả lập lỗi ở hàm sort
+            });
+
+            await expect(dashboardService.getNearExpiredMedicines(15))
+                .rejects.toThrow('Database query execution failed');
         });
     });
 
