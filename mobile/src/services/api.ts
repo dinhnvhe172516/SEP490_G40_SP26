@@ -46,9 +46,23 @@ apiClient.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as any;
 
-        // If not 401, or already retried twice, reject
+        // If not 401, or already retried, reject immediately
         if (error.response?.status !== 401 || originalRequest._retry) {
             return Promise.reject(error);
+        }
+
+        // Skip refresh for auth endpoints — pass the original backend error through directly
+        // (e.g. "Mật khẩu không đúng" from /api/auth/login should NOT be swallowed)
+        const AUTH_ENDPOINTS = [
+            '/api/auth/login',
+            '/api/auth/register',
+            '/api/auth/forgot-password',
+            '/api/auth/reset-password',
+            '/api/auth/refresh-token',
+        ];
+        const isAuthEndpoint = AUTH_ENDPOINTS.some(ep => originalRequest.url?.includes(ep));
+        if (isAuthEndpoint) {
+            return Promise.reject(error); // ← trả nguyên lỗi gốc từ Backend
         }
 
         if (isRefreshing) {
@@ -68,14 +82,14 @@ apiClient.interceptors.response.use(
 
         try {
             const refreshToken = await tokenService.getRefreshToken();
-            
+
             if (!refreshToken) {
                 throw new Error('No refresh token available');
             }
 
             // Call refresh API directly to avoid circular interceptor issue
-            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, { 
-                refreshToken 
+            const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, {
+                refreshToken
             });
 
             const { token, refreshToken: newRefreshToken } = response.data.data;
@@ -94,7 +108,7 @@ apiClient.interceptors.response.use(
             // If refresh fails, clear tokens and reject queue
             processQueue(refreshError, null);
             await tokenService.clearTokens();
-            
+
             // Note: AuthContext should listen to this or we trigger a logout event
             return Promise.reject(refreshError);
         } finally {

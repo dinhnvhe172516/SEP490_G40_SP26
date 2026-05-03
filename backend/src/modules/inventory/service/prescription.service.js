@@ -42,11 +42,14 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
             })
             .populate("medicine_usage.medicine_id", "medicine_name unit dosage")
             .select("patient_id doctor_id medicine_usage createdAt skipped_dispense")
-            .sort({ createdAt: -1 })
-            .skip(skip)
-            .limit(limitNum);
+            .sort({ createdAt: -1 });
 
-        const [treatments, totalCount] = await Promise.all([
+        // Nếu không có search, áp dụng phân trang ở DB cho tối ưu
+        if (!search || !search.trim()) {
+            treatmentQuery = treatmentQuery.skip(skip).limit(limitNum);
+        }
+
+        const [treatments, dbTotalCount] = await Promise.all([
             treatmentQuery,
             Treatment.countDocuments(query)
         ]);
@@ -76,33 +79,30 @@ exports.getPrescriptions = async ({ status, search, page = 1, limit = 10, date }
             };
         });
 
-        // Filter search sau populate (tên bệnh nhân, bác sĩ)
-        let filtered = prescriptions;
+        let finalPrescriptions = prescriptions;
+        let finalTotalCount = dbTotalCount;
+
+        // Nếu có search, filter trên JS trước, đếm số lượng, sau đó mới cắt mảng (slice) để phân trang
         if (search && search.trim()) {
             const searchLower = search.trim().toLowerCase();
-            filtered = prescriptions.filter(
+            const filtered = prescriptions.filter(
                 (p) =>
                     p.patient_name.toLowerCase().includes(searchLower) ||
                     p.doctor_name.toLowerCase().includes(searchLower)
             );
+
+            finalTotalCount = filtered.length;
+            finalPrescriptions = filtered.slice(skip, skip + limitNum);
         }
 
         return {
-            _id: t._id,
-            patient_name: patientProfile?.full_name || "N/A",
-            patient_phone: patientProfile?.phone || "",
-            doctor_name: doctorProfile?.full_name || "N/A",
-            created_at: t.createdAt,
-            dispense_status: t.skipped_dispense ? "Mua ngoài" : (allDispensed ? "Đã xuất" : "Chờ xuất"),
-            medicines: t.medicine_usage.map((m) => ({
-                _id: m._id,
-                medicine_name: m.medicine_id?.medicine_name || "N/A",
-                unit: m.medicine_id?.unit || "",
-                dosage: m.medicine_id?.dosage || "",
-                quantity: m.quantity,
-                usage_instruction: m.usage_instruction,
-                dispensed: m.dispensed
-            }))
+            prescriptions: finalPrescriptions,
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(finalTotalCount / limitNum),
+                totalItems: finalTotalCount,
+                itemsPerPage: limitNum
+            }
         };
     } catch (error) {
         logger.error(`Error in getPrescriptions: ${error.message}`);

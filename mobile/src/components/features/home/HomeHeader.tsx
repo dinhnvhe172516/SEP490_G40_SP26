@@ -20,9 +20,9 @@ export function HomeHeader({ profile, isLoading }: { profile: any, isLoading: bo
     const userName = profile?.full_name || 'Khách hàng';
     const avatarUrl = profile?.avatar_url;
 
-    // Check if user is logged in based on avatarUrl presence
-    // (This works as a quick UI check based on your profile structure)
-    const isLoggedIn = !!profile?.avatar_url;
+    // Check login by profile object existence, NOT avatar_url
+    // (avatar_url can be null even when logged in — user may not have uploaded a photo)
+    const isLoggedIn = !!profile?.account_id;
 
     const handleAvatarPress = () => {
         if (isLoggedIn) {

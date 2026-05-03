@@ -477,6 +477,23 @@ describe('StaffService', () => {
             mockLicenseModel.findOne.mockImplementationOnce(() => mockChain(null));
             expect(await staffService.checkUniqueLicenseNumberNotId('L', 'id')).toBe(false);
         });
+
+        it('TC-UL-06 · throws raw Error if database query fails for checkUniqueLicenseNumber', async () => {
+            const dbError = new Error('Database connection failed');
+            // Ghi đè mock để throw lỗi
+            mockLicenseModel.findOne.mockImplementationOnce(() => { throw dbError; });
+
+            await expect(staffService.checkUniqueLicenseNumber('ERR-001'))
+                .rejects.toThrow('Database connection failed');
+        });
+
+        it('TC-UL-07 · throws raw Error if database query fails for checkUniqueLicenseNumberNotId', async () => {
+            const dbError = new Error('Database disconnected');
+            mockLicenseModel.findOne.mockImplementationOnce(() => { throw dbError; });
+
+            await expect(staffService.checkUniqueLicenseNumberNotId('ERR-002', 'any_id'))
+                .rejects.toThrow('Database disconnected');
+        });
     });
 
     /* ─────────────────────────────────────────────
