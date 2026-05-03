@@ -25,7 +25,7 @@ const generateCashFlowReport = async ({
       const now = new Date();
       const start = fromDate
             ? new Date(new Date(fromDate).setHours(0, 0, 0, 0))
-            : new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            : new Date(now.getFullYear(), now.getMonth() - 6, 1);
 
       const end = toDate
             ? new Date(new Date(toDate).setHours(23, 59, 59, 999))
